@@ -13,7 +13,7 @@ namespace Flicker.View
             {
                 Vector3 temp = transform.localPosition;
                 transform.localPosition = new Vector3(-temp.x,temp.y,temp.z);
-                ServiceLocator.GetService<VibrationMgrInterface>().AddVibration(0.2f,new Vector3(0.1f,0,0));
+                ServiceLocator.GetService<VibrationMgrInterface>().AddVibration(0.2f,new Vector3(0.2f,0,0));
             }
         }
     }
