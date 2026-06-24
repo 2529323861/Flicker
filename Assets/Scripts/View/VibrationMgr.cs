@@ -3,7 +3,7 @@ using Flicker.Core;
 using Flicker.Core.Service;
 using UnityEngine;
 
-namespace Flicker.Veiw
+namespace Flicker.View
 {
     class Vibration
     {   

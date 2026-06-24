@@ -1,7 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using Flicker.Core.Service;
-using Flicker.Veiw;
+using Flicker.View;
 using UnityEngine;
 
 public class GameBootstrap : MonoBehaviour
