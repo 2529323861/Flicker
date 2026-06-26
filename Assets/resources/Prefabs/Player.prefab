@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8593293358950288741}
   - component: {fileID: 7298623258369807520}
   - component: {fileID: 395343777757520970}
+  - component: {fileID: 2815263038695549923}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -126,3 +127,21 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
+--- !u!114 &2815263038695549923
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8513294268330583383}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c9acc13593a7524e88b226c2aea1567, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hangTime: 0.2
+  maxJumpingCD: 2
+  leftWallPos: -5.3
+  rightWallPos: 5.3
+  teamTag: default
+  nowJumpingCD: 0
