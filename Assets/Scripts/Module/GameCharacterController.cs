@@ -33,6 +33,11 @@ namespace Flicker.Module
     public class GameCharacterController : MonoBehaviour 
     {   
         /// <summary>
+        /// 移动速度
+        /// </summary>
+        public float moveSpeed = 3;
+
+        /// <summary>
         /// 滞空时间
         /// </summary>
         public float hangTime = 0.2f;
@@ -60,12 +65,10 @@ namespace Flicker.Module
         /// <summary>
         /// 剩余跳跃冷却时间
         /// </summary>
-        [HideInInspector]
         public float nowJumpingCD = 0f;
         /// <summary>
         /// 当前墙面
         /// </summary>
-        [HideInInspector]
         private bool isRightWall = false;
 
         /// <summary>
@@ -100,13 +103,17 @@ namespace Flicker.Module
         {
             if (state != GameCharacterState.Idle && state != GameCharacterState.Moving) return;
             if (nowJumpingCD >0) return;
-            
+
             if (_jumpingCoroutine != null)
             {
                 StopCoroutine(_jumpingCoroutine);
             }
             _jumpingCoroutine = StartCoroutine(JumpingCoroutine());
         }
+        /// <summary>
+        /// 供Jump方法使用的跳跃协程
+        /// </summary>
+        /// <returns></returns>
         IEnumerator JumpingCoroutine()
         {
             state = GameCharacterState.JumpHanging;
@@ -125,6 +132,17 @@ namespace Flicker.Module
             state = GameCharacterState.Idle;
             isRightWall = !isRightWall;
             ServiceLocator.GetService<VibrationMgrInterface>().AddVibration(0.2f,new Vector3(0.2f,0,0));
+        }
+        /// <summary>
+        /// 移动
+        /// </summary>
+        /// <param name="isUp"></param>
+        public void Move(bool isUp)
+        {
+            if (state != GameCharacterState.Idle && state != GameCharacterState.Moving) return;
+            float deltaY = moveSpeed * Time.deltaTime * (isUp ? 1 : -1);
+            Vector3 temp = transform.localPosition;
+            transform.localPosition = new Vector3(temp.x,temp.y+deltaY,temp.z);
         }
     }
 }

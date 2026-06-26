@@ -9,6 +9,10 @@ namespace Flicker.Module
     {
         public static float Vertical => Input.GetAxis("Vertical");
 
+        public static bool Up => Input.GetKey(KeyCode.UpArrow);
+        public static bool Down => Input.GetKey(KeyCode.DownArrow);
+
+
         public static bool Jump => Input.GetKeyDown(KeyCode.Space);
 
     }

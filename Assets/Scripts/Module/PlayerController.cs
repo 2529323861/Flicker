@@ -9,11 +9,12 @@ namespace Flicker.Module
         new void Update()
         {
             base.Update();
-            GetComponent<Rigidbody2D>().velocity = new Vector2(0,InputRouter.Vertical*3f);
-            if (InputRouter.Jump)
-            {
-                Jump();
-            }
+
+            if (InputRouter.Up)
+                Move(true);
+            else if (InputRouter.Down)
+                Move(false);
+            if (InputRouter.Jump) Jump();
         }
     }
 }
