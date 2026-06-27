@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8593293358950288741}
   - component: {fileID: 7298623258369807520}
   - component: {fileID: 2815263038695549923}
+  - component: {fileID: 4602146967020674669}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -114,7 +115,43 @@ MonoBehaviour:
   moveSpeed: 3
   hangTime: 0.2
   maxJumpingCD: 2
+  collisionRadius: 0.5
   leftWallPos: -5.3
   rightWallPos: 5.3
   teamTag: default
   nowJumpingCD: 0
+--- !u!58 &4602146967020674669
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8513294268330583383}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 0.5
