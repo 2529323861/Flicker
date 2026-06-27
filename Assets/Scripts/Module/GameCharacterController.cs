@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -185,7 +186,8 @@ namespace Flicker.Module
             transform.localPosition = distination;
             nowJumpingCD = maxJumpingCD;
             if (state == GameCharacterState.JumpHanging)
-            {                
+            {
+                AttackDetect();
                 state = GameCharacterState.Idle;
                 isRightWall = !isRightWall;
             }
@@ -211,16 +213,15 @@ namespace Flicker.Module
         /// </summary>
         private void ParryDetect()
         {
+            Vector2 centerStart = new Vector2(transform.position.x,transform.position.y);
             Vector2 topStart = new Vector2(transform.position.x,transform.position.y+collisionRadius);
             Vector2 bottomStart = new Vector2(transform.position.x,transform.position.y-collisionRadius);
 
-            Debug.DrawRay(topStart,new Vector2(isRightWall ? -100 : 100,0),Color.red,hangTime);
-            Debug.DrawRay(bottomStart,new Vector2(isRightWall ? -100 : 100,0),Color.red,hangTime);
-
+            RaycastHit2D[] centerHit =  Physics2D.RaycastAll(centerStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
             RaycastHit2D[] topHit =  Physics2D.RaycastAll(topStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
             RaycastHit2D[] bottomHit =  Physics2D.RaycastAll(bottomStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
 
-            RaycastHit2D[] raycastHit2Ds = topHit.Concat(bottomHit).ToArray();
+            RaycastHit2D[] raycastHit2Ds = topHit.Concat(bottomHit).Concat(centerHit).ToArray();
             foreach (var i in raycastHit2Ds)
             {
                 if (i.collider.gameObject.TryGetComponent<GameCharacterController>(out var gameCharacterController) && //是游戏角色
@@ -252,6 +253,51 @@ namespace Flicker.Module
         {
             state = GameCharacterState.Stiffness;
             nowStiffTime = time;
+        }
+        /// <summary>
+        /// 攻击侦测
+        /// </summary>
+        private void AttackDetect()
+        {
+            Vector2 centerStart = new Vector2(transform.position.x,transform.position.y);
+            Vector2 topStart = new Vector2(transform.position.x,transform.position.y+collisionRadius);
+            Vector2 bottomStart = new Vector2(transform.position.x,transform.position.y-collisionRadius);
+
+            RaycastHit2D[] centerHit =  Physics2D.RaycastAll(centerStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
+            RaycastHit2D[] topHit =  Physics2D.RaycastAll(topStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
+            RaycastHit2D[] bottomHit =  Physics2D.RaycastAll(bottomStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
+
+            RaycastHit2D[] raycastHit2Ds = topHit.Concat(bottomHit).Concat(centerHit).ToArray();
+            GameObject[] attacked = {};
+            foreach (var i in raycastHit2Ds)
+            {
+                if (i.collider.gameObject.TryGetComponent<GameCharacterController>(out var gameCharacterController) && //是游戏角色
+                    gameCharacterController.teamTag != teamTag && //与自己不是一个阵营的
+                    gameCharacterController.state != GameCharacterState.JumpHanging && //不处于跳跃滞空
+                    gameCharacterController.state != GameCharacterState.ParryHanging && //不处于弹反滞空
+                    !attacked.Contains(i.collider.gameObject) && //没有计算过伤害
+                    (i.collider.gameObject.transform.localPosition - transform.localPosition).magnitude <= collisionRadius + gameCharacterController.collisionRadius //碰撞
+                    )
+                {
+                    gameCharacterController.BeAttacked(gameObject);
+                    attacked.Append(i.collider.gameObject);
+                }
+            }
+            
+        }
+        /// <summary>
+        /// 受击
+        /// </summary>
+        /// <param name="attacker">攻击者</param>
+        public void BeAttacked(GameObject attacker)
+        {
+            /** 暂时先不考虑道具卡和藏品造成的修饰，后面再引入 */
+            if (!TryGetComponent<HealthController>(out var healthController))
+            {
+                Debug.Log($"[Error] {name} 生命组件缺失！");
+                return;
+            }
+            healthController.SetHealth(healthController.health-1);
         }
     }
 }
