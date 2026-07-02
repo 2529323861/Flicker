@@ -221,7 +221,7 @@ namespace Flicker.Module
         /// </summary>
         public void Jump()
         {
-            if (state != GameCharacterState.Idle || state != GameCharacterState.Moving) return;
+            if (state != GameCharacterState.Idle && state != GameCharacterState.Moving) return;
             if (nowJumpingCDMV.value > 0 ) return;
 
             ActionContext actionContext = new();
@@ -299,7 +299,7 @@ namespace Flicker.Module
         public void Move(bool isUp)
         {
 
-            if (state == GameCharacterState.JumpHanging && state == GameCharacterState.ParryHanging) return;
+            if (state == GameCharacterState.JumpHanging || state == GameCharacterState.ParryHanging) return;
 
             ActionContext actionContext = new();
             miniEventBus.Publish<BeforeMoveEvent>(new BeforeMoveEvent{context=actionContext,isUp = isUp});
