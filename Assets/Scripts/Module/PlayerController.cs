@@ -6,6 +6,10 @@ namespace Flicker.Module
 {   
     public class PlayerController : GameCharacterController
     {
+        void Start()
+        {
+            GetComponent<EffectContainer>().AddEffect(new MockStrategy());
+        }
         new void Update()
         {
             base.Update();
