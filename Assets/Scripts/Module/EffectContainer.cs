@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Flicker.Module
 {
+    /// <summary>
+    /// 挂载于游戏对象上，作为效果容器，供修饰管线调用
+    /// </summary>
     public class EffectContainer: MonoBehaviour
     {
         private List<BaseEffectStrategy> effects = new();
