@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Flicker.Module
 {
     /// <summary>
@@ -5,6 +7,10 @@ namespace Flicker.Module
     /// </summary>
     public class BaseBuffStrategy
     {
+        /// <summary>
+        /// 对象绑定
+        /// </summary>
+        protected GameObject gameObject;
         /// <summary>
         /// Buff名称
         /// </summary>
@@ -14,7 +20,7 @@ namespace Flicker.Module
         /// </summary>
         public string iconPath = "invisible";
         /// <summary>
-        /// 图标是否可见
+        /// 图标不可见
         /// </summary>
         public bool iconInvisible = true;
         /// <summary>
@@ -41,5 +47,10 @@ namespace Flicker.Module
         /// 叠层变化时触发
         /// </summary>
         public virtual void OnStacksChange(){}
+
+        public void BindGameObject(GameObject gameObject)
+        {
+            this.gameObject = gameObject;
+        }
     }
 }

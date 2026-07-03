@@ -1,6 +1,7 @@
 using Flicker.Core.Service;
 using UnityEngine;
 using Flicker.Module;
+using Flicker.Module.Buff;
 
 namespace Flicker.Module
 {   
@@ -8,7 +9,7 @@ namespace Flicker.Module
     {
         void Start()
         {
-            GetComponent<EffectContainer>().AddEffect(new MockStrategy());
+            GetComponent<BuffContainer>().AddBuff(new AccelerateBuff(),5);
         }
         new void Update()
         {

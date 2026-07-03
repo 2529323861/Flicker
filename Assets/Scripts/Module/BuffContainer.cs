@@ -65,12 +65,14 @@ namespace Flicker.Module
                 if (i == buffs.Count)
                 {
                     buffs.Add(new BuffWrapper{baseBuffStrategy=baseBuffStrategy,duration=duration});
+                    baseBuffStrategy.BindGameObject(gameObject);
                     baseBuffStrategy.OnAdd();
                 }
             }
             else
             {                
                 buffs.Add(new BuffWrapper{baseBuffStrategy=baseBuffStrategy,duration=duration});
+                baseBuffStrategy.BindGameObject(gameObject);
                 baseBuffStrategy.OnAdd();
             }
         }
