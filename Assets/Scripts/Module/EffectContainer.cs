@@ -19,10 +19,11 @@ namespace Flicker.Module
             }
             return result;
         }
-        public void AddEffect(BaseEffectStrategy baseEffectStrategy)
+        public void AddEffect(BaseEffectStrategy baseEffectStrategy, BaseBuffStrategy sourceBuff=null)
         {
             effects.Add(baseEffectStrategy);
             baseEffectStrategy.BindGameObject(gameObject);
+            baseEffectStrategy.BindBaseBuffStrategy(sourceBuff);
             baseEffectStrategy.Register(gameObject.GetComponent<MiniEventBus>());
         }
         public void RemoveEffect(BaseEffectStrategy baseEffectStrategy)

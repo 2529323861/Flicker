@@ -13,6 +13,10 @@ namespace Flicker.Module
         /// </summary>
         protected GameObject gameObject;
         /// <summary>
+        /// 来源buff
+        /// </summary>
+        protected BaseBuffStrategy baseBuffStrategy;
+        /// <summary>
         /// 持续性修饰，每次读取数据都会应用
         /// </summary>
         /// <param name="ModifierSet">迭代数据集</param>
@@ -31,6 +35,10 @@ namespace Flicker.Module
         public void BindGameObject(GameObject gameObject)
         {
             this.gameObject = gameObject;
+        }
+        public void BindBaseBuffStrategy(BaseBuffStrategy baseBuffStrategy)
+        {
+            this.baseBuffStrategy = baseBuffStrategy;
         }
     }
 }
