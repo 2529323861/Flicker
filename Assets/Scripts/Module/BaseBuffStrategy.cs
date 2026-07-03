@@ -20,6 +20,10 @@ namespace Flicker.Module
         /// </summary>
         public string iconPath = "invisible";
         /// <summary>
+        /// 描述
+        /// </summary>
+        public string description = "默认描述";
+        /// <summary>
         /// 图标不可见
         /// </summary>
         public bool iconInvisible = true;
