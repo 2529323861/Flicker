@@ -427,9 +427,22 @@ namespace Flicker.Module
             miniEventBus.Publish<BeforeBeAttackedEvent>(new BeforeBeAttackedEvent{context=damageContext,attacker=attacker});
             if (damageContext.cancelled) return;  //事件是否被取消
 
-            healthController.SetHealth(healthController.health-(int)damageContext.damage);
-
+            healthController.ReduceHealth((int)damageContext.damage);
             miniEventBus.Publish<AfterBeAttackedEvent>(new AfterBeAttackedEvent{attacker=attacker});
+
+            if (healthController.health <= 0) Die();
+        }
+        /// <summary>
+        /// 死亡
+        /// </summary>
+        public void Die()
+        {
+            ActionContext actionContext = new();
+            miniEventBus.Publish<BeforeDie>(new BeforeDie{context=actionContext});
+            if (actionContext.cancelled) return;
+
+            miniEventBus.Publish<AfterDie>(new AfterDie());
+            Destroy(gameObject);
         }
     }
 }

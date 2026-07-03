@@ -100,4 +100,15 @@ namespace Flicker.Module.CharacterEvent
     /// 传递引擎更新事件,用于dot效果自治间隔触发
     /// </summary>
     public struct UpdateEvent{}
+    /// <summary>
+    /// 死亡前事件
+    /// </summary>
+    public struct BeforeDie
+    {
+        public ActionContext context;
+    }
+    /// <summary>
+    /// 死亡后事件
+    /// </summary>
+    public struct AfterDie{}
 }

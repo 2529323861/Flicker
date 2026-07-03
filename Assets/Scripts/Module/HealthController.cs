@@ -12,23 +12,12 @@ namespace Flicker.Module
         /// </summary>
         public int health = 3;
         /// <summary>
-        /// 临时生命值，优先于生命值被消耗
+        /// 减少生命值
         /// </summary>
-        public int temporaryHealth = 1;
-        /// <summary>
-        /// 护盾值，优先于临时生命值被消耗
-        /// </summary>
-        public int shield = 3;
-        /// <summary>
-        /// 临时护盾值，优先于护盾值被消耗
-        /// </summary>
-        public int temporaryShield = 1;
-
-        public void SetHealth(int value)
+        /// <param name="damage"></param>
+        public void ReduceHealth(int damage)
         {
-            health = value;
-            if (health < 0) health = 0;
-            if (health == 0) Destroy(gameObject);
+            health -= damage;
         }
 
     }
