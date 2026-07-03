@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Flicker.Module
 {   
     /// <summary>
-    /// 生命值处理器，负责记录生命值，临时生命值，护盾值，临时护盾值，并处理掉血，护盾代偿逻辑
+    /// 生命值处理器，负责记录生命值
     /// </summary>
     public class HealthController: MonoBehaviour
     {
