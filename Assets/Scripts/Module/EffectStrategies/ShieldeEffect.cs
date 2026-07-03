@@ -20,6 +20,7 @@ namespace Flicker.Module.Effect
         }
         public void Callback(BeforeBeAttackedEvent beforeBeAttackedEvent)
         {
+            if (beforeBeAttackedEvent.context.cancelled) return;
             beforeBeAttackedEvent.context.cancelled = true;
             num--;
             if (num == 0)
