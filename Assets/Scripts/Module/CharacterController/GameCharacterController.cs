@@ -217,6 +217,7 @@ namespace Flicker.Module
                     miniEventBus.Publish<AfterStiffEvent>(new AfterStiffEvent());
                 }
             }
+            miniEventBus.Publish<UpdateEvent>(new UpdateEvent());
         }
         /// <summary>
         /// 跳跃

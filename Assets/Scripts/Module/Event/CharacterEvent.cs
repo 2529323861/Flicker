@@ -96,5 +96,8 @@ namespace Flicker.Module.CharacterEvent
     {
         public bool isUp;
     }
-
+    /// <summary>
+    /// 传递引擎更新事件,用于dot效果自治间隔触发
+    /// </summary>
+    public struct UpdateEvent{}
 }
