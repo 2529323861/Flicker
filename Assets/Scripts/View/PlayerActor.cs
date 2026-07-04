@@ -27,8 +27,8 @@ namespace Flicker.View
             {
                 SetFacing(false);
             }
-            animator.SetInteger("State",(int)evt.state);
-            print(evt.towardUp);
+            if (animator!=null)
+                animator.SetInteger("State",(int)evt.state);
         }
     }
 }
