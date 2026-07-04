@@ -18,6 +18,7 @@ namespace Flicker.View
 
         protected virtual void Awake()
         {
+            _spriteRenderer = GetComponent<SpriteRenderer>();
             if (_spriteRenderer != null) _baseColor = _spriteRenderer.color;
         }
 
@@ -91,6 +92,8 @@ namespace Flicker.View
         public void SetFacing(bool faceRight)
         {
             _isFacingRight = faceRight;
+            if (_spriteRenderer != null)
+                _spriteRenderer.flipX = faceRight; 
         }
 
         public void SetSortingOrder(int order)

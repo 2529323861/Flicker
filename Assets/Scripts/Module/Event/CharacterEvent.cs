@@ -111,4 +111,11 @@ namespace Flicker.Module.CharacterEvent
     /// 死亡后事件
     /// </summary>
     public struct AfterDie{}
+
+    public struct StateChangedEvent
+    {
+        public GameCharacterState state; 
+        public bool towardUp;
+        public bool isRightWall;
+    }
 }

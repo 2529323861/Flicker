@@ -156,6 +156,8 @@ namespace Flicker.Module
 
         void Awake()
         {
+            SetState(GameCharacterState.Idle);
+
             modifyPipeline = GetComponent<ModifyPipeline>();
             miniEventBus = GetComponent<MiniEventBus>();
             healthController = GetComponent<HealthController>();
@@ -220,7 +222,7 @@ namespace Flicker.Module
                 if (nowStiffTimeMV.value < 0)
                 {
                     nowStiffTimeMV.value = 0;
-                    state = GameCharacterState.Idle;
+                    SetState(GameCharacterState.Idle);
                     miniEventBus.Publish<AfterStiffEvent>(new AfterStiffEvent());
                 }
             }
@@ -229,7 +231,7 @@ namespace Flicker.Module
             /** 维护移动标识 */
             if (_moveflag == false && state == GameCharacterState.Moving)
             {
-                state = GameCharacterState.Idle;
+                SetState(GameCharacterState.Idle);
             }
             _moveflag = false;
         }
@@ -263,7 +265,7 @@ namespace Flicker.Module
             float hangTime = values.hangTime.FinalValue;
             float maxJumpingCD = values.maxJumpingCD.FinalValue;
 
-            state = GameCharacterState.JumpHanging;
+            SetState(GameCharacterState.JumpHanging);
             float timer = 0;
 
 
@@ -282,7 +284,7 @@ namespace Flicker.Module
                 {
                     parryAtFrame = false;                      
                     /** 如果在这一帧中触发了弹反，先复位触发，切换状态，然后倒置计时器，交换移动终/起点 */
-                    state = GameCharacterState.ParryHanging;
+                    SetState(GameCharacterState.ParryHanging);
                     timer = hangTime - timer;
                     Vector2 temp = startingPoint;
                     startingPoint = distination;
@@ -300,8 +302,8 @@ namespace Flicker.Module
             if (state == GameCharacterState.JumpHanging)
             {
                 AttackDetect();
-                state = GameCharacterState.Idle;
                 isRightWall = !isRightWall;
+                SetState(GameCharacterState.Idle);
             }
             else
             {
@@ -322,9 +324,9 @@ namespace Flicker.Module
             miniEventBus.Publish<BeforeMoveEvent>(new BeforeMoveEvent{context=actionContext,isUp = isUp});
             if (actionContext.cancelled) return;  //事件是否被取消
 
-            state = GameCharacterState.Moving;
             _moveflag = true;
             towardUp = isUp;
+            SetState(GameCharacterState.Moving);
 
             ModifierSet values = modifyPipeline.GetModifierSet();
             float moveSpeed = values.moveSpeed.FinalValue;
@@ -388,7 +390,7 @@ namespace Flicker.Module
             ModifierSet values = modifyPipeline.GetModifierSet();
             float maxStiffTime = values.maxStiffTime.FinalValue;
 
-            state = GameCharacterState.Stiffness;
+            SetState(GameCharacterState.Stiffness);
             nowStiffTimeMV.value = maxStiffTime;
         }
         /// <summary>
@@ -461,6 +463,13 @@ namespace Flicker.Module
 
             miniEventBus.Publish<AfterDie>(new AfterDie());
             Destroy(gameObject);
+        }
+
+        private void SetState(GameCharacterState newState)
+        {
+            if (state == newState) return;
+            state = newState;
+            miniEventBus.Publish(new StateChangedEvent { state = state, towardUp = towardUp, isRightWall = isRightWall});
         }
     }
 }
