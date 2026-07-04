@@ -54,7 +54,7 @@ namespace Flicker.Module
         /// <summary>
         /// 移动速度
         /// </summary>
-        public float moveSpeed = 3;
+        public float moveSpeed = 8;
         public ModifiableValue moveSpeedMV;
 
         /// <summary>
@@ -144,6 +144,7 @@ namespace Flicker.Module
         /// 移动标识，表示速度离散导数是否为0
         /// </summary>
         private bool _moveflag = false;
+        private bool _lastTowardUp = false;
 
         /// <summary>
         /// 这一帧是否发生弹反
@@ -467,8 +468,9 @@ namespace Flicker.Module
 
         private void SetState(GameCharacterState newState)
         {
-            if (state == newState) return;
+            if (state == newState && towardUp == _lastTowardUp) return;
             state = newState;
+            _lastTowardUp = towardUp;
             miniEventBus.Publish(new StateChangedEvent { state = state, towardUp = towardUp, isRightWall = isRightWall});
         }
     }

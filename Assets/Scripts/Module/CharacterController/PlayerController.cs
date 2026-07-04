@@ -9,8 +9,6 @@ namespace Flicker.Module
     {
         void Start()
         {
-            GetComponent<BuffContainer>().AddBuff(new AccelerateBuff(),5);
-            GetComponent<BuffContainer>().AddBuff(new ShieldBuff(),-1);
         }
         new void Update()
         {

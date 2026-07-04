@@ -41,3 +41,12 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Wall
+    uniqueID: 972394981
+    locked: 0
+  - name: Character
+    uniqueID: 465741981
+    locked: 0
+  - name: OtherEntity
+    uniqueID: 2242801919
+    locked: 0
