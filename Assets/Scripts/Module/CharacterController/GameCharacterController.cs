@@ -113,6 +113,8 @@ namespace Flicker.Module
         /// </summary>
         public string teamTag = "default";
 
+        public bool towardUp = false;
+
         /// <summary>
         /// 剩余僵直时间
         /// </summary>
@@ -137,6 +139,11 @@ namespace Flicker.Module
         /// </summary>
         protected GameCharacterState state = GameCharacterState.Idle;
         public GameCharacterState State { get{return state;} }
+
+        /// <summary>
+        /// 移动标识，表示速度离散导数是否为0
+        /// </summary>
+        private bool _moveflag = false;
 
         /// <summary>
         /// 这一帧是否发生弹反
@@ -218,6 +225,13 @@ namespace Flicker.Module
                 }
             }
             miniEventBus.Publish<UpdateEvent>(new UpdateEvent());
+
+            /** 维护移动标识 */
+            if (_moveflag == false && state == GameCharacterState.Moving)
+            {
+                state = GameCharacterState.Idle;
+            }
+            _moveflag = false;
         }
         /// <summary>
         /// 跳跃
@@ -307,6 +321,10 @@ namespace Flicker.Module
             ActionContext actionContext = new();
             miniEventBus.Publish<BeforeMoveEvent>(new BeforeMoveEvent{context=actionContext,isUp = isUp});
             if (actionContext.cancelled) return;  //事件是否被取消
+
+            state = GameCharacterState.Moving;
+            _moveflag = true;
+            towardUp = isUp;
 
             ModifierSet values = modifyPipeline.GetModifierSet();
             float moveSpeed = values.moveSpeed.FinalValue;
