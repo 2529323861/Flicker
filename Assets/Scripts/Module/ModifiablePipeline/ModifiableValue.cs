@@ -12,6 +12,7 @@ namespace Flicker.Module
         /// </summary>
         float _baseValue;
         public float BaseValue { get{ return _baseValue; } }
+        private float _lastFinalValue;
 
         /// <summary>
         /// 最终值，供管线导出
@@ -31,6 +32,11 @@ namespace Flicker.Module
                 {
                     result *= i;
                 }
+                if (result != _lastFinalValue)
+                {                    
+                    NotifyAllObservers(_lastFinalValue,result);
+                    _lastFinalValue = result;
+                }
                 return result;
 
             }
@@ -49,6 +55,7 @@ namespace Flicker.Module
         List<float> multipliers = new();
         public ModifiableValue(float baseValue){
             _baseValue = baseValue;
+            _lastFinalValue =baseValue;
         }
 
         /// <summary>
@@ -67,11 +74,11 @@ namespace Flicker.Module
         {
             multipliers.Add(multiplier);
         }
-        public void NotifyAllObservers()
+        public void NotifyAllObservers(float bv,float fv)
         {
             foreach (var i in observers)
             {
-                i.onUpdate(BaseValue, FinalValue);
+                i.onUpdate(bv, fv);
             }
         }
         public void AddObserver(MutableValue observer)
