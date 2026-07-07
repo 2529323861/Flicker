@@ -11,7 +11,7 @@ namespace Flicker.Module.Buff
         }
         public override void OnAdd()
         {
-            temp1 = new JumpingProhibitioEffect();
+            temp1 = new JumpingProhibitionEffect();
             temp2 = new AccelerateEffect(0.5f);
             gameObject.GetComponent<EffectContainer>().AddEffect(temp1,this);
             gameObject.GetComponent<EffectContainer>().AddEffect(temp2,this);

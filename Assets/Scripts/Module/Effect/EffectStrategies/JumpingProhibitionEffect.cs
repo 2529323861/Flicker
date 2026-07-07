@@ -6,7 +6,7 @@ namespace Flicker.Module.Effect
     /// <summary>
     /// 跳跃禁止效果
     /// </summary>
-    public class JumpingProhibitioEffect : BaseEffectStrategy
+    public class JumpingProhibitionEffect : BaseEffectStrategy
     {
         public override void Register(MiniEventBus miniEventBus)
         {
