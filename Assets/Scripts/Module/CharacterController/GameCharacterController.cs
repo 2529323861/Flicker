@@ -37,10 +37,6 @@ namespace Flicker.Module
         /// 弹反滞空
         /// </summary>
         ParryHanging,
-        /// <summary>
-        /// 僵直
-        /// </summary>
-        // Stiffness
     }
     [RequireComponent(typeof(ModifyPipeline))]
     [RequireComponent(typeof(HealthController))]
@@ -81,18 +77,6 @@ namespace Flicker.Module
         /// </summary>
         public int damage = 1;
         public ModifiableValue damageMV;
-
-        // /// <summary>
-        // /// 僵直时间
-        // /// </summary>
-        // public float maxStiffTime = 3;
-        // public ModifiableValue maxStiffTimeMV;
-
-        // /// <summary>
-        // /// 僵直恢复速率
-        // /// </summary>
-        // public float stiffTimeRate = 1f;
-        // public ModifiableValue stiffTimeRateMV;
 
         /// <summary>
         /// 碰撞半径
