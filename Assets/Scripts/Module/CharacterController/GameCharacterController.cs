@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Flicker.Core;
 using Flicker.Core.Service;
+using Flicker.Module.Buff;
 using Flicker.Module.CharacterEvent;
 using Flicker.Module.Context;
 using Mirror.BouncyCastle.Asn1.Crmf;
@@ -287,6 +288,7 @@ namespace Flicker.Module
             {
                 SetState(GameCharacterState.Idle);
                 /** 这里改为施加僵直buff */
+                gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),3);
             }
             ServiceLocator.GetService<VibrationMgrInterface>().AddVibration(0.2f,new Vector3(0.2f,0,0));
         }
