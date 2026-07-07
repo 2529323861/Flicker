@@ -1,4 +1,5 @@
 using Flicker.Core.Service;
+using Flicker.UI;
 using Flicker.View;
 using UnityEngine;
 
@@ -12,7 +13,7 @@ public class GameBootstrap : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        UIManager.Instance.Open<PlayerHUD>();
     }
 
     // Update is called once per frame
