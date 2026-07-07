@@ -82,7 +82,7 @@ SpriteRenderer:
   m_SortingLayerID: 465741981
   m_SortingLayer: 2
   m_SortingOrder: 0
-  m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 42c1fe85648f5cb40a1b97a1059998d5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -123,11 +123,9 @@ MonoBehaviour:
   maxJumpingCD: 2
   jumpingCDRate: 1
   damage: 1
-  maxStiffTime: 3
-  stiffTimeRate: 1
   collisionRadius: 0.5
-  leftWallPos: -5.3
-  rightWallPos: 5.3
+  leftWallPos: -4.1
+  rightWallPos: 4.1
   teamTag: default
   towardUp: 0
   isRightWall: 0
