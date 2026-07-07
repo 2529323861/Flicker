@@ -86,12 +86,12 @@ namespace Flicker.Module
         /// <summary>
         /// 左边墙的位置
         /// </summary>
-        public float leftWallPos = -5.3f;
+        public float leftWallPos = -4.1f;
 
         /// <summary>
         /// 右边墙的位置
         /// </summary>
-        public float rightWallPos = 5.3f;
+        public float rightWallPos = 4.1f;
 
         /// <summary>
         /// 阵营tag
