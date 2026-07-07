@@ -26,10 +26,7 @@ namespace Flicker.Module
                 hangTime = gameCharacterController.hangTimeMV,
                 maxJumpingCD = gameCharacterController.maxJumpingCDMV,
                 jumpingCDRate = gameCharacterController.jumpingCDRateMV,
-                maxStiffTime = gameCharacterController.maxStiffTimeMV,
-                stiffTimeRate = gameCharacterController.stiffTimeRateMV,
                 damage = gameCharacterController.damageMV,
-                nowStiffTime = gameCharacterController.nowStiffTimeMV,
                 nowJumpingCD = gameCharacterController.nowJumpingCDMV
             };
         }

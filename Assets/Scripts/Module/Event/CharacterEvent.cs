@@ -36,18 +36,6 @@ namespace Flicker.Module.CharacterEvent
         public GameObject opponent;
     }
     /// <summary>
-    /// 僵直前事件
-    /// </summary>
-    public struct BeforeStiffEvent{
-        public ActionContext context;
-    }
-
-    /// <summary>
-    /// 僵直后事件
-    /// </summary>
-    public struct AfterStiffEvent{}
-
-    /// <summary>
     /// 攻击前事件
     /// </summary>
     public struct BeforeAttackEvent

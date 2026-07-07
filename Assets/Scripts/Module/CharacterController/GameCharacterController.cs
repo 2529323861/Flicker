@@ -39,7 +39,7 @@ namespace Flicker.Module
         /// <summary>
         /// 僵直
         /// </summary>
-        Stiffness
+        // Stiffness
     }
     [RequireComponent(typeof(ModifyPipeline))]
     [RequireComponent(typeof(HealthController))]
@@ -81,17 +81,17 @@ namespace Flicker.Module
         public int damage = 1;
         public ModifiableValue damageMV;
 
-        /// <summary>
-        /// 僵直时间
-        /// </summary>
-        public float maxStiffTime = 3;
-        public ModifiableValue maxStiffTimeMV;
+        // /// <summary>
+        // /// 僵直时间
+        // /// </summary>
+        // public float maxStiffTime = 3;
+        // public ModifiableValue maxStiffTimeMV;
 
-        /// <summary>
-        /// 僵直恢复速率
-        /// </summary>
-        public float stiffTimeRate = 1f;
-        public ModifiableValue stiffTimeRateMV;
+        // /// <summary>
+        // /// 僵直恢复速率
+        // /// </summary>
+        // public float stiffTimeRate = 1f;
+        // public ModifiableValue stiffTimeRateMV;
 
         /// <summary>
         /// 碰撞半径
@@ -115,10 +115,10 @@ namespace Flicker.Module
 
         public bool towardUp = false;
 
-        /// <summary>
-        /// 剩余僵直时间
-        /// </summary>
-        public MutableValue nowStiffTimeMV;
+        // /// <summary>
+        // /// 剩余僵直时间
+        // /// </summary>
+        // public MutableValue nowStiffTimeMV;
         
         /// <summary>
         /// 剩余跳跃冷却时间
@@ -167,12 +167,9 @@ namespace Flicker.Module
             hangTimeMV = new(hangTime);
             maxJumpingCDMV = new(maxJumpingCD);
             damageMV = new(damage);
-            maxStiffTimeMV = new(maxStiffTime);
             jumpingCDRateMV = new(jumpingCDRate);
-            stiffTimeRateMV = new(stiffTimeRate); 
 
             nowJumpingCDMV = new MutableValue(0f);
-            nowStiffTimeMV = new MutableValue(0f);
 
             /** 对于依赖于属性类数据的瞬时数据进行观察者绑定，实现等比缩放 */
             nowJumpingCDMV.onUpdate = (a, b) =>
@@ -181,13 +178,6 @@ namespace Flicker.Module
                 else nowJumpingCDMV.value *= b/a;
             };
             maxJumpingCDMV.AddObserver(nowJumpingCDMV);
-
-            nowStiffTimeMV.onUpdate = (a, b) =>
-            {
-                if (a==0) nowStiffTimeMV.value = 0;
-                else nowStiffTimeMV.value *= b/a;
-            };
-            maxStiffTimeMV.AddObserver(nowStiffTimeMV);
             
         }
 
@@ -213,20 +203,7 @@ namespace Flicker.Module
                     nowJumpingCDMV.value = 0;
                 }
             }
-            /** 维护僵直CD */
-            if (nowStiffTimeMV.value > 0)
-            {
-                ModifierSet values = modifyPipeline.GetModifierSet();
-                float stiffTimeRate = values.stiffTimeRate.FinalValue;
 
-                nowStiffTimeMV.value -= Time.deltaTime*stiffTimeRate;
-                if (nowStiffTimeMV.value < 0)
-                {
-                    nowStiffTimeMV.value = 0;
-                    SetState(GameCharacterState.Idle);
-                    miniEventBus.Publish<AfterStiffEvent>(new AfterStiffEvent());
-                }
-            }
             miniEventBus.Publish<UpdateEvent>(new UpdateEvent());
 
             /** 维护移动标识 */
@@ -308,7 +285,8 @@ namespace Flicker.Module
             }
             else
             {
-                Stiff();
+                SetState(GameCharacterState.Idle);
+                /** 这里改为施加僵直buff */
             }
             ServiceLocator.GetService<VibrationMgrInterface>().AddVibration(0.2f,new Vector3(0.2f,0,0));
         }
@@ -329,10 +307,10 @@ namespace Flicker.Module
             towardUp = isUp;
             SetState(GameCharacterState.Moving);
 
+
             ModifierSet values = modifyPipeline.GetModifierSet();
             float moveSpeed = values.moveSpeed.FinalValue;
 
-            if (state == GameCharacterState.Stiffness) moveSpeed *= 0.5f;
             float deltaY = moveSpeed * Time.deltaTime * (isUp ? 1 : -1);//————TODO——————————————————————
             Vector3 temp = transform.localPosition;
             transform.localPosition = new Vector3(temp.x,temp.y+deltaY,temp.z);
@@ -378,22 +356,7 @@ namespace Flicker.Module
             if (actionContext.cancelled) return;  //事件是否被取消
             parryAtFrame = true;
         }
-        /// <summary>
-        /// 僵直
-        /// </summary>
-        /// <param name="time">僵直时间</param>
-        public void Stiff()
-        {
-            ActionContext actionContext = new();
-            miniEventBus.Publish<BeforeStiffEvent>(new BeforeStiffEvent{context=actionContext});
-            if (actionContext.cancelled) return;  //事件是否被取消
 
-            ModifierSet values = modifyPipeline.GetModifierSet();
-            float maxStiffTime = values.maxStiffTime.FinalValue;
-
-            SetState(GameCharacterState.Stiffness);
-            nowStiffTimeMV.value = maxStiffTime;
-        }
         /// <summary>
         /// 攻击侦测
         /// </summary>

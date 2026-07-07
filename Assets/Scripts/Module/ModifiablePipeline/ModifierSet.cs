@@ -24,14 +24,6 @@ namespace Flicker.Module
         /// </summary>
         public ModifiableValue jumpingCDRate;
         /// <summary>
-        /// 僵直时间
-        /// </summary>
-        public ModifiableValue maxStiffTime;
-        /// <summary>
-        /// 僵直恢复速率
-        /// </summary>
-        public ModifiableValue stiffTimeRate;
-        /// <summary>
         /// 攻击伤害
         /// </summary>
         public ModifiableValue damage;
@@ -50,8 +42,6 @@ namespace Flicker.Module
             hangTime.ClearModify();
             maxJumpingCD.ClearModify();
             jumpingCDRate.ClearModify();
-            maxStiffTime.ClearModify();
-            stiffTimeRate.ClearModify();
             damage.ClearModify();
         }
     }
