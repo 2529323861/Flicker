@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Flicker.View
 {
+    [RequireComponent(typeof(Animator))]
     public class PlayerActor: SpriteActor
     {
         Animator animator;
