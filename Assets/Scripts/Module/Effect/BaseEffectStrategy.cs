@@ -17,20 +17,26 @@ namespace Flicker.Module
         /// </summary>
         protected BaseBuffStrategy baseBuffStrategy;
         /// <summary>
+        /// buff容器的绑定
+        /// </summary>
+        protected BuffContainer buffContainer;
+        /// <summary>
+        /// 游戏角色的事件总线
+        /// </summary>
+        protected MiniEventBus miniEventBus;
+        /// <summary>
         /// 持续性修饰，每次读取数据都会应用
         /// </summary>
         /// <param name="ModifierSet">迭代数据集</param>
         public virtual void Apply(ModifierSet ModifierSet){}
         /// <summary>
-        /// 注册，当效果被加至效果列表时被调用，用于绑定事件
+        /// 添加钩子，效果添加后被触发
         /// </summary>
-        /// <param name="miniEventBus">迷你事件总线</param>
-        public virtual void Register(MiniEventBus miniEventBus){}
+        public virtual void OnAdd(){}
         /// <summary>
-        /// 取消注册，当效果被移除效果列表时调用，用于解绑事件
+        /// 移除钩子，效果移除后被触发
         /// </summary>
-        /// <param name="miniEventBus">迷你事件总线</param>
-        public virtual void Unregister(MiniEventBus miniEventBus){}
+        public virtual void OnRemove(){}
 
         public void BindGameObject(GameObject gameObject)
         {
@@ -39,6 +45,12 @@ namespace Flicker.Module
         public void BindBaseBuffStrategy(BaseBuffStrategy baseBuffStrategy)
         {
             this.baseBuffStrategy = baseBuffStrategy;
+        }
+        public void BindMiniEventBus(MiniEventBus miniEventBus){
+            this.miniEventBus = miniEventBus;
+        }
+        public void BindBuffContainer(BuffContainer buffContainer){
+            this.buffContainer = buffContainer;
         }
     }
 }

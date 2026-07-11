@@ -7,10 +7,15 @@ namespace Flicker.Module
     /// </summary>
     public class BaseBuffStrategy
     {
+
         /// <summary>
-        /// 对象绑定
+        /// buff容器绑定
         /// </summary>
-        protected GameObject gameObject;
+        protected BuffContainer buffContainer;
+        /// <summary>
+        /// 效果容器绑定
+        /// </summary>
+        protected EffectContainer effectContainer;
         /// <summary>
         /// Buff名称
         /// </summary>
@@ -52,9 +57,13 @@ namespace Flicker.Module
         /// </summary>
         public virtual void OnStacksChange(){}
 
-        public void BindGameObject(GameObject gameObject)
+        public void BindBuffContainer(BuffContainer buffContainer)
         {
-            this.gameObject = gameObject;
+            this.buffContainer = buffContainer;
+        }
+        public void BindEffectContainer(EffectContainer effectContainer)
+        {
+            this.effectContainer = effectContainer;
         }
     }
 }

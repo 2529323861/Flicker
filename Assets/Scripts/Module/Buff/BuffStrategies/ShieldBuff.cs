@@ -11,11 +11,11 @@ namespace Flicker.Module.Buff
         public override void OnAdd()
         {
             temp = new ShieldEffect(3);
-            gameObject.GetComponent<EffectContainer>().AddEffect(temp,this);
+            effectContainer.AddEffect(temp,this);
         }
         public override void OnRemove()
         {
-            gameObject.GetComponent<EffectContainer>().RemoveEffect(temp);
+            effectContainer.RemoveEffect(temp);
         }
     }
 }

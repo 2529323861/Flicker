@@ -8,11 +8,11 @@ namespace Flicker.Module.Effect
     /// </summary>
     public class JumpingProhibitionEffect : BaseEffectStrategy
     {
-        public override void Register(MiniEventBus miniEventBus)
+        public override void OnAdd()
         {
             miniEventBus.Subscribe<BeforeJumpEvent>(CallBack);
         }
-        public override void Unregister(MiniEventBus miniEventBus)
+        public override void OnRemove()
         {
             miniEventBus.Unsubscribe<BeforeJumpEvent>(CallBack);
         }

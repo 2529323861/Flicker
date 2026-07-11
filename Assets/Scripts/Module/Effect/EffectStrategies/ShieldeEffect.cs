@@ -10,11 +10,11 @@ namespace Flicker.Module.Effect
         {
             this.num = num;
         }
-        public override void Register(MiniEventBus miniEventBus)
+        public override void OnAdd()
         {
             miniEventBus.Subscribe<BeforeBeAttackedEvent>(Callback);
         }
-        public override void Unregister(MiniEventBus miniEventBus)
+        public override void OnRemove()
         {
             miniEventBus.Unsubscribe<BeforeBeAttackedEvent>(Callback);
         }
@@ -25,7 +25,7 @@ namespace Flicker.Module.Effect
             num--;
             if (num == 0)
             {
-                gameObject.GetComponent<BuffContainer>().RemoveBuff(baseBuffStrategy);
+                buffContainer.RemoveBuff(baseBuffStrategy);
             }
         }
     }

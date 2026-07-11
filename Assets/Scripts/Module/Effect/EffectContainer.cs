@@ -9,7 +9,20 @@ namespace Flicker.Module
     /// </summary>
     public class EffectContainer: MonoBehaviour
     {
+        /// <summary>
+        /// 游戏角色的迷你事件总线
+        /// </summary>
+        private MiniEventBus miniEventBus;
+        /// <summary>
+        /// 游戏角色的buff容器
+        /// </summary>
+        private BuffContainer buffContainer;
         private List<BaseEffectStrategy> effects = new();
+        void Awake()
+        {
+            miniEventBus = GetComponent<MiniEventBus>();
+            buffContainer = GetComponent<BuffContainer>();
+        }
         public List<BaseEffectStrategy> GetEffectStrategies()
         {
             List<BaseEffectStrategy> result = new();
@@ -24,12 +37,14 @@ namespace Flicker.Module
             effects.Add(baseEffectStrategy);
             baseEffectStrategy.BindGameObject(gameObject);
             baseEffectStrategy.BindBaseBuffStrategy(sourceBuff);
-            baseEffectStrategy.Register(gameObject.GetComponent<MiniEventBus>());
+            baseEffectStrategy.BindMiniEventBus(miniEventBus);
+            baseEffectStrategy.BindBuffContainer(buffContainer);
+            baseEffectStrategy.OnAdd();
         }
         public void RemoveEffect(BaseEffectStrategy baseEffectStrategy)
         {
             effects.Remove(baseEffectStrategy);
-            baseEffectStrategy.Unregister(gameObject.GetComponent<MiniEventBus>());
+            baseEffectStrategy.OnRemove();
         }
     }
 }

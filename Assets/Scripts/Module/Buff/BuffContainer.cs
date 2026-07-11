@@ -17,6 +17,14 @@ namespace Flicker.Module
     public class BuffContainer: MonoBehaviour
     {
         List<BuffWrapper> buffs = new();
+        /// <summary>
+        /// 效果容器
+        /// </summary>
+        private EffectContainer effectContainer;
+        void Awake()
+        {
+            effectContainer = GetComponent<EffectContainer>();
+        }
 
         void Update()
         {
@@ -65,14 +73,16 @@ namespace Flicker.Module
                 if (i == buffs.Count)
                 {
                     buffs.Add(new BuffWrapper{baseBuffStrategy=baseBuffStrategy,duration=duration});
-                    baseBuffStrategy.BindGameObject(gameObject);
+                    baseBuffStrategy.BindEffectContainer(effectContainer);
+                    baseBuffStrategy.BindBuffContainer(this);
                     baseBuffStrategy.OnAdd();
                 }
             }
             else
             {                
                 buffs.Add(new BuffWrapper{baseBuffStrategy=baseBuffStrategy,duration=duration});
-                baseBuffStrategy.BindGameObject(gameObject);
+                baseBuffStrategy.BindEffectContainer(effectContainer);
+                baseBuffStrategy.BindBuffContainer(this);
                 baseBuffStrategy.OnAdd();
             }
         }

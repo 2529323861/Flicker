@@ -13,13 +13,13 @@ namespace Flicker.Module.Buff
         {
             temp1 = new JumpingProhibitionEffect();
             temp2 = new AccelerateEffect(0.5f);
-            gameObject.GetComponent<EffectContainer>().AddEffect(temp1,this);
-            gameObject.GetComponent<EffectContainer>().AddEffect(temp2,this);
+            effectContainer.AddEffect(temp1,this);
+            effectContainer.AddEffect(temp2,this);
         }
         public override void OnRemove()
         {
-            gameObject.GetComponent<EffectContainer>().RemoveEffect(temp1);
-            gameObject.GetComponent<EffectContainer>().RemoveEffect(temp2);
+            effectContainer.RemoveEffect(temp1);
+            effectContainer.RemoveEffect(temp2);
         }
     }
 }
