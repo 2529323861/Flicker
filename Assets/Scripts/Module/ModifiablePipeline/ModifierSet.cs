@@ -28,6 +28,19 @@ namespace Flicker.Module
         /// </summary>
         public ModifiableValue damage;
         /// <summary>
+        /// 道具栏槽位
+        /// </summary>
+        public ModifiableValue propSlot;
+        /// <summary>
+        /// 获取道具卡时间
+        /// </summary>
+        public ModifiableValue getPropCD;
+
+        /// <summary>
+        /// 获取道具卡冷却速率
+        /// </summary>
+        public ModifiableValue getPropCDRate;
+        /// <summary>
         /// 剩余僵直时间
         /// </summary>
         public MutableValue nowStiffTime;
@@ -35,6 +48,10 @@ namespace Flicker.Module
         /// 剩余跳跃冷却时间
         /// </summary>
         public MutableValue nowJumpingCD;
+        /// <summary>
+        /// 剩余道具获取时间
+        /// </summary>
+        public MutableValue nowGetPropCD;
 
         public void ClearModify()
         {
@@ -43,6 +60,9 @@ namespace Flicker.Module
             maxJumpingCD.ClearModify();
             jumpingCDRate.ClearModify();
             damage.ClearModify();
+            propSlot.ClearModify();
+            getPropCD.ClearModify();
+            getPropCDRate.ClearModify();
         }
     }
 }

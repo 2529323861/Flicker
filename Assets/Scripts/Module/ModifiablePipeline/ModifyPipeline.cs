@@ -11,12 +11,13 @@ namespace Flicker.Module
     {
         private GameCharacterController gameCharacterController;
         private EffectContainer effectContainer;
-
+        private PropContainer propContainer = null;
         private ModifierSet modifierSet;
 
         void Awake(){
             this.gameCharacterController = gameObject.GetComponent<GameCharacterController>();
             this.effectContainer = gameObject.GetComponent<EffectContainer>();
+            this.propContainer = GetComponent<PropContainer>();
         }
         void Start()
         {
@@ -29,6 +30,20 @@ namespace Flicker.Module
                 damage = gameCharacterController.damageMV,
                 nowJumpingCD = gameCharacterController.nowJumpingCDMV
             };
+            if (propContainer != null)
+            {
+                modifierSet.getPropCD = propContainer.getPropCDMV;
+                modifierSet.getPropCDRate = propContainer.getPropCDRateMV;
+                modifierSet.propSlot = propContainer.propSlotMV;
+                modifierSet.nowGetPropCD = propContainer.nowGetPropCDMV;
+            }
+            else
+            {
+                modifierSet.getPropCD = new(0f);
+                modifierSet.getPropCDRate = new(0f);
+                modifierSet.propSlot = new(0f);
+                modifierSet.nowGetPropCD = new(0f);
+            }
         }
         /// <summary>
         /// 获取修饰
