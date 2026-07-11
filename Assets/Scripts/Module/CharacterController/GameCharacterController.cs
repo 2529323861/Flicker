@@ -140,6 +140,14 @@ namespace Flicker.Module
         private MiniEventBus miniEventBus;
         private HealthController healthController;
 
+        public void GenerateDataPool()
+        {
+            moveSpeedMV = new(moveSpeed);
+            hangTimeMV = new(hangTime);
+            maxJumpingCDMV = new(maxJumpingCD);
+            damageMV = new(damage);
+            jumpingCDRateMV = new(jumpingCDRate);
+        }
         void Awake()
         {
             SetState(GameCharacterState.Idle);
@@ -148,11 +156,7 @@ namespace Flicker.Module
             miniEventBus = GetComponent<MiniEventBus>();
             healthController = GetComponent<HealthController>();
 
-            moveSpeedMV = new(moveSpeed);
-            hangTimeMV = new(hangTime);
-            maxJumpingCDMV = new(maxJumpingCD);
-            damageMV = new(damage);
-            jumpingCDRateMV = new(jumpingCDRate);
+            GenerateDataPool();
 
             nowJumpingCDMV = new MutableValue(0f);
 
