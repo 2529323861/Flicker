@@ -106,12 +106,4 @@ namespace Flicker.Module.CharacterEvent
         public bool towardUp;
         public bool isRightWall;
     }
-    /// <summary>
-    /// 道具栏更新事件
-    /// </summary>
-    public struct PropSlotUpdateEvent
-    {
-        public BasePropStrategy[] basePropStrategies;
-        public int propslot;
-    }
 }

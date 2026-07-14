@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Flicker.Core;
 using Flicker.Module;
 using Flicker.Module.CharacterEvent;
+using Flicker.Module.UIEvent;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -55,7 +56,9 @@ namespace Flicker.UI
                 if (player == null) return;
                 gcc = player.GetComponent<GameCharacterController>();
                 miniEventBus = player.GetComponent<MiniEventBus>();
-                miniEventBus.Subscribe<PropSlotUpdateEvent>(SetPropSlot);
+                miniEventBus.Subscribe<GetPropEvent>(SetProp);
+                miniEventBus.Subscribe<GetPropNumberEvent>(SetPropSlotNumber);
+                // miniEventBus.Subscribe<GetPropCDProgressEvent>();
             }
             SetJumpCDBar(1-gcc.nowJumpingCDMV.value/gcc.maxJumpingCDMV.FinalValue);
         }
@@ -68,26 +71,36 @@ namespace Flicker.UI
             var nowAmount = NonlinearDamper.Vector3Damp(new(jumpCDImage.fillAmount,0,0),new(per,0,0)).x;
             jumpCDImage.fillAmount = nowAmount;
         }
-        public void SetPropSlot(PropSlotUpdateEvent propSlotUpdateEvent)
+        /// <summary>
+        /// 设置道具
+        /// </summary>
+        /// <param name="getPropEvent"></param>
+        public void SetProp(GetPropEvent getPropEvent)
         {
+            /** 设置可见并切换材质 */
+            props[getPropEvent.slotIndex].SetActive(true);
+            Image image = props[getPropEvent.slotIndex].GetComponent<Image>();
+            image.sprite = Resources.Load<Sprite>("Images/UI/PropIcon/"+getPropEvent.basePropStrategy.path);
+
+            props[getPropEvent.slotIndex].GetComponent<Animator>().Play("PropPop");
+
+        }
+        /// <summary>
+        /// 设置道具槽位数
+        /// </summary>
+        /// <param name="propSlot"></param>
+        public void SetPropSlotNumber(GetPropNumberEvent getPropNumberEvent)
+        {
+            int propSlot = getPropNumberEvent.propSlot;
             for (int i = 0; i < 5; i++)
             {
-                if (i >= propSlotUpdateEvent.propslot)
+                if (i >= propSlot)
                 {
                     slots[i].SetActive(false);
                 }
                 else
                 {
-                    if (propSlotUpdateEvent.basePropStrategies[i] == null)
-                    {
-                        props[i].SetActive(false);
-                    }
-                    else
-                    {
-                        props[i].SetActive(true);
-                        Image image = props[i].GetComponent<Image>();
-                        image.sprite = Resources.Load<Sprite>("Images/UI/PropIcon/"+propSlotUpdateEvent.basePropStrategies[i].path);
-                    }
+                    slots[i].SetActive(true);
                 }
             }
         }

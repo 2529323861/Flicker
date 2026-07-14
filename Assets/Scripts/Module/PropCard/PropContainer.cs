@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Flicker.Core;
 using Flicker.Module.CharacterEvent;
+using Flicker.Module.UIEvent;
 using UnityEngine;
 
 namespace Flicker.Module
@@ -23,7 +24,7 @@ namespace Flicker.Module
         /// <summary>
         /// 获取道具卡时间
         /// </summary>
-        public float getPropCD = 10f;
+        public float getPropCD = 3f;
         public ModifiableValue getPropCDMV;
 
         /// <summary>
@@ -76,11 +77,9 @@ namespace Flicker.Module
                     AddProp(propCardDeck.GetProp());
                 }
             }
-            miniEventBus.Publish<PropSlotUpdateEvent>(new PropSlotUpdateEvent
-            {
-                basePropStrategies = props.ToArray(),
-                propslot = (int)(values.propSlot.FinalValue)
-            });
+
+            miniEventBus.Publish<GetPropNumberEvent>(new GetPropNumberEvent{propSlot = (int)values.propSlot.FinalValue});
+            miniEventBus.Publish<GetPropCDProgressEvent>(new GetPropCDProgressEvent{propCDProgress=values.nowGetPropCD.value/values.getPropCD.FinalValue});
         }
         /// <summary>
         /// 获取当前道具容器中的道具数，超出槽位的不计
@@ -113,6 +112,11 @@ namespace Flicker.Module
                 i++;
             }
             props[i]=basePropStrategy;
+            miniEventBus.Publish<GetPropEvent>(new GetPropEvent
+            {
+                basePropStrategy = basePropStrategy,
+                slotIndex = i,
+            });
         }
     }
 }
