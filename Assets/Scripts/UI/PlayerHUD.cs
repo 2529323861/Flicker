@@ -19,11 +19,29 @@ namespace Flicker.UI
         GameObject player = null;
         GameCharacterController gcc;
         MiniEventBus miniEventBus;
-        public GameObject[] slots;
-        public GameObject[] props;
+        public GameObject slotPrefab;
+        public GameObject slotParent;
+        public Sprite[] slotsKey;
+
+        private GameObject[] slots=new GameObject[5];
+        private GameObject[] props=new GameObject[5];
+        private Image[] propBars = new Image[5];
+        private bool[] propCache=new bool[5]{false,false,false,false,false};
         void Awake()
         {
             jumpCDImage =  jumpCDProgress.GetComponent<Image>();
+            for (int i = 0; i < 5; i++)
+            {
+                GameObject gameObject =  Instantiate(slotPrefab);
+                gameObject.transform.SetParent(slotParent.transform);
+                gameObject.transform.localPosition = new(7f+i*134f,32,0);
+
+                slots[i] = gameObject;
+                props[i] = gameObject.transform.Find("Prop").gameObject;
+                props[i].SetActive(false);
+                propBars[i] = gameObject.transform.Find("SlotCD").gameObject.GetComponent<Image>();
+                gameObject.transform.Find("Key").gameObject.GetComponent<Image>().sprite = slotsKey[i];
+            }
         }
         void Start()
         {
