@@ -1,15 +1,20 @@
 using System.Collections.Generic;
+using Flicker.Core;
+using Flicker.Module.CharacterEvent;
 using UnityEngine;
 
 namespace Flicker.Module
 {
     [RequireComponent(typeof(PlayerController))]
+    [RequireComponent(typeof(PropCardDeck))]
     /// <summary>
     /// 道具卡容器，用于管理道具卡的生成，使用
     /// </summary>
     public class PropContainer : MonoBehaviour
     {
         private ModifyPipeline modifyPipeline;
+        private PropCardDeck propCardDeck;
+        private MiniEventBus miniEventBus;
         /// <summary>
         /// 道具卡槽位数
         /// </summary>
@@ -51,14 +56,15 @@ namespace Flicker.Module
             nowGetPropCDMV = new(getPropCD);
 
             modifyPipeline = GetComponent<ModifyPipeline>();
+            propCardDeck = GetComponent<PropCardDeck>();
+            miniEventBus = GetComponent<MiniEventBus>();
 
         }
         void Update()
         {
-            
+            ModifierSet values = modifyPipeline.GetModifierSet();
             if (nowGetPropCDMV.value > 0)
             {
-                ModifierSet values = modifyPipeline.GetModifierSet();
                 if (GetNowPropCount() < values.propSlot.FinalValue){
                     //只有还有空槽位的时候，CD才会流动，防止同时使用上限+1个道具
                     float getPropCDRate = values.getPropCDRate.FinalValue;
@@ -66,9 +72,15 @@ namespace Flicker.Module
                 }
                 if (nowGetPropCDMV.value < 0)
                 {
-                    nowGetPropCDMV.value = 0;
+                    nowGetPropCDMV.value = values.getPropCD.FinalValue;
+                    AddProp(propCardDeck.GetProp());
                 }
             }
+            miniEventBus.Publish<PropSlotUpdateEvent>(new PropSlotUpdateEvent
+            {
+                basePropStrategies = props.ToArray(),
+                propslot = (int)(values.propSlot.FinalValue)
+            });
         }
         /// <summary>
         /// 获取当前道具容器中的道具数，超出槽位的不计
@@ -87,9 +99,20 @@ namespace Flicker.Module
             }
             return result;
         }
-        public void AddProp()
+        /// <summary>
+        /// 添加道具卡到当前槽位，若超出当前槽位值则不赋值
+        /// </summary>
+        /// <param name="basePropStrategy"></param>
+        public void AddProp(BasePropStrategy basePropStrategy)
         {
-            
+            ModifierSet values = modifyPipeline.GetModifierSet();
+            if (GetNowPropCount()>=values.propSlot.FinalValue) return;
+            int i=0;
+            while (props[i] != null)
+            {
+                i++;
+            }
+            props[i]=basePropStrategy;
         }
     }
 }

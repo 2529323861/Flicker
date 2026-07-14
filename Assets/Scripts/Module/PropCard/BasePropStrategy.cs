@@ -7,9 +7,23 @@ namespace Flicker.Module
     /// </summary>
     public class BasePropStrategy
     {
+        /// <summary>
+        /// 道具名称
+        /// </summary>
         public string name = "默认卡牌";
+        /// <summary>
+        /// 道具id
+        /// </summary>
         public string id = "00000";
-        public string path = "default";
-        
+        /// <summary>
+        /// 道具资源路径
+        /// </summary>
+        public string path = "RushGel";
+        /// <summary>
+        /// 道具描述
+        /// </summary>
+
+        public string description = "默认描述";
+        public virtual void OnUse(){}
     }
 }

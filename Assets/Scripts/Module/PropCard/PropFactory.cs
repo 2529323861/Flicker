@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Flicker.Core;
+using Flicker.Module.Prop;
 
 namespace Flicker.Module
 {
@@ -9,13 +10,31 @@ namespace Flicker.Module
         private Dictionary<string, Func<BasePropStrategy>> props = new();
         protected override void OnSingletonInit()
         {
-            RegisterProps();
+            RegisterAllProps();
         }
-        public void RegisterProps()
+        public void RegisterAllProps()
         {
             props = new();
+            RegisterProp("00000",()=>new BasePropStrategy());
+            RegisterProp("00001",()=>new RushGelProp());
+            RegisterProp("00002",()=>new EmergenceSporeProp());
+            RegisterProp("00003",()=>new ReverseFlowHourglassProp());
 
         }
-        
+        public void RegisterProp(string id, Func<BasePropStrategy> func)
+        {
+            props.Add(id,func);
+        }
+        public BasePropStrategy GetProp(string id)
+        {
+            if (props.TryGetValue(id, out var func))
+            {
+                return func.Invoke();
+            }
+            else
+            {
+                return GetProp("00000");
+            }
+        }
     }
 }
