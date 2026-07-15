@@ -14,12 +14,7 @@ namespace Flicker.UI
     public class PlayerHUD: UIPanel
     {
         public GameObject jumpCDProgress;
-        public float maxMaskHeight;
-
         Image jumpCDImage;
-        GameObject player = null;
-        GameCharacterController gcc;
-        MiniEventBus miniEventBus;
         public GameObject slotPrefab;
         public GameObject slotParent;
         public Sprite[] slotsKey;
