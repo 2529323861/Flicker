@@ -1,6 +1,10 @@
 
 namespace Flicker.Module.UIEvent
 {    
+    public struct UpdateJumpCDProgressEvent
+    {
+        public float jumpCDProgress;
+    }
     /// <summary>
     /// 获取当前槽位数
     /// </summary>
@@ -22,7 +26,7 @@ namespace Flicker.Module.UIEvent
     /// <summary>
     /// 获取当前道具CD比
     /// </summary>
-    public struct GetPropCDProgressEvent
+    public struct UpdatePropCDProgressEvent
     {
         /** CD比，0到1 */
         public float propCDProgress;

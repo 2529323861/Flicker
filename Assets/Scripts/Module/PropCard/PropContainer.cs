@@ -78,8 +78,8 @@ namespace Flicker.Module
                 }
             }
 
-            miniEventBus.Publish<GetPropNumberEvent>(new GetPropNumberEvent{propSlot = (int)values.propSlot.FinalValue});
-            miniEventBus.Publish<GetPropCDProgressEvent>(new GetPropCDProgressEvent{propCDProgress=values.nowGetPropCD.value/values.getPropCD.FinalValue});
+            EventBus.Publish<GetPropNumberEvent>(new GetPropNumberEvent{propSlot = (int)values.propSlot.FinalValue});
+            EventBus.Publish<UpdatePropCDProgressEvent>(new UpdatePropCDProgressEvent{propCDProgress=values.nowGetPropCD.value/values.getPropCD.FinalValue});
         }
         /// <summary>
         /// 获取当前道具容器中的道具数，超出槽位的不计
@@ -112,7 +112,7 @@ namespace Flicker.Module
                 i++;
             }
             props[i]=basePropStrategy;
-            miniEventBus.Publish<GetPropEvent>(new GetPropEvent
+            EventBus.Publish<GetPropEvent>(new GetPropEvent
             {
                 basePropStrategy = basePropStrategy,
                 slotIndex = i,

@@ -2,6 +2,8 @@ using Flicker.Core.Service;
 using UnityEngine;
 using Flicker.Module;
 using Flicker.Module.Buff;
+using Flicker.Core;
+using Flicker.Module.UIEvent;
 
 namespace Flicker.Module
 {   
@@ -20,6 +22,11 @@ namespace Flicker.Module
             else if (InputRouter.Down)
                 Move(false);
             if (InputRouter.Jump) Jump();
+
+            EventBus.Publish<UpdateJumpCDProgressEvent>(new UpdateJumpCDProgressEvent
+            {
+                jumpCDProgress = nowJumpingCDMV.value/maxJumpingCDMV.FinalValue
+            });
         }
     }
 }

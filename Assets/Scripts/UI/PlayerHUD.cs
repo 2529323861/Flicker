@@ -28,6 +28,7 @@ namespace Flicker.UI
         private GameObject[] props=new GameObject[5];
         private Image[] propBars = new Image[5];
         private bool[] propCache=new bool[5]{false,false,false,false,false};
+        private float jumpCDProgressCache=0;
         void Awake()
         {
             jumpCDImage =  jumpCDProgress.GetComponent<Image>();
@@ -43,6 +44,9 @@ namespace Flicker.UI
                 propBars[i] = gameObject.transform.Find("SlotCD").gameObject.GetComponent<Image>();
                 gameObject.transform.Find("Key").gameObject.GetComponent<Image>().sprite = slotsKey[i];
             }
+            EventBus.Subscribe<GetPropEvent>(SetProp);
+            EventBus.Subscribe<GetPropNumberEvent>(SetPropSlotNumber);
+            EventBus.Subscribe<UpdateJumpCDProgressEvent>(SetJumpCD);
         }
         void Start()
         {
@@ -50,20 +54,18 @@ namespace Flicker.UI
         }
         void Update()
         {
-            if (player == null)
-            {
-                player = GameManager.Instance.GetPlayerRef();
-                if (player == null) return;
-                gcc = player.GetComponent<GameCharacterController>();
-                miniEventBus = player.GetComponent<MiniEventBus>();
-                miniEventBus.Subscribe<GetPropEvent>(SetProp);
-                miniEventBus.Subscribe<GetPropNumberEvent>(SetPropSlotNumber);
-                // miniEventBus.Subscribe<GetPropCDProgressEvent>();
-            }
-            SetJumpCDBar(1-gcc.nowJumpingCDMV.value/gcc.maxJumpingCDMV.FinalValue);
+            SetJumpCDBar(1-jumpCDProgressCache);
         }
         /// <summary>
-        /// 设置跳跃CD条
+        /// 设置jumpdCD的目标值
+        /// </summary>
+        /// <param name="updateJumpCDProgressEvent"></param>
+        public void SetJumpCD(UpdateJumpCDProgressEvent updateJumpCDProgressEvent)
+        {
+            jumpCDProgressCache = updateJumpCDProgressEvent.jumpCDProgress;
+        }
+        /// <summary>
+        /// 设置跳跃CD条Image
         /// </summary>
         /// <param name="per"></param>
         public void SetJumpCDBar(float per)
