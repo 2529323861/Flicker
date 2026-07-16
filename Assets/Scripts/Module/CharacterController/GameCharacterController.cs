@@ -51,54 +51,54 @@ namespace Flicker.Module
         /// <summary>
         /// 移动速度
         /// </summary>
-        public float moveSpeed = 8;
+        public float moveSpeed;
         public ModifiableValue moveSpeedMV;
 
         /// <summary>
         /// 滞空时间
         /// </summary>
-        public float hangTime = 0.2f;
+        public float hangTime;
         public ModifiableValue hangTimeMV;
 
         /// <summary>
         /// 最大跳跃冷却
         /// </summary>
-        public float maxJumpingCD = 2f;
+        public float maxJumpingCD;
         public ModifiableValue maxJumpingCDMV;
 
         /// <summary>
         /// 跳跃冷却速度
         /// </summary>
-        public float jumpingCDRate = 1f;
+        public float jumpingCDRate;
         public ModifiableValue jumpingCDRateMV;
 
         /// <summary>
         /// 攻击伤害
         /// </summary>
-        public int damage = 1;
+        public int damage;
         public ModifiableValue damageMV;
 
         /// <summary>
         /// 碰撞半径
         /// </summary>
-        public float collisionRadius = 0.5f;
+        public float collisionRadius;
 
         /// <summary>
         /// 左边墙的位置
         /// </summary>
-        public float leftWallPos = -4.1f;
+        public float leftWallPos;
 
         /// <summary>
         /// 右边墙的位置
         /// </summary>
-        public float rightWallPos = 4.1f;
+        public float rightWallPos;
 
         /// <summary>
         /// 阵营tag
         /// </summary>
-        public string teamTag = "default";
+        public string teamTag;
 
-        public bool towardUp = false;
+        public bool towardUp;
 
         // /// <summary>
         // /// 剩余僵直时间
@@ -112,7 +112,7 @@ namespace Flicker.Module
         /// <summary>
         /// 当前墙面
         /// </summary>
-        public bool isRightWall = false;
+        public bool isRightWall;
 
         /// <summary>
         /// 跳跃协程

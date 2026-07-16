@@ -10,7 +10,7 @@ namespace Flicker.Module
         /// <summary>
         /// 生命值
         /// </summary>
-        public int health = 3;
+        public int health;
         /// <summary>
         /// 减少生命值
         /// </summary>

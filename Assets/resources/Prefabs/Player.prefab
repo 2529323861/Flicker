@@ -120,7 +120,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c9acc13593a7524e88b226c2aea1567, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 8
+  moveSpeed: 5
   hangTime: 0.2
   maxJumpingCD: 2
   jumpingCDRate: 1
@@ -128,7 +128,7 @@ MonoBehaviour:
   collisionRadius: 0.5
   leftWallPos: -4.1
   rightWallPos: 4.1
-  teamTag: default
+  teamTag: Player
   towardUp: 0
   isRightWall: 0
 --- !u!58 &4602146967020674669

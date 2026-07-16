@@ -21,18 +21,18 @@ namespace Flicker.Module
         /// <summary>
         /// 道具卡槽位数
         /// </summary>
-        public float propSlot = 3f;
+        public float propSlot;
         public ModifiableValue propSlotMV;
         /// <summary>
         /// 获取道具卡时间
         /// </summary>
-        public float getPropCD = 3f;
+        public float getPropCD;
         public ModifiableValue getPropCDMV;
 
         /// <summary>
         /// 获取道具卡冷却速率
         /// </summary>
-        public float getPropCDRate = 1f;
+        public float getPropCDRate;
         public ModifiableValue getPropCDRateMV;
 
         /// <summary>

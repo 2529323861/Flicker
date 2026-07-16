@@ -40,7 +40,6 @@ namespace Flicker.Module
                     propContainer.UseProp(i-1);
                 }
             }
-            print(GetComponent<ModifyPipeline>().GetModifierSet().moveSpeed.FinalValue);
         }
     }
 }
