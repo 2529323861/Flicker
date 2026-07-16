@@ -148,7 +148,7 @@ namespace Flicker.Module
             damageMV = new(damage);
             jumpingCDRateMV = new(jumpingCDRate);
         }
-        void Awake()
+        protected void Awake()
         {
             SetState(GameCharacterState.Idle);
 

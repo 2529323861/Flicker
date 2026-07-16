@@ -31,4 +31,8 @@ namespace Flicker.Module.UIEvent
         /** CD比，0到1 */
         public float propCDProgress;
     }
+    public struct UsePropEvent
+    {
+        public int propSlotIndex;
+    }
 }

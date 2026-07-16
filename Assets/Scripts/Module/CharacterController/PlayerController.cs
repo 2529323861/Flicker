@@ -9,6 +9,12 @@ namespace Flicker.Module
 {   
     public class PlayerController : GameCharacterController
     {
+        PropContainer propContainer;
+        new void Awake()
+        {
+            base.Awake();
+            propContainer = GetComponent<PropContainer>();
+        }
         void Start()
         {
             GameManager.Instance.SetPlayerRef(gameObject);
@@ -27,6 +33,14 @@ namespace Flicker.Module
             {
                 jumpCDProgress = nowJumpingCDMV.value/maxJumpingCDMV.FinalValue
             });
+            for (int i = 1; i <= 5; i++)
+            {
+                if (InputRouter.Number(i))
+                {
+                    propContainer.UseProp(i-1);
+                }
+            }
+            print(GetComponent<ModifyPipeline>().GetModifierSet().moveSpeed.FinalValue);
         }
     }
 }

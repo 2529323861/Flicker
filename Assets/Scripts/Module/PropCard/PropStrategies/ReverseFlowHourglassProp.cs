@@ -9,7 +9,7 @@ namespace Flicker.Module.Prop
             path = "ReverseFlowHourglass";
             description = "立即重置跳跃冷却，并且下一次跳跃的冷却时间减少50%。";
         }
-        public override void OnUse()
+        public override void OnUse(BuffContainer buffContainer, EffectContainer effectContainer)
         {
             
         }

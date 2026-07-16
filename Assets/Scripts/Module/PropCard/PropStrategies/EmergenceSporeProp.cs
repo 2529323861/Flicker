@@ -9,7 +9,7 @@ namespace Flicker.Module.Prop
             path = "EmergenceSpore";
             description = "使用后，下一次跳跃的滞空时间减少80%";
         }
-        public override void OnUse()
+        public override void OnUse(BuffContainer buffContainer, EffectContainer effectContainer)
         {
             
         }

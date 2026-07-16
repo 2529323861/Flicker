@@ -13,6 +13,8 @@ namespace Flicker.Module
     /// </summary>
     public class PropContainer : MonoBehaviour
     {
+        private BuffContainer buffContainer;
+        private EffectContainer effectContainer;
         private ModifyPipeline modifyPipeline;
         private PropCardDeck propCardDeck;
         private MiniEventBus miniEventBus;
@@ -59,6 +61,8 @@ namespace Flicker.Module
             modifyPipeline = GetComponent<ModifyPipeline>();
             propCardDeck = GetComponent<PropCardDeck>();
             miniEventBus = GetComponent<MiniEventBus>();
+            buffContainer = GetComponent<BuffContainer>();
+            effectContainer = GetComponent<EffectContainer>();
 
         }
         void Update()
@@ -117,6 +121,16 @@ namespace Flicker.Module
                 basePropStrategy = basePropStrategy,
                 slotIndex = i,
             });
+        }
+        public void UseProp(int propSlotIndex)
+        {
+            ModifierSet values = modifyPipeline.GetModifierSet();
+            if (propSlotIndex >= values.propSlot.FinalValue) return;
+            if (props[propSlotIndex]==null) return;
+            BasePropStrategy basePropStrategy = props[propSlotIndex];
+            props[propSlotIndex] = null;
+            basePropStrategy.OnUse(buffContainer,effectContainer);
+            EventBus.Publish<UsePropEvent>(new UsePropEvent{propSlotIndex = propSlotIndex});
         }
     }
 }

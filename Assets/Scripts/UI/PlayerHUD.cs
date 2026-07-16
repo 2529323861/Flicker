@@ -44,10 +44,11 @@ namespace Flicker.UI
                 propBars[i] = gameObject.transform.Find("SlotCD").gameObject.GetComponent<Image>();
                 gameObject.transform.Find("Key").gameObject.GetComponent<Image>().sprite = slotsKey[i];
             }
-            EventBus.Subscribe<GetPropEvent>(SetPropHandler);
+            EventBus.Subscribe<GetPropEvent>(GetPropHandler);
             EventBus.Subscribe<GetPropNumberEvent>(SetPropSlotNumberHandler);
             EventBus.Subscribe<UpdateJumpCDProgressEvent>(SetJumpCDHandler);
             EventBus.Subscribe<UpdatePropCDProgressEvent>(SetPropCDBarHandler);
+            EventBus.Subscribe<UsePropEvent>(UsePropHandler);
         }
         void Start()
         {
@@ -79,7 +80,7 @@ namespace Flicker.UI
         /// 设置道具
         /// </summary>
         /// <param name="getPropEvent"></param>
-        public void SetPropHandler(GetPropEvent getPropEvent)
+        public void GetPropHandler(GetPropEvent getPropEvent)
         {
             propCache[getPropEvent.slotIndex] = true;
             /** 设置可见并切换材质 */
@@ -145,6 +146,11 @@ namespace Flicker.UI
             {
                 propBars[i].fillAmount = NonlinearDamper.FloatDamp(propBars[i].fillAmount,propCDCache[i]);
             }
+        }
+        public void UsePropHandler(UsePropEvent usePropEvent)
+        {
+            propCache[usePropEvent.propSlotIndex] = false;
+            props[usePropEvent.propSlotIndex].SetActive(false);
         }
     }
 }

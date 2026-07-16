@@ -10,7 +10,7 @@ namespace Flicker.Module
         /// <summary>
         /// 道具名称
         /// </summary>
-        public string name = "默认卡牌";
+        public string name = "Unknown";
         /// <summary>
         /// 道具id
         /// </summary>
@@ -18,12 +18,11 @@ namespace Flicker.Module
         /// <summary>
         /// 道具资源路径
         /// </summary>
-        public string path = "RushGel";
+        public string path = "Unknown";
         /// <summary>
         /// 道具描述
         /// </summary>
-
         public string description = "默认描述";
-        public virtual void OnUse(){}
+        public virtual void OnUse(BuffContainer buffContainer, EffectContainer effectContainer){}
     }
 }

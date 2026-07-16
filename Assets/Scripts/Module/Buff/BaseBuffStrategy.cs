@@ -43,7 +43,7 @@ namespace Flicker.Module
         /// <summary>
         /// 最大层数
         /// </summary>
-        public int maxStacks = -1;
+        public int maxStacks = 1;
         /// <summary>
         /// 添加时触发
         /// </summary>
