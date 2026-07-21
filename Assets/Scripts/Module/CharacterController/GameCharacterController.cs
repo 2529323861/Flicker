@@ -49,6 +49,10 @@ namespace Flicker.Module
     public class GameCharacterController : MonoBehaviour 
     {   
         /// <summary>
+        /// 跳跃CD变更的委托，供玩家控制器注入
+        /// </summary>
+        public Action<float> onUpdateJumpCDProgress;
+        /// <summary>
         /// 移动速度
         /// </summary>
         public float moveSpeed;
@@ -192,6 +196,7 @@ namespace Flicker.Module
                     nowJumpingCDMV.value = 0;
                 }
             }
+            onUpdateJumpCDProgress?.Invoke(nowJumpingCDMV.value/maxJumpingCDMV.FinalValue);
 
             miniEventBus.Publish<UpdateEvent>(new UpdateEvent());
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Flicker.Core;
 using Flicker.Module.CharacterEvent;
@@ -13,6 +14,23 @@ namespace Flicker.Module
     /// </summary>
     public class PropContainer : MonoBehaviour
     {
+        /// <summary>
+        /// 道具添加时的UI发布委托，供玩家控制器注入
+        /// </summary>
+        public Action<BasePropStrategy,int> onPropAdded;
+        /// <summary>
+        /// 道具使用时的UI发布委托，供玩家控制器注入
+        /// </summary>
+        public Action<int> onPropUse;
+        /// <summary>
+        /// 获取当前道具槽数的UI发布委托，供玩家控制器注入
+        /// </summary>
+        public Action<int> onGetPropNumber;
+        /// <summary>
+        /// 获取当前UICD进度比的UI发布委托，供玩家控制器注入
+        /// </summary>
+        public Action<float> onUpdatePropCDProgress;
+
         private BuffContainer buffContainer;
         private EffectContainer effectContainer;
         private ModifyPipeline modifyPipeline;
@@ -81,9 +99,8 @@ namespace Flicker.Module
                     AddProp(propCardDeck.GetProp());
                 }
             }
-
-            EventBus.Publish<GetPropNumberEvent>(new GetPropNumberEvent{propSlot = (int)values.propSlot.FinalValue});
-            EventBus.Publish<UpdatePropCDProgressEvent>(new UpdatePropCDProgressEvent{propCDProgress=values.nowGetPropCD.value/values.getPropCD.FinalValue});
+            onGetPropNumber?.Invoke((int)values.propSlot.FinalValue);
+            onUpdatePropCDProgress?.Invoke(values.nowGetPropCD.value/values.getPropCD.FinalValue);
         }
         /// <summary>
         /// 获取当前道具容器中的道具数，超出槽位的不计
@@ -116,11 +133,7 @@ namespace Flicker.Module
                 i++;
             }
             props[i]=basePropStrategy;
-            EventBus.Publish<GetPropEvent>(new GetPropEvent
-            {
-                basePropStrategy = basePropStrategy,
-                slotIndex = i,
-            });
+            onPropAdded(basePropStrategy,i);
         }
         public void UseProp(int propSlotIndex)
         {
@@ -130,7 +143,7 @@ namespace Flicker.Module
             BasePropStrategy basePropStrategy = props[propSlotIndex];
             props[propSlotIndex] = null;
             basePropStrategy.OnUse(buffContainer,effectContainer);
-            EventBus.Publish<UsePropEvent>(new UsePropEvent{propSlotIndex = propSlotIndex});
+            onPropUse?.Invoke(propSlotIndex);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -16,6 +17,18 @@ namespace Flicker.Module
     /// </summary>
     public class BuffContainer: MonoBehaviour
     {
+        /// <summary>
+        /// buff添加时的UI发布委托，用于玩家控制器注入
+        /// </summary>
+        public Action<BaseBuffStrategy> onBuffAdd;
+        /// <summary>
+        /// buff移除时的UI发布委托，用于玩家控制器注入
+        /// </summary>
+        public Action<BaseBuffStrategy> onBuffRemove;
+        /// <summary>
+        /// buff层数变更时的UI发布委托，用于玩家控制器注入
+        /// </summary>
+        public Action<BaseBuffStrategy> onBuffStackChange;
         List<BuffWrapper> buffs = new();
         /// <summary>
         /// 效果容器
@@ -61,6 +74,7 @@ namespace Flicker.Module
                             traverse.stacks++;
                             buffs[i].duration = duration;
                             traverse.OnStacksChange();
+                            onBuffStackChange?.Invoke(traverse);
                             break;
                         }
                         else
@@ -76,6 +90,7 @@ namespace Flicker.Module
                     baseBuffStrategy.BindEffectContainer(effectContainer);
                     baseBuffStrategy.BindBuffContainer(this);
                     baseBuffStrategy.OnAdd();
+                    onBuffAdd?.Invoke(baseBuffStrategy);
                 }
             }
             else
@@ -84,6 +99,7 @@ namespace Flicker.Module
                 baseBuffStrategy.BindEffectContainer(effectContainer);
                 baseBuffStrategy.BindBuffContainer(this);
                 baseBuffStrategy.OnAdd();
+                onBuffAdd?.Invoke(baseBuffStrategy);
             }
         }
         /// <summary>
@@ -98,6 +114,7 @@ namespace Flicker.Module
                 {
                     buffs.RemoveAt(i);
                     baseBuffStrategy.OnRemove();
+                    onBuffRemove?.Invoke(baseBuffStrategy);
                     break;
                 }
             }
