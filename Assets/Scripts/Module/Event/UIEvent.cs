@@ -35,4 +35,25 @@ namespace Flicker.Module.UIEvent
     {
         public int propSlotIndex;
     }
+    /// <summary>
+    /// 添加新buff
+    /// </summary>
+    public struct AddNewBuffEvent
+    {
+        public BaseBuffStrategy baseBuffStrategy;
+    }
+    /// <summary>
+    /// 移除buff
+    /// </summary>
+    public struct RemoveBuffEvent
+    {
+        public BaseBuffStrategy baseBuffStrategy;
+    }
+    /// <summary>
+    /// buff层数变化
+    /// </summary>
+    public struct BuffStackChangeEvent
+    {
+        public BaseBuffStrategy baseBuffStrategy;
+    }
 }

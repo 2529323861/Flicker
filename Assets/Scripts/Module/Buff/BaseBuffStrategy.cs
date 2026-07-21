@@ -29,9 +29,9 @@ namespace Flicker.Module
         /// </summary>
         public string description = "默认描述";
         /// <summary>
-        /// 图标不可见
+        /// 图标可见
         /// </summary>
-        public bool iconInvisible = true;
+        public bool iconVisible = true;
         /// <summary>
         /// 是否可叠层
         /// </summary>

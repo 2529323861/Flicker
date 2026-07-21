@@ -5,11 +5,21 @@ using Flicker.Module.CharacterEvent;
 using Flicker.Module.UIEvent;
 using Mirror.BouncyCastle.Bcpg.Sig;
 using Mirror.BouncyCastle.Crypto.Modes;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Flicker.UI
 {
+    /// <summary>
+    /// UI buff的包装类，包含基准位置，buff策略体和ui对象
+    /// </summary>
+    public class BuffWrapper
+    {
+        public BaseBuffStrategy baseBuffStrategy;
+        public GameObject buffUI;
+        public Vector3 reference;
+    }
     /// <summary>
     /// 玩家HUD，游戏时始终显示
     /// </summary>
@@ -20,15 +30,23 @@ namespace Flicker.UI
         public GameObject slotPrefab;
         public GameObject slotParent;
         public Sprite[] slotsKey;
+        public GameObject buff;
+        public GameObject buffParent;
 
         private GameObject[] slots=new GameObject[5];
         private GameObject[] props=new GameObject[5];
         private Image[] propBars = new Image[5];
+
         /** 缓存每个槽位是否有道具 */
         private bool[] propCache=new bool[5]{false,false,false,false,false};
         /** 缓存每个槽位CD */
         private float[] propCDCache = new float[5]{0f,0f,0f,0f,0f};
         private float jumpCDProgressCache=0;
+
+        /// <summary>
+        /// UI层BUff缓存
+        /// </summary>
+        private List<BuffWrapper> buffWrappers=new();
         void Awake()
         {
             jumpCDImage =  jumpCDProgress.GetComponent<Image>();
@@ -49,6 +67,10 @@ namespace Flicker.UI
             EventBus.Subscribe<UpdateJumpCDProgressEvent>(SetJumpCDHandler);
             EventBus.Subscribe<UpdatePropCDProgressEvent>(SetPropCDBarHandler);
             EventBus.Subscribe<UsePropEvent>(UsePropHandler);
+            EventBus.Subscribe<AddNewBuffEvent>(AddNewBuffHandler);
+            EventBus.Subscribe<RemoveBuffEvent>(RemoveBuffHandler);
+            EventBus.Subscribe<BuffStackChangeEvent>(BuffStackChangeHandler);
+
         }
         void Start()
         {
@@ -58,7 +80,18 @@ namespace Flicker.UI
         {
             UpdateJumpCDBar(1-jumpCDProgressCache);
             UpdatePropCDBar();
+            ResetBuffPos();
         }
+        /// <summary>
+        /// 清除缓存
+        /// </summary>
+        public void ClearCache()
+        {
+            propCache=new bool[5]{false,false,false,false,false};
+            jumpCDProgressCache=0;
+            buffWrappers = new();
+        }
+        //—————————————————————————————————跳跃CD部分———————————————————————————————————————————
         /// <summary>
         /// 设置jumpdCD的目标值
         /// </summary>
@@ -76,6 +109,7 @@ namespace Flicker.UI
             var nowAmount = NonlinearDamper.Vector3Damp(new(jumpCDImage.fillAmount,0,0),new(per,0,0)).x;
             jumpCDImage.fillAmount = nowAmount;
         }
+        //—————————————————————————————————道具槽部分———————————————————————————————————————————
         /// <summary>
         /// 设置道具
         /// </summary>
@@ -151,6 +185,85 @@ namespace Flicker.UI
         {
             propCache[usePropEvent.propSlotIndex] = false;
             props[usePropEvent.propSlotIndex].SetActive(false);
+        }
+        //—————————————————————————————————buff图标部分———————————————————————————————————————————
+        /// <summary>
+        /// buff图标间距
+        /// </summary>
+        private float spacing = 70;
+        public void AddNewBuffHandler(AddNewBuffEvent addNewBuffEvent)
+        {
+            if (!addNewBuffEvent.baseBuffStrategy.iconVisible) return;
+            GameObject buffUI = Instantiate(buff);
+            buffUI.transform.SetParent(buffParent.transform);
+            buffUI.transform.localPosition = new(buffWrappers.Count*spacing,0,0);
+            
+            Image image = buffUI.GetComponent<Image>();
+            image.sprite = Resources.Load<Sprite>("Images/UI/BuffIcon/"+addNewBuffEvent.baseBuffStrategy.path);
+
+            GameObject stack = buffUI.transform.Find("Stack").gameObject;
+            if (addNewBuffEvent.baseBuffStrategy.stacks > 1)
+            {
+                stack.SetActive(true);
+                stack.GetComponent<TextMeshPro>().text = addNewBuffEvent.baseBuffStrategy.stacks.ToString();
+            }
+            else
+            {
+                stack.SetActive(false);
+            }
+
+            BuffWrapper buffWrapper = new()
+            {
+                baseBuffStrategy = addNewBuffEvent.baseBuffStrategy,
+                buffUI = buffUI,
+                reference = new(buffWrappers.Count*spacing,0,0)
+            };
+            buffWrappers.Add(buffWrapper);
+        }
+        public void RemoveBuffHandler(RemoveBuffEvent removeBuffEvent)
+        {
+            int i=0;
+            while (i<buffWrappers.Count && buffWrappers[i].baseBuffStrategy != removeBuffEvent.baseBuffStrategy)
+            {
+                i++;
+            }
+            if (i>=buffWrappers.Count) return;
+            Destroy(buffWrappers[i].buffUI);
+            buffWrappers.RemoveAt(i);
+            for (int j = 0; j < buffWrappers.Count; j++)
+            {
+                buffWrappers[j].reference.x = j*spacing;
+            }
+        }
+        public void BuffStackChangeHandler(BuffStackChangeEvent buffStackChangeEvent)
+        {
+            int i=0;
+            while (i<buffWrappers.Count && buffWrappers[i].baseBuffStrategy != buffStackChangeEvent.baseBuffStrategy)
+            {
+                i++;
+            }
+            if (i>=buffWrappers.Count) return;
+            GameObject stack = buffWrappers[i].buffUI.transform.Find("Stack").gameObject;
+            if (buffStackChangeEvent.baseBuffStrategy.stacks > 1)
+            {
+                stack.SetActive(true);
+                stack.GetComponent<TextMeshPro>().text = buffStackChangeEvent.baseBuffStrategy.stacks.ToString();
+            }
+            else
+            {
+                stack.SetActive(false);
+            }
+        }
+        /// <summary>
+        /// 复位buff图标坐标
+        /// </summary>
+        public void ResetBuffPos()
+        {
+            foreach (var i in buffWrappers)
+            {
+                var rt = i.buffUI.GetComponent<RectTransform>();
+                rt.anchoredPosition = NonlinearDamper.Vector3Damp(rt.anchoredPosition,i.reference);
+            }
         }
     }
 }
