@@ -56,4 +56,19 @@ namespace Flicker.Module.UIEvent
     {
         public BaseBuffStrategy baseBuffStrategy;
     }
+    /// <summary>
+    /// 显示buff详情事件
+    /// </summary>
+    public struct ShowBuffDescriptionEvent
+    {
+        public string name;
+        public string description;
+    }
+    /// <summary>
+    /// 隐藏buff详情事件
+    /// </summary>
+    public struct HideBuffDescriptionEvent
+    {
+        
+    }
 }

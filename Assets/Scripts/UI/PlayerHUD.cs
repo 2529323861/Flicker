@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Flicker.Core;
 using Flicker.Module;
@@ -32,6 +33,7 @@ namespace Flicker.UI
         public Sprite[] slotsKey;
         public GameObject buff;
         public GameObject buffParent;
+        public GameObject descriptionTray;
 
         private GameObject[] slots=new GameObject[5];
         private GameObject[] props=new GameObject[5];
@@ -70,6 +72,8 @@ namespace Flicker.UI
             EventBus.Subscribe<AddNewBuffEvent>(AddNewBuffHandler);
             EventBus.Subscribe<RemoveBuffEvent>(RemoveBuffHandler);
             EventBus.Subscribe<BuffStackChangeEvent>(BuffStackChangeHandler);
+            EventBus.Subscribe<ShowBuffDescriptionEvent>(ShowBuffDescriptionHandler);
+            EventBus.Subscribe<HideBuffDescriptionEvent>(HideBuffDescriptionHandler);
 
         }
         void Start()
@@ -201,11 +205,15 @@ namespace Flicker.UI
             Image image = buffUI.GetComponent<Image>();
             image.sprite = Resources.Load<Sprite>("Images/UI/BuffIcon/"+addNewBuffEvent.baseBuffStrategy.path);
 
+            var description =  buffUI.GetComponent<BuffDescription>();
+            description.buffName = addNewBuffEvent.baseBuffStrategy.name;
+            description.description = addNewBuffEvent.baseBuffStrategy.description;
+
             GameObject stack = buffUI.transform.Find("Stack").gameObject;
             if (addNewBuffEvent.baseBuffStrategy.stacks > 1)
             {
                 stack.SetActive(true);
-                stack.GetComponent<TextMeshPro>().text = addNewBuffEvent.baseBuffStrategy.stacks.ToString();
+                stack.GetComponent<TextMeshProUGUI>().text = addNewBuffEvent.baseBuffStrategy.stacks.ToString();
             }
             else
             {
@@ -247,7 +255,7 @@ namespace Flicker.UI
             if (buffStackChangeEvent.baseBuffStrategy.stacks > 1)
             {
                 stack.SetActive(true);
-                stack.GetComponent<TextMeshPro>().text = buffStackChangeEvent.baseBuffStrategy.stacks.ToString();
+                stack.GetComponent<TextMeshProUGUI>().text = buffStackChangeEvent.baseBuffStrategy.stacks.ToString();
             }
             else
             {
@@ -264,6 +272,35 @@ namespace Flicker.UI
                 var rt = i.buffUI.GetComponent<RectTransform>();
                 rt.anchoredPosition = NonlinearDamper.Vector3Damp(rt.anchoredPosition,i.reference);
             }
+        }
+        //—————————————————————————————————buff描述框———————————————————————————————————————————
+        /// <summary>
+        /// 显示buff描述框
+        /// </summary>
+        /// <param name="showBuffDescriptionEvent"></param>
+        public void ShowBuffDescriptionHandler(ShowBuffDescriptionEvent showBuffDescriptionEvent)
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                GetComponent<RectTransform>(),
+                Input.mousePosition,
+                null,
+                out var localPoint);
+            descriptionTray.GetComponent<RectTransform>().anchoredPosition = localPoint;
+            descriptionTray.transform.Find("name").GetComponent<TextMeshProUGUI>().text = showBuffDescriptionEvent.name;
+            var i = descriptionTray.transform.Find("description").GetComponent<TextMeshProUGUI>();
+            i.text = showBuffDescriptionEvent.description;
+            var lineHeight = i.GetPreferredValues(i.text,i.GetComponent<RectTransform>().sizeDelta.x,0).y;
+            var rt = descriptionTray.GetComponent<RectTransform>();
+            rt.sizeDelta = new(rt.sizeDelta.x,lineHeight+50f);
+            descriptionTray.SetActive(true);
+        }
+        /// <summary>
+        /// 隐藏buff描述框
+        /// </summary>
+        /// <param name="hideBuffDescriptionEvent"></param>
+        public void HideBuffDescriptionHandler(HideBuffDescriptionEvent hideBuffDescriptionEvent)
+        {
+            descriptionTray.SetActive(false);
         }
     }
 }
