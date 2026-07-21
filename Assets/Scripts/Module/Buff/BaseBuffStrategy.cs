@@ -23,7 +23,7 @@ namespace Flicker.Module
         /// <summary>
         /// 资源地址
         /// </summary>
-        public string iconPath = "invisible";
+        public string path = "Unknown";
         /// <summary>
         /// 描述
         /// </summary>
