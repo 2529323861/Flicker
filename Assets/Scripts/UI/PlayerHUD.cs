@@ -33,7 +33,7 @@ namespace Flicker.UI
         public Sprite[] slotsKey;
         public GameObject buff;
         public GameObject buffParent;
-        public GameObject descriptionTray;
+        public GameObject descriptionAnimationRoot;
 
         private GameObject[] slots=new GameObject[5];
         private GameObject[] props=new GameObject[5];
@@ -285,14 +285,16 @@ namespace Flicker.UI
                 Input.mousePosition,
                 null,
                 out var localPoint);
-            descriptionTray.GetComponent<RectTransform>().anchoredPosition = localPoint;
-            descriptionTray.transform.Find("name").GetComponent<TextMeshProUGUI>().text = showBuffDescriptionEvent.name;
-            var i = descriptionTray.transform.Find("description").GetComponent<TextMeshProUGUI>();
+            descriptionAnimationRoot.GetComponent<RectTransform>().anchoredPosition = localPoint;
+            var descriptionTray = descriptionAnimationRoot.transform.Find("BuffDescription");
+            descriptionTray.Find("name").GetComponent<TextMeshProUGUI>().text = showBuffDescriptionEvent.name;
+            var i = descriptionTray.Find("description").GetComponent<TextMeshProUGUI>();
             i.text = showBuffDescriptionEvent.description;
             var lineHeight = i.GetPreferredValues(i.text,i.GetComponent<RectTransform>().sizeDelta.x,0).y;
             var rt = descriptionTray.GetComponent<RectTransform>();
             rt.sizeDelta = new(rt.sizeDelta.x,lineHeight+50f);
-            descriptionTray.SetActive(true);
+            descriptionAnimationRoot.SetActive(true);
+            descriptionAnimationRoot.GetComponent<Animator>().Play("UIShow");
         }
         /// <summary>
         /// 隐藏buff描述框
@@ -300,7 +302,7 @@ namespace Flicker.UI
         /// <param name="hideBuffDescriptionEvent"></param>
         public void HideBuffDescriptionHandler(HideBuffDescriptionEvent hideBuffDescriptionEvent)
         {
-            descriptionTray.SetActive(false);
+            descriptionAnimationRoot.SetActive(false);
         }
     }
 }
