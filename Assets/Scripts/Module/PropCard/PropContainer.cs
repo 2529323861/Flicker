@@ -75,6 +75,12 @@ namespace Flicker.Module
             }
             GenerateDataPool();
             nowGetPropCDMV = new(getPropCD);
+            nowGetPropCDMV.onUpdate = (a, b) =>
+            {
+                if (a==0) nowGetPropCDMV.value = 0;
+                else nowGetPropCDMV.value *= b/a;
+            };
+            getPropCDMV.AddObserver(nowGetPropCDMV);
 
             modifyPipeline = GetComponent<ModifyPipeline>();
             propCardDeck = GetComponent<PropCardDeck>();
