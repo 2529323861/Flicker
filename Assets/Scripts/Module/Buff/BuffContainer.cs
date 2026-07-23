@@ -84,9 +84,8 @@ namespace Flicker.Module
                             buffs[i].duration = duration;
                             traverse.stacks++;
                             traverse.OnStacksChange();
-                            onBuffStackChange?.Invoke(traverse);
-
                             miniEventBus.Publish<AfterBuffStackEvent>(new());
+                            onBuffStackChange?.Invoke(traverse);
                             break;
                         }
                         else
@@ -121,9 +120,8 @@ namespace Flicker.Module
             baseBuffStrategy.BindEffectContainer(effectContainer);
             baseBuffStrategy.BindBuffContainer(this);
             baseBuffStrategy.OnAdd();
-            onBuffAdd?.Invoke(baseBuffStrategy);
-
             miniEventBus.Publish<AfterAddBuffEvent>(new());
+            onBuffAdd?.Invoke(baseBuffStrategy);
         }
         /// <summary>
         /// 移除buff
@@ -141,9 +139,8 @@ namespace Flicker.Module
 
                     buffs.RemoveAt(i);
                     baseBuffStrategy.OnRemove();
-                    onBuffRemove?.Invoke(baseBuffStrategy);
-
                     miniEventBus.Publish<AfterRemoveBuffEvent>(new());
+                    onBuffRemove?.Invoke(baseBuffStrategy);
                     break;
                 }
             }
