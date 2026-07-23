@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Flicker.Core;
+using Flicker.Module.CharacterEvent;
+using Flicker.Module.Context;
 using UnityEngine;
 
 namespace Flicker.Module
@@ -17,6 +20,7 @@ namespace Flicker.Module
     /// </summary>
     public class BuffContainer: MonoBehaviour
     {
+        MiniEventBus miniEventBus;
         /// <summary>
         /// buff添加时的UI发布委托，用于玩家控制器注入
         /// </summary>
@@ -37,6 +41,7 @@ namespace Flicker.Module
         void Awake()
         {
             effectContainer = GetComponent<EffectContainer>();
+            miniEventBus = GetComponent<MiniEventBus>();
         }
 
         void Update()
@@ -69,16 +74,24 @@ namespace Flicker.Module
                     var traverse = buffs[i].baseBuffStrategy;
                     if (traverse.GetType() == baseBuffStrategy.GetType())
                     {
+                        
                         if (traverse.stacks != traverse.maxStacks)
                         {
-                            traverse.stacks++;
+                            ActionContext actionContext = new();
+                            miniEventBus.Publish<BeforeBuffStackEvent>(new BeforeBuffStackEvent(){context=actionContext,baseBuffStrategy=baseBuffStrategy});
+                            if (actionContext.cancelled) return;
+
                             buffs[i].duration = duration;
+                            traverse.stacks++;
                             traverse.OnStacksChange();
                             onBuffStackChange?.Invoke(traverse);
+
+                            miniEventBus.Publish<AfterBuffStackEvent>(new());
                             break;
                         }
                         else
                         {
+                            buffs[i].duration = duration;
                             return;
                         }
                     }
@@ -86,21 +99,31 @@ namespace Flicker.Module
                 }
                 if (i == buffs.Count)
                 {
-                    buffs.Add(new BuffWrapper{baseBuffStrategy=baseBuffStrategy,duration=duration});
-                    baseBuffStrategy.BindEffectContainer(effectContainer);
-                    baseBuffStrategy.BindBuffContainer(this);
-                    baseBuffStrategy.OnAdd();
-                    onBuffAdd?.Invoke(baseBuffStrategy);
+                    AddNewBuff(baseBuffStrategy,duration);
                 }
             }
             else
-            {                
-                buffs.Add(new BuffWrapper{baseBuffStrategy=baseBuffStrategy,duration=duration});
-                baseBuffStrategy.BindEffectContainer(effectContainer);
-                baseBuffStrategy.BindBuffContainer(this);
-                baseBuffStrategy.OnAdd();
-                onBuffAdd?.Invoke(baseBuffStrategy);
+            {          
+                AddNewBuff(baseBuffStrategy,duration);
             }
+        }
+        /// <summary>
+        /// 添加新buff的封装
+        /// </summary>
+        /// <param name="baseBuffStrategy"></param>
+        private void AddNewBuff(BaseBuffStrategy baseBuffStrategy, float duration)
+        {
+            ActionContext actionContext = new();
+            miniEventBus.Publish<BeforeAddBuffEvent>(new BeforeAddBuffEvent(){context=actionContext,baseBuffStrategy=baseBuffStrategy});
+            if (actionContext.cancelled) return;
+
+            buffs.Add(new BuffWrapper{baseBuffStrategy=baseBuffStrategy,duration=duration});
+            baseBuffStrategy.BindEffectContainer(effectContainer);
+            baseBuffStrategy.BindBuffContainer(this);
+            baseBuffStrategy.OnAdd();
+            onBuffAdd?.Invoke(baseBuffStrategy);
+
+            miniEventBus.Publish<AfterAddBuffEvent>(new());
         }
         /// <summary>
         /// 移除buff
@@ -112,17 +135,40 @@ namespace Flicker.Module
             {
                 if (buffs[i].baseBuffStrategy == baseBuffStrategy)
                 {
+                    ActionContext actionContext = new();
+                    miniEventBus.Publish<BeforeRemoveBuffEvent>(new(){context=actionContext,baseBuffStrategy=baseBuffStrategy});
+                    if (actionContext.cancelled) return;
+
                     buffs.RemoveAt(i);
                     baseBuffStrategy.OnRemove();
                     onBuffRemove?.Invoke(baseBuffStrategy);
+
+                    miniEventBus.Publish<AfterRemoveBuffEvent>(new());
                     break;
                 }
             }
         }
         /// <summary>
-        /// 清理所有buff
+        /// 清除所有buff
         /// </summary>
-        public void Clear()
+        public void ClearBuff()
+        {
+            for (int i = buffs.Count - 1; i >= 0; i--)
+            {
+                ActionContext actionContext = new();
+                miniEventBus.Publish<BeforeRemoveBuffEvent>(new(){context=actionContext,baseBuffStrategy=buffs[i].baseBuffStrategy});
+                if (actionContext.cancelled) continue;
+
+                buffs[i].baseBuffStrategy.OnRemove();
+
+                miniEventBus.Publish<AfterRemoveBuffEvent>(new());
+                buffs.RemoveAt(i);
+            }
+        }
+        /// <summary>
+        /// 强制清理所有buff
+        /// </summary>
+        public void ForeClearBuff()
         {
             for (int i = buffs.Count - 1; i >= 0; i--)
             {
