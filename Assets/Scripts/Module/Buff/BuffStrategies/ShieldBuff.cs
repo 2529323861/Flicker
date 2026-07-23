@@ -6,6 +6,7 @@ namespace Flicker.Module.Buff
     {
         private BaseEffectStrategy temp;
         public ShieldBuff(){
+            name = "调试护盾";
             description = "免疫3次攻击";
         }
         public override void OnAdd()

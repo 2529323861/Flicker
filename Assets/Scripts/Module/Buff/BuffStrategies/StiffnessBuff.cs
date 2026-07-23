@@ -7,7 +7,8 @@ namespace Flicker.Module.Buff
         private BaseEffectStrategy temp1;
         private BaseEffectStrategy temp2;
         public StiffnessBuff(){
-            description = "僵直！无法跳跃且减速50%";
+            name = "僵直";
+            description = "无法跳跃且减速50%";
         }
         public override void OnAdd()
         {

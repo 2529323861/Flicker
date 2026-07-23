@@ -6,6 +6,7 @@ namespace Flicker.Module.Buff
     {
         private BaseEffectStrategy temp;
         public AccelerateBuff(){
+            name = "调试加速";
             description = "移动速度上升400%";
         }
         public override void OnAdd()
