@@ -106,4 +106,41 @@ namespace Flicker.Module.CharacterEvent
         public bool towardUp;
         public bool isRightWall;
     }
+
+    /// <summary>
+    /// 获得buff前事件
+    /// </summary>
+    public struct BeforeAddBuffEvent
+    {
+        public ActionContext context;
+        public BaseBuffStrategy baseBuffStrategy;
+    }
+    /// <summary>
+    /// 获得buff后事件
+    /// </summary>
+    public struct AfterAddBuffEvent{}
+    /// <summary>
+    /// buff叠层前事件
+    /// </summary>
+    public struct BeforeBuffStackEvent
+    {
+        public ActionContext context;
+        public BaseBuffStrategy baseBuffStrategy;
+    }
+    /// <summary>
+    /// buff叠层后事件
+    /// </summary>
+    public struct AfterBuffStackEvent{}
+    /// <summary>
+    /// 移除buff前事件
+    /// </summary>
+    public struct BeforeRemoveBuffEvent
+    {
+        public ActionContext context;
+        public BaseBuffStrategy baseBuffStrategy;
+    }
+    /// <summary>
+    /// 移除buff后事件
+    /// </summary>
+    public struct AfterRemoveBuffEvent{}
 }
