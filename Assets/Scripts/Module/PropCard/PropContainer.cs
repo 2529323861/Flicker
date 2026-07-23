@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Flicker.Core;
 using Flicker.Module.CharacterEvent;
+using Flicker.Module.Context;
 using Flicker.Module.UIEvent;
 using UnityEngine;
 
@@ -133,12 +134,19 @@ namespace Flicker.Module
         {
             ModifierSet values = modifyPipeline.GetModifierSet();
             if (GetNowPropCount()>=values.propSlot.FinalValue) return;
+
+            ActionContext context = new();
+            miniEventBus.Publish<BeforeAddPropEvent>(new(){context=context,basePropStrategy=basePropStrategy});
+            if (context.cancelled) return;
+
             int i=0;
             while (props[i] != null)
             {
                 i++;
             }
             props[i]=basePropStrategy;
+            miniEventBus.Publish<AfterAddPropEvent>(new());
+
             onPropAdded(basePropStrategy,i);
         }
         public void UseProp(int propSlotIndex)
@@ -146,9 +154,17 @@ namespace Flicker.Module
             ModifierSet values = modifyPipeline.GetModifierSet();
             if (propSlotIndex >= values.propSlot.FinalValue) return;
             if (props[propSlotIndex]==null) return;
+
+            ActionContext context = new();
+            miniEventBus.Publish<BeforeUsePropEvent>(new(){context=context,basePropStrategy=props[propSlotIndex]});
+            if (context.cancelled) return;
+
             BasePropStrategy basePropStrategy = props[propSlotIndex];
             props[propSlotIndex] = null;
             basePropStrategy.OnUse(buffContainer,effectContainer);
+
+            miniEventBus.Publish<AfterUsePropEvent>(new());
+
             onPropUse?.Invoke(propSlotIndex);
         }
     }
