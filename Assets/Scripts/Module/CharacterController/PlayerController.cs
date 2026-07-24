@@ -57,5 +57,9 @@ namespace Flicker.Module
                 }
             }
         }
+        protected override void OnIntoEdge(LevelEdge levelEdge)
+        {
+            LevelManager.Instance.OnPlayerIntoEdge(levelEdge);
+        }
     }
 }

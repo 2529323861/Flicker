@@ -306,11 +306,28 @@ namespace Flicker.Module
             ModifierSet values = modifyPipeline.GetModifierSet();
             float moveSpeed = values.moveSpeed.FinalValue;
 
-            float deltaY = moveSpeed * Time.deltaTime * (isUp ? 1 : -1);//————TODO——————————————————————
+            float deltaY = moveSpeed * Time.deltaTime * (isUp ? 1 : -1);
             Vector3 temp = transform.localPosition;
-            transform.localPosition = new Vector3(temp.x,temp.y+deltaY,temp.z);
+            float targetY = temp.y+deltaY;
+            if (!isRightWall)
+            {
+                if (targetY > LevelManager.Instance.leftTop) OnIntoEdge(LevelEdge.LeftTop);
+                if (targetY < LevelManager.Instance.leftBottom) OnIntoEdge(LevelEdge.LeftBottom);
+                targetY = Mathf.Clamp(targetY,LevelManager.Instance.leftBottom,LevelManager.Instance.leftTop);
+            }
+            else
+            {
+                if (targetY > LevelManager.Instance.rightTop) OnIntoEdge(LevelEdge.RightTop);
+                if (targetY < LevelManager.Instance.rightBottom) OnIntoEdge(LevelEdge.RightBottom);
+                targetY = Mathf.Clamp(targetY,LevelManager.Instance.rightBottom,LevelManager.Instance.rightTop);
+            }
+            transform.localPosition = new Vector3(temp.x,targetY,temp.z);
             miniEventBus.Publish<AfterMoveEvent>(new AfterMoveEvent{isUp = isUp});
         }
+        /// <summary>
+        /// 到达边缘
+        /// </summary>
+        protected virtual void OnIntoEdge(LevelEdge levelEdge){}
         /// <summary>
         /// 弹反侦测
         /// </summary>
