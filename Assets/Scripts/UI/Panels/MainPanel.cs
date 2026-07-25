@@ -2,18 +2,38 @@ using System.Collections;
 using System.Collections.Generic;
 using Flicker.UI;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class MainPanel : UIPanel
-{
-    // Start is called before the first frame update
-    void Start()
+namespace Flicker.UI
+{    
+    public class MainPanel : UIPanel
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        public GameObject singlePlayButton;
+        public GameObject hostPlayButton;
+        public GameObject joinPlayButton;
+        public GameObject settingsButton;
+        void Awake()
+        {
+            singlePlayButton.GetComponent<Button>().onClick.AddListener(SinglePlayButtonCallback);
+            hostPlayButton.GetComponent<Button>().onClick.AddListener(HostPlayButtonCallback);
+            joinPlayButton.GetComponent<Button>().onClick.AddListener(JoinPlayButtonCallback);
+            settingsButton.GetComponent<Button>().onClick.AddListener(SettingsButtonCallback);
+        }
+        public void SinglePlayButtonCallback()
+        {
+            
+        }
+        public void HostPlayButtonCallback()
+        {
+            
+        }
+        public void JoinPlayButtonCallback()
+        {
+            
+        }
+        public void SettingsButtonCallback()
+        {
+            
+        }
     }
 }
