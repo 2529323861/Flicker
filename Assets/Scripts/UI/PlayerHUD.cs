@@ -78,7 +78,6 @@ namespace Flicker.UI
         }
         void Start()
         {
-            Layer = UILayer.HUD;
         }
         void Update()
         {
