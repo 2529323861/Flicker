@@ -219,17 +219,24 @@ namespace Flicker.Module
             miniEventBus.Publish<BeforeJumpEvent>(new BeforeJumpEvent{context=actionContext,toRightWall=!isRightWall});
             if (actionContext.cancelled) return;  //事件被取消
 
+            ForceJump(false);
+        }
+        /// <summary>
+        /// 强制跳跃，无视CD，无视状态
+        /// </summary>
+        public void ForceJump(bool isForce=true)
+        {
             if (_jumpingCoroutine != null)
             {
                 StopCoroutine(_jumpingCoroutine);
             }
-            _jumpingCoroutine = StartCoroutine(JumpingCoroutine());
+            _jumpingCoroutine = StartCoroutine(JumpingCoroutine(isForce));
         }
         /// <summary>
         /// 供Jump方法使用的跳跃协程
         /// </summary>
         /// <returns></returns>
-        IEnumerator JumpingCoroutine()
+        IEnumerator JumpingCoroutine(bool isForce=true)
         {   
             
             
@@ -270,7 +277,10 @@ namespace Flicker.Module
             transform.localPosition = distination;
             nowJumpingCDMV.value = maxJumpingCD;
 
-            miniEventBus.Publish<AfterJumpEvent>(new AfterJumpEvent{toRightWall=!isRightWall});
+            if (!isForce)
+            {
+                miniEventBus.Publish<AfterJumpEvent>(new AfterJumpEvent{toRightWall=!isRightWall});
+            }
             if (state == GameCharacterState.JumpHanging)
             {
                 AttackDetect();
@@ -298,10 +308,19 @@ namespace Flicker.Module
             miniEventBus.Publish<BeforeMoveEvent>(new BeforeMoveEvent{context=actionContext,isUp = isUp});
             if (actionContext.cancelled) return;  //事件是否被取消
 
+            ForceMove(isUp);
+            
+            miniEventBus.Publish<AfterMoveEvent>(new AfterMoveEvent{isUp = isUp});
+        }
+        /// <summary>
+        /// 强制移动，不发布事件，无视状态
+        /// </summary>
+        /// <param name="isUp"></param>
+        public void ForceMove(bool isUp)
+        {
             _moveflag = true;
             towardUp = isUp;
             SetState(GameCharacterState.Moving);
-
 
             ModifierSet values = modifyPipeline.GetModifierSet();
             float moveSpeed = values.moveSpeed.FinalValue;
@@ -322,7 +341,6 @@ namespace Flicker.Module
                 targetY = Mathf.Clamp(targetY,LevelManager.Instance.rightBottom,LevelManager.Instance.rightTop);
             }
             transform.localPosition = new Vector3(temp.x,targetY,temp.z);
-            miniEventBus.Publish<AfterMoveEvent>(new AfterMoveEvent{isUp = isUp});
         }
         /// <summary>
         /// 到达边缘
