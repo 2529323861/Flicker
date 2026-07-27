@@ -29,10 +29,10 @@ namespace Flicker.Module
             buffContainer.onBuffStackChange = (evt)=> EventBus.Publish<BuffStackChangeEvent>(evt);
             /** 注入道具UI发布委托 */
             PropContainer propContainer = GetComponent<PropContainer>();
-            propContainer.onPropAdded = (basePropStrategy,i) => EventBus.Publish<GetPropEvent>(new GetPropEvent{basePropStrategy = basePropStrategy,slotIndex = i,});
-            propContainer.onPropUse = (propSlotIndex) => EventBus.Publish<UsePropEvent>(new UsePropEvent{propSlotIndex = propSlotIndex});
-            propContainer.onGetPropNumber = (propSlot)=>EventBus.Publish<GetPropNumberEvent>(new GetPropNumberEvent{propSlot = propSlot});
-            propContainer.onUpdatePropCDProgress = (p)=>EventBus.Publish<UpdatePropCDProgressEvent>(new UpdatePropCDProgressEvent{propCDProgress=p});
+            propContainer.onPropAdded = (evt) => EventBus.Publish<GetPropEvent>(evt);
+            propContainer.onPropUse = (evt) => EventBus.Publish<UsePropEvent>(evt);
+            propContainer.onGetPropNumber = (evt)=>EventBus.Publish<GetPropNumberEvent>(evt);
+            propContainer.onUpdatePropCDProgress = (evt)=>EventBus.Publish<UpdatePropCDProgressEvent>(evt);
             /** 注入跳跃CD发布委托 */
             onUpdateJumpCDProgress = (jumpCDProgress)=>EventBus.Publish<UpdateJumpCDProgressEvent>(new UpdateJumpCDProgressEvent{jumpCDProgress = jumpCDProgress});
         }

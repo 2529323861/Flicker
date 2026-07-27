@@ -7,7 +7,7 @@ namespace Flicker.Module.Prop
         public RushGelProp()
         {
             name = "疾行凝胶";
-            id = "00001";
+            factoryId = "00001";
             path = "RushGel";
             description = "使用后3秒内，移动速度提高150%。";
         }

@@ -123,7 +123,7 @@ namespace Flicker.UI
             /** 设置可见并切换材质 */
             props[getPropEvent.slotIndex].SetActive(true);
             Image image = props[getPropEvent.slotIndex].GetComponent<Image>();
-            image.sprite = Resources.Load<Sprite>("Images/UI/PropIcon/"+getPropEvent.basePropStrategy.path);
+            image.sprite = Resources.Load<Sprite>("Images/UI/PropIcon/"+getPropEvent.basePropStrategyMetaData.path);
 
             props[getPropEvent.slotIndex].GetComponent<Animator>().Play("PropPop");
 

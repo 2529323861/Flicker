@@ -42,7 +42,7 @@ namespace Flicker.Module
     /// </summary>
     public class BaseBuffStrategy
     {
-        protected static int buffIder = 0;
+        private static int buffIder = 0;
         public BaseBuffStrategy()
         {
             this.buffId = buffIder;

@@ -20,7 +20,7 @@ namespace Flicker.Module.UIEvent
     public struct GetPropEvent
     {
         /** 新道具 */
-        public BasePropStrategy basePropStrategy;
+        public BasePropStrategyMetaData basePropStrategyMetaData;
         /** 新道具的位置 */
         public int slotIndex;
     }

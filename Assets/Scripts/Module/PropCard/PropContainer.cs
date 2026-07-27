@@ -18,19 +18,19 @@ namespace Flicker.Module
         /// <summary>
         /// 道具添加时的UI发布委托，供玩家控制器注入
         /// </summary>
-        public Action<BasePropStrategy,int> onPropAdded;
+        public Action<GetPropEvent> onPropAdded;
         /// <summary>
         /// 道具使用时的UI发布委托，供玩家控制器注入
         /// </summary>
-        public Action<int> onPropUse;
+        public Action<UsePropEvent> onPropUse;
         /// <summary>
         /// 获取当前道具槽数的UI发布委托，供玩家控制器注入
         /// </summary>
-        public Action<int> onGetPropNumber;
+        public Action<GetPropNumberEvent> onGetPropNumber;
         /// <summary>
         /// 获取当前UICD进度比的UI发布委托，供玩家控制器注入
         /// </summary>
-        public Action<float> onUpdatePropCDProgress;
+        public Action<UpdatePropCDProgressEvent> onUpdatePropCDProgress;
 
         private BuffContainer buffContainer;
         private EffectContainer effectContainer;
@@ -106,8 +106,9 @@ namespace Flicker.Module
                     AddProp(propCardDeck.GetProp());
                 }
             }
-            onGetPropNumber?.Invoke((int)values.propSlot.FinalValue);
-            onUpdatePropCDProgress?.Invoke(values.nowGetPropCD.value/values.getPropCD.FinalValue);
+            
+            onGetPropNumber?.Invoke(new(){propSlot=(int)values.propSlot.FinalValue});
+            onUpdatePropCDProgress?.Invoke(new(){propCDProgress=values.nowGetPropCD.value/values.getPropCD.FinalValue});
         }
         /// <summary>
         /// 获取当前道具容器中的道具数，超出槽位的不计
@@ -147,7 +148,7 @@ namespace Flicker.Module
             props[i]=basePropStrategy;
             miniEventBus.Publish<AfterAddPropEvent>(new());
 
-            onPropAdded(basePropStrategy,i);
+            onPropAdded(new(){basePropStrategyMetaData=basePropStrategy.GetMetaData(),slotIndex=i});
         }
         public void UseProp(int propSlotIndex)
         {
@@ -165,7 +166,7 @@ namespace Flicker.Module
 
             miniEventBus.Publish<AfterUsePropEvent>(new());
 
-            onPropUse?.Invoke(propSlotIndex);
+            onPropUse?.Invoke(new(){propSlotIndex=propSlotIndex});
         }
     }
 }
