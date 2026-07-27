@@ -7,6 +7,7 @@ using Flicker.Core.Service;
 using Flicker.Module.Buff;
 using Flicker.Module.CharacterEvent;
 using Flicker.Module.Context;
+using Flicker.Module.UIEvent;
 using Mirror.BouncyCastle.Asn1.Crmf;
 using Mirror.Transports.Encryption;
 using Unity.VisualScripting;
@@ -51,7 +52,7 @@ namespace Flicker.Module
         /// <summary>
         /// 跳跃CD变更的委托，供玩家控制器注入
         /// </summary>
-        public Action<float> onUpdateJumpCDProgress;
+        public Action<UpdateJumpCDProgressEvent> onUpdateJumpCDProgress;
         /// <summary>
         /// 移动速度
         /// </summary>
@@ -196,7 +197,7 @@ namespace Flicker.Module
                     nowJumpingCDMV.value = 0;
                 }
             }
-            onUpdateJumpCDProgress?.Invoke(nowJumpingCDMV.value/maxJumpingCDMV.FinalValue);
+            onUpdateJumpCDProgress?.Invoke(new(){jumpCDProgress=nowJumpingCDMV.value/maxJumpingCDMV.FinalValue});
 
             miniEventBus.Publish<UpdateEvent>(new UpdateEvent());
 
