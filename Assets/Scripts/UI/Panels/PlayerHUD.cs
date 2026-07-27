@@ -17,7 +17,7 @@ namespace Flicker.UI
     /// </summary>
     public class BuffWrapper
     {
-        public BaseBuffStrategy baseBuffStrategy;
+        public BaseBuffStrategyMetaData baseBuffStrategyMetaData;
         public GameObject buffUI;
         public Vector3 reference;
     }
@@ -196,23 +196,23 @@ namespace Flicker.UI
         private float spacing = 70;
         public void AddNewBuffHandler(AddNewBuffEvent addNewBuffEvent)
         {
-            if (!addNewBuffEvent.baseBuffStrategy.iconVisible) return;
+            if (!addNewBuffEvent.baseBuffStrategyMetaData.iconVisible) return;
             GameObject buffUI = Instantiate(buff);
             buffUI.transform.SetParent(buffParent.transform);
             buffUI.transform.localPosition = new(buffWrappers.Count*spacing,0,0);
             
             Image image = buffUI.GetComponent<Image>();
-            image.sprite = Resources.Load<Sprite>("Images/UI/BuffIcon/"+addNewBuffEvent.baseBuffStrategy.path);
+            image.sprite = Resources.Load<Sprite>("Images/UI/BuffIcon/"+addNewBuffEvent.baseBuffStrategyMetaData.path);
 
             var description =  buffUI.GetComponent<BuffDescription>();
-            description.buffName = addNewBuffEvent.baseBuffStrategy.name;
-            description.description = addNewBuffEvent.baseBuffStrategy.description;
+            description.buffName = addNewBuffEvent.baseBuffStrategyMetaData.name;
+            description.description = addNewBuffEvent.baseBuffStrategyMetaData.description;
 
             GameObject stack = buffUI.transform.Find("Stack").gameObject;
-            if (addNewBuffEvent.baseBuffStrategy.stacks > 1)
+            if (addNewBuffEvent.baseBuffStrategyMetaData.stacks > 1)
             {
                 stack.SetActive(true);
-                stack.GetComponent<TextMeshProUGUI>().text = addNewBuffEvent.baseBuffStrategy.stacks.ToString();
+                stack.GetComponent<TextMeshProUGUI>().text = addNewBuffEvent.baseBuffStrategyMetaData.stacks.ToString();
             }
             else
             {
@@ -221,7 +221,7 @@ namespace Flicker.UI
 
             BuffWrapper buffWrapper = new()
             {
-                baseBuffStrategy = addNewBuffEvent.baseBuffStrategy,
+                baseBuffStrategyMetaData = addNewBuffEvent.baseBuffStrategyMetaData,
                 buffUI = buffUI,
                 reference = new(buffWrappers.Count*spacing,0,0)
             };
@@ -230,7 +230,7 @@ namespace Flicker.UI
         public void RemoveBuffHandler(RemoveBuffEvent removeBuffEvent)
         {
             int i=0;
-            while (i<buffWrappers.Count && buffWrappers[i].baseBuffStrategy != removeBuffEvent.baseBuffStrategy)
+            while (i<buffWrappers.Count && buffWrappers[i].baseBuffStrategyMetaData.buffId != removeBuffEvent.baseBuffStrategyMetaData.buffId)
             {
                 i++;
             }
@@ -245,16 +245,16 @@ namespace Flicker.UI
         public void BuffStackChangeHandler(BuffStackChangeEvent buffStackChangeEvent)
         {
             int i=0;
-            while (i<buffWrappers.Count && buffWrappers[i].baseBuffStrategy != buffStackChangeEvent.baseBuffStrategy)
+            while (i<buffWrappers.Count && buffWrappers[i].baseBuffStrategyMetaData.buffId != buffStackChangeEvent.baseBuffStrategyMetaData.buffId)
             {
                 i++;
             }
             if (i>=buffWrappers.Count) return;
             GameObject stack = buffWrappers[i].buffUI.transform.Find("Stack").gameObject;
-            if (buffStackChangeEvent.baseBuffStrategy.stacks > 1)
+            if (buffStackChangeEvent.baseBuffStrategyMetaData.stacks > 1)
             {
                 stack.SetActive(true);
-                stack.GetComponent<TextMeshProUGUI>().text = buffStackChangeEvent.baseBuffStrategy.stacks.ToString();
+                stack.GetComponent<TextMeshProUGUI>().text = buffStackChangeEvent.baseBuffStrategyMetaData.stacks.ToString();
             }
             else
             {

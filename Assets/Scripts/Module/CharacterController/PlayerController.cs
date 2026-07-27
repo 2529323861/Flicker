@@ -24,9 +24,9 @@ namespace Flicker.Module
         {
             /** 注入buffUI发布委托 */
             BuffContainer buffContainer = GetComponent<BuffContainer>();
-            buffContainer.onBuffAdd = (baseBuffStrategy)=> EventBus.Publish<AddNewBuffEvent>(new AddNewBuffEvent{baseBuffStrategy = baseBuffStrategy});
-            buffContainer.onBuffRemove = (baseBuffStrategy)=> EventBus.Publish<RemoveBuffEvent>(new RemoveBuffEvent{baseBuffStrategy = baseBuffStrategy});
-            buffContainer.onBuffStackChange = (baseBuffStrategy)=> EventBus.Publish<BuffStackChangeEvent>(new BuffStackChangeEvent{baseBuffStrategy = baseBuffStrategy});
+            buffContainer.onBuffAdd = (evt)=> EventBus.Publish<AddNewBuffEvent>(evt);
+            buffContainer.onBuffRemove = (evt)=> EventBus.Publish<RemoveBuffEvent>(evt);
+            buffContainer.onBuffStackChange = (evt)=> EventBus.Publish<BuffStackChangeEvent>(evt);
             /** 注入道具UI发布委托 */
             PropContainer propContainer = GetComponent<PropContainer>();
             propContainer.onPropAdded = (basePropStrategy,i) => EventBus.Publish<GetPropEvent>(new GetPropEvent{basePropStrategy = basePropStrategy,slotIndex = i,});

@@ -41,21 +41,21 @@ namespace Flicker.Module.UIEvent
     /// </summary>
     public struct AddNewBuffEvent
     {
-        public BaseBuffStrategy baseBuffStrategy;
+        public BaseBuffStrategyMetaData baseBuffStrategyMetaData;
     }
     /// <summary>
     /// 移除buff
     /// </summary>
     public struct RemoveBuffEvent
     {
-        public BaseBuffStrategy baseBuffStrategy;
+        public BaseBuffStrategyMetaData baseBuffStrategyMetaData;
     }
     /// <summary>
     /// buff层数变化
     /// </summary>
     public struct BuffStackChangeEvent
     {
-        public BaseBuffStrategy baseBuffStrategy;
+        public BaseBuffStrategyMetaData baseBuffStrategyMetaData;
     }
     /// <summary>
     /// 显示buff详情事件

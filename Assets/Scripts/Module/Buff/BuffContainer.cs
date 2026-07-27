@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Flicker.Core;
 using Flicker.Module.CharacterEvent;
 using Flicker.Module.Context;
+using Flicker.Module.UIEvent;
 using UnityEngine;
 
 namespace Flicker.Module
@@ -24,15 +25,15 @@ namespace Flicker.Module
         /// <summary>
         /// buff添加时的UI发布委托，用于玩家控制器注入
         /// </summary>
-        public Action<BaseBuffStrategy> onBuffAdd;
+        public Action<AddNewBuffEvent> onBuffAdd;
         /// <summary>
         /// buff移除时的UI发布委托，用于玩家控制器注入
         /// </summary>
-        public Action<BaseBuffStrategy> onBuffRemove;
+        public Action<RemoveBuffEvent> onBuffRemove;
         /// <summary>
         /// buff层数变更时的UI发布委托，用于玩家控制器注入
         /// </summary>
-        public Action<BaseBuffStrategy> onBuffStackChange;
+        public Action<BuffStackChangeEvent> onBuffStackChange;
         List<BuffWrapper> buffs = new();
         /// <summary>
         /// 效果容器
@@ -85,7 +86,11 @@ namespace Flicker.Module
                             traverse.stacks++;
                             traverse.OnStacksChange();
                             miniEventBus.Publish<AfterBuffStackEvent>(new());
-                            onBuffStackChange?.Invoke(traverse);
+                            var sbs = traverse;
+                            var evt = new BuffStackChangeEvent();
+                            evt.baseBuffStrategyMetaData = sbs.GetMetaData();
+
+                            onBuffStackChange?.Invoke(evt);
                             break;
                         }
                         else
@@ -121,7 +126,12 @@ namespace Flicker.Module
             baseBuffStrategy.BindBuffContainer(this);
             baseBuffStrategy.OnAdd();
             miniEventBus.Publish<AfterAddBuffEvent>(new());
-            onBuffAdd?.Invoke(baseBuffStrategy);
+
+            var sbs = baseBuffStrategy;
+            var evt = new AddNewBuffEvent();
+            evt.baseBuffStrategyMetaData = sbs.GetMetaData();
+
+            onBuffAdd?.Invoke(evt);
         }
         /// <summary>
         /// 移除buff
@@ -140,7 +150,12 @@ namespace Flicker.Module
                     buffs.RemoveAt(i);
                     baseBuffStrategy.OnRemove();
                     miniEventBus.Publish<AfterRemoveBuffEvent>(new());
-                    onBuffRemove?.Invoke(baseBuffStrategy);
+
+                    var sbs = baseBuffStrategy;
+                    var evt = new RemoveBuffEvent();
+                    evt.baseBuffStrategyMetaData = sbs.GetMetaData();
+
+                    onBuffRemove?.Invoke(evt);
                     break;
                 }
             }
