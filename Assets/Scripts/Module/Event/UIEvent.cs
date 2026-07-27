@@ -1,6 +1,7 @@
 
 namespace Flicker.Module.UIEvent
 {    
+    //—————————————————————————————————PlayerHUD——————————————————————————————————
     public struct UpdateJumpCDProgressEvent
     {
         public float jumpCDProgress;
@@ -71,4 +72,14 @@ namespace Flicker.Module.UIEvent
     {
         
     }
+    //—————————————————————————————————MainPanel——————————————————————————————————
+    /// <summary>
+    /// 主持游戏被点击
+    /// </summary>
+    public struct HostPlayClickedEvent{}
+    //—————————————————————————————————LobbyPanel——————————————————————————————————
+    /// <summary>
+    /// 多人游戏房间启动
+    /// </summary>
+    public struct LobbyPanelStartEvent{}
 }

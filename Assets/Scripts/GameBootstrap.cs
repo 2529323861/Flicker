@@ -13,7 +13,7 @@ public class GameBootstrap : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        UIManager.Instance.Open<PlayerHUD>();
+        UIManager.Instance.Open<MainPanel>();
     }
 
     // Update is called once per frame

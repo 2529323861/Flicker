@@ -1112,7 +1112,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b2702700f84225b4d80e6d9339cf8126, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Layer: 200
+  Layer: 300
   IsFullScreen: 0
 --- !u!1 &6692893326142303350
 GameObject:

@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using Flicker.Core;
+using Flicker.Module.UIEvent;
 using Flicker.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,7 +27,7 @@ namespace Flicker.UI
         }
         public void HostPlayButtonCallback()
         {
-            
+            EventBus.Publish<HostPlayClickedEvent>(new());
         }
         public void JoinPlayButtonCallback()
         {
