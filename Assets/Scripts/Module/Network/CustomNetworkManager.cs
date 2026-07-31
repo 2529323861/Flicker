@@ -8,13 +8,21 @@ using UnityEngine;
 
 namespace Flicker.Module.Network
 {
+    class ConnectionProxyWrapper
+    {
+        public NetworkConnection conn;
+        public ConnectionProxy connectionProxy;
+    }
     public class CustomNetworkManager: NetworkManager
     {
-        private List<NetworkConnectionToClient> networkConnectionToClients=new();
+        public GameObject gameCharacterPrefab;
+        private List<ConnectionProxyWrapper> connectionProxyWrappers=new();
+        //———————————————————————————————————钩子—————————————————————————————————————————————
         new void Awake()
         {
             base.Awake();
             EventBus.Subscribe<HostPlayClickedEvent>(HostPlayClickedHandler);
+            
         }
         new void OnDestroy() {
             base.OnDestroy();
@@ -33,12 +41,36 @@ namespace Flicker.Module.Network
         public override void OnServerAddPlayer(NetworkConnectionToClient conn)
         {
             base.OnServerAddPlayer(conn);
+            ConnectionProxyWrapper connectionProxyWrapper = new();
+            connectionProxyWrapper.conn = conn;
+            connectionProxyWrapper.connectionProxy = conn.identity.GetComponent<ConnectionProxy>();
+            connectionProxyWrappers.Add(connectionProxyWrapper);
 
         }
         public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
             base.OnServerDisconnect(conn);
-
+            connectionProxyWrappers.Remove(connectionProxyWrappers.Find((i)=>i.conn==conn));
+        }
+        //——————————————————————————————————————————————————————————————————————————
+        public void StartGame()
+        {
+            int i = 0;
+            foreach(var wrapper in connectionProxyWrappers)
+            {
+                GameObject gameChar = Instantiate(gameCharacterPrefab);
+                NetworkServer.Spawn(gameChar, wrapper.connectionProxy.connectionToClient);
+                wrapper.connectionProxy.BindGameObject(gameChar);
+                if (i == 0)
+                {
+                    gameChar.GetComponent<PlayerController>().SetPosition(4.0f,false);
+                }
+                else
+                {
+                    gameChar.GetComponent<PlayerController>().SetPosition(-4.0f,true);
+                }
+                i++;
+            }
         }
         
         //—————————————————————————————————Handler—————————————————————————————————————————————
@@ -53,6 +85,7 @@ namespace Flicker.Module.Network
                 Debug.LogError($"[!] 服务器启动失败：{se}");
                 return;
             }
+            UIManager.Instance.Close<MainPanel>();
             UIManager.Instance.Open<LobbyPanel>();
         }
     }

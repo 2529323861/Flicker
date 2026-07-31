@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 3328804453363109166}
   - component: {fileID: 7255502853659709530}
   - component: {fileID: 1577272532960329972}
+  - component: {fileID: 8313389505742317603}
   m_Layer: 0
   m_Name: NetworkPlayer
   m_TagString: Untagged
@@ -39,7 +40,7 @@ Transform:
   m_GameObject: {fileID: 8513294268330583383}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: -0.7071068, w: 0.7071068}
-  m_LocalPosition: {x: -5.28, y: 4.05, z: 0}
+  m_LocalPosition: {x: -4.1, y: 4.05, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -328,3 +329,23 @@ MonoBehaviour:
   positionSensitivity: 0.01
   rotationSensitivity: 0.01
   scaleSensitivity: 0.01
+--- !u!114 &8313389505742317603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8513294268330583383}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 054fcd9bb4e8c9345adc96e636fdccef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  logicComponents:
+  - {fileID: 2815263038695549923}
+  - {fileID: 874169737054387625}
+  - {fileID: 4504530372663164551}
+  miniEventBus: {fileID: 8253156914361824777}

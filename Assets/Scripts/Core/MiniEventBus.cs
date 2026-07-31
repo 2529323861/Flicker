@@ -14,6 +14,9 @@ namespace Flicker.Core
         // object 版本缓存（非泛型 Publish(Type,object) 走快路径，零反射）
         private readonly Dictionary<Type, Action<object>> _objectHandlers = new();
 
+        [HideInInspector]
+        public Action<Type,object> publish = null;
+
         /// <summary>
         /// 订阅事件。
         /// </summary>
@@ -73,6 +76,7 @@ namespace Flicker.Core
         /// </summary>
         public void Publish<T>(T evt) where T : struct
         {
+            publish?.Invoke(typeof(T),evt);
             var type = typeof(T);
             if (_handlers.TryGetValue(type, out var existing))
             {
@@ -92,6 +96,7 @@ namespace Flicker.Core
         /// </summary>
         public void Publish(Type type, object evt)
         {
+            publish?.Invoke(type,evt);
             if (_objectHandlers.TryGetValue(type, out var handler))
             {
                 try

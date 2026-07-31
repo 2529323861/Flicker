@@ -152,7 +152,6 @@ namespace Flicker.Module
         }
         protected void Awake()
         {
-            SetState(GameCharacterState.Idle);
 
             modifyPipeline = GetComponent<ModifyPipeline>();
             miniEventBus = GetComponent<MiniEventBus>();
@@ -170,6 +169,7 @@ namespace Flicker.Module
             };
             maxJumpingCDMV.AddObserver(nowJumpingCDMV);
             
+            SetState(GameCharacterState.Idle);
         }
 
         void OnDrawGizmos()
@@ -472,7 +472,7 @@ namespace Flicker.Module
 
         private void SetState(GameCharacterState newState)
         {
-            if (state == newState && towardUp == _lastTowardUp) return;
+            // if (state == newState && towardUp == _lastTowardUp) return;
             state = newState;
             _lastTowardUp = towardUp;
             miniEventBus.Publish(new StateChangedEvent { state = state, towardUp = towardUp, isRightWall = isRightWall});
@@ -481,6 +481,7 @@ namespace Flicker.Module
         {
             this.isRightWall = isRightWall;
             transform.localPosition = new(isRightWall?rightWallPos:leftWallPos,y,0);
+            SetState(state);
         }
     }
 }
