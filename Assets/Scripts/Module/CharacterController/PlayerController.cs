@@ -9,6 +9,8 @@ namespace Flicker.Module
 {   
     public class PlayerController : GameCharacterController
     {
+        [HideInInspector]
+        public IInput input=new KeyInput();
         PropContainer propContainer;
 
         new void Awake()
@@ -44,14 +46,14 @@ namespace Flicker.Module
         {
             base.Update();
 
-            if (InputRouter.Up)
+            if (input.Up)
                 Move(true);
-            else if (InputRouter.Down)
+            else if (input.Down)
                 Move(false);
-            if (InputRouter.Jump) Jump();
+            if (input.Jump) Jump();
             for (int i = 1; i <= 5; i++)
             {
-                if (InputRouter.Number(i))
+                if (input.Number(i))
                 {
                     propContainer.UseProp(i-1);
                 }
