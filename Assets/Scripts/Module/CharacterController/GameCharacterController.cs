@@ -467,5 +467,10 @@ namespace Flicker.Module
             _lastTowardUp = towardUp;
             miniEventBus.Publish(new StateChangedEvent { state = state, towardUp = towardUp, isRightWall = isRightWall});
         }
+        public void SetPosition(float y, bool isRightWall)
+        {
+            this.isRightWall = isRightWall;
+            transform.localPosition = new(isRightWall?rightWallPos:leftWallPos,y,0);
+        }
     }
 }
