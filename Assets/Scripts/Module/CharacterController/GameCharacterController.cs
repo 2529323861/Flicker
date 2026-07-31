@@ -130,10 +130,6 @@ namespace Flicker.Module
         protected GameCharacterState state = GameCharacterState.Idle;
         public GameCharacterState State { get{return state;} }
 
-        /// <summary>
-        /// 移动标识，表示速度离散导数是否为0
-        /// </summary>
-        private bool _moveflag = false;
         private bool _lastTowardUp = false;
 
         /// <summary>
@@ -144,6 +140,7 @@ namespace Flicker.Module
         private ModifyPipeline modifyPipeline;
         private MiniEventBus miniEventBus;
         private HealthController healthController;
+        private List<bool> moveDirectionStack = new();
 
         public void GenerateDataPool()
         {
@@ -202,11 +199,7 @@ namespace Flicker.Module
             miniEventBus.Publish<UpdateEvent>(new UpdateEvent());
 
             /** 维护移动标识 */
-            if (_moveflag == false && state == GameCharacterState.Moving)
-            {
-                SetState(GameCharacterState.Idle);
-            }
-            _moveflag = false;
+            UpdateMove();
         }
         /// <summary>
         /// 跳跃
@@ -286,42 +279,57 @@ namespace Flicker.Module
             {
                 AttackDetect();
                 isRightWall = !isRightWall;
+            }
+            else
+            {
+                /** 这里改为施加僵直buff */
+                gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),3);
+            }
+            SetState(GameCharacterState.Idle);
+            MoveRecovery();
+            ServiceLocator.GetService<VibrationMgrInterface>().AddVibration(0.2f,new Vector3(0.2f,0,0));
+        }
+        public void EnterMove(bool isUp)
+        {
+            moveDirectionStack.Add(isUp);
+            if (state == GameCharacterState.JumpHanging || state == GameCharacterState.ParryHanging) return;
+            towardUp = moveDirectionStack[moveDirectionStack.Count - 1];
+            SetState(GameCharacterState.Moving);
+        }
+        public void ExitMove(bool isUp)
+        {
+            moveDirectionStack.Remove(isUp);
+            if (state == GameCharacterState.JumpHanging || state == GameCharacterState.ParryHanging) return;
+            if (moveDirectionStack.Count == 0)
+            {                
                 SetState(GameCharacterState.Idle);
             }
             else
             {
-                SetState(GameCharacterState.Idle);
-                /** 这里改为施加僵直buff */
-                gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),3);
+                towardUp = moveDirectionStack[moveDirectionStack.Count - 1];
+                SetState(GameCharacterState.Moving);
             }
-            ServiceLocator.GetService<VibrationMgrInterface>().AddVibration(0.2f,new Vector3(0.2f,0,0));
         }
         /// <summary>
-        /// 移动
+        /// 移动恢复，供跳跃打断移动后调用，回复移动状态
         /// </summary>
-        /// <param name="isUp"></param>
-        public void Move(bool isUp)
+        private void MoveRecovery()
         {
-
+            if (moveDirectionStack.Count==0) return;
+            towardUp = moveDirectionStack[moveDirectionStack.Count - 1];
+            SetState(GameCharacterState.Moving);
+        }
+        private void UpdateMove()
+        {
+            if (moveDirectionStack.Count==0) return;
             if (state == GameCharacterState.JumpHanging || state == GameCharacterState.ParryHanging) return;
 
+            bool isUp = moveDirectionStack[moveDirectionStack.Count-1];
             ActionContext actionContext = new();
             miniEventBus.Publish<BeforeMoveEvent>(new BeforeMoveEvent{context=actionContext,isUp = isUp});
-            if (actionContext.cancelled) return;  //事件是否被取消
+            if (actionContext.cancelled) return;
 
-            ForceMove(isUp);
-            
-            miniEventBus.Publish<AfterMoveEvent>(new AfterMoveEvent{isUp = isUp});
-        }
-        /// <summary>
-        /// 强制移动，不发布事件，无视状态
-        /// </summary>
-        /// <param name="isUp"></param>
-        public void ForceMove(bool isUp)
-        {
-            _moveflag = true;
             towardUp = isUp;
-            SetState(GameCharacterState.Moving);
 
             ModifierSet values = modifyPipeline.GetModifierSet();
             float moveSpeed = values.moveSpeed.FinalValue;
@@ -342,6 +350,8 @@ namespace Flicker.Module
                 targetY = Mathf.Clamp(targetY,LevelManager.Instance.rightBottom,LevelManager.Instance.rightTop);
             }
             transform.localPosition = new Vector3(temp.x,targetY,temp.z);
+
+            miniEventBus.Publish<AfterMoveEvent>(new AfterMoveEvent{isUp = isUp});
         }
         /// <summary>
         /// 到达边缘

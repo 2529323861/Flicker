@@ -46,10 +46,14 @@ namespace Flicker.Module
         {
             base.Update();
 
-            if (input.Up)
-                Move(true);
-            else if (input.Down)
-                Move(false);
+            if (input.EnterUp)
+                EnterMove(true);
+            if (input.EnterDown)
+                EnterMove(false);
+            if (input.ExitUp)
+                ExitMove(true);
+            if (input.ExitDown)
+                ExitMove(false);
             if (input.Jump) Jump();
             for (int i = 1; i <= 5; i++)
             {
