@@ -58,9 +58,9 @@ namespace Flicker.Module.Network
             int i = 0;
             foreach(var wrapper in connectionProxyWrappers)
             {
+                wrapper.connectionProxy.SwitchToGameUI();
+
                 GameObject gameChar = Instantiate(gameCharacterPrefab);
-                NetworkServer.Spawn(gameChar, wrapper.connectionProxy.connectionToClient);
-                wrapper.connectionProxy.BindGameObject(gameChar);
                 if (i == 0)
                 {
                     gameChar.GetComponent<PlayerController>().SetPosition(4.0f,false);
@@ -69,6 +69,8 @@ namespace Flicker.Module.Network
                 {
                     gameChar.GetComponent<PlayerController>().SetPosition(-4.0f,true);
                 }
+                wrapper.connectionProxy.BindGameObject(gameChar);
+                NetworkServer.Spawn(gameChar, wrapper.connectionProxy.connectionToClient);
                 i++;
             }
         }

@@ -69,7 +69,7 @@ MonoBehaviour:
       m_Calls: []
   m_Sprite: {fileID: 21300000, guid: dfd1539f807b49249b5d49360ae947be, type: 3}
   m_Type: 0
-  m_PreserveAspect: 1
+  m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -91,6 +91,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buffName: 
   description: 
+  isHovering: 0
 --- !u!1 &8079127027013294630
 GameObject:
   m_ObjectHideFlags: 0

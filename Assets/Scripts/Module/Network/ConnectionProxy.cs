@@ -54,6 +54,7 @@ namespace Flicker.Module.Network
                 EventBus.Unsubscribe<LobbyPanelStartEvent>(LobbyPanelStartHandler);
             }
         }
+        //—————————————————————————————————————客户端方法—————————————————————————————————————————————
         public override void OnStartLocalPlayer()
         {
             if (isLocalPlayer)
@@ -63,6 +64,11 @@ namespace Flicker.Module.Network
             base.OnStartLocalPlayer();
 
         }
+        /// <summary>
+        /// 服务端事件转发
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="evt"></param>
         public void EventTransmit<T>(T evt)
         {
             string json = JsonConvert.SerializeObject(evt);
@@ -75,7 +81,19 @@ namespace Flicker.Module.Network
             var evt = JsonConvert.DeserializeObject(json,type);
             EventBus.Publish(type,evt);
         }
-        //————————————————————————————————————————————————————————————————————————————————————
+        [TargetRpc]
+        public void SwitchToGameUI()
+        {
+            UIManager.Instance.Close<LobbyPanel>();
+            UIManager.Instance.Open<PlayerHUD>();
+        }
+        [TargetRpc]
+        public void SwitchToLobbyUI()
+        {
+            UIManager.Instance.Close<PlayerHUD>();
+            UIManager.Instance.Open<LobbyPanel>();
+        }
+        //———————————————————————————————————服务端控制命令————————————————————————————————————————————
         [Command]
         public void CmdStartGame()
         {
@@ -127,8 +145,6 @@ namespace Flicker.Module.Network
         {
             /** 暂时不做什么房主才能启动，先把链路跑通再做细枝末节的处理 */
             CmdStartGame();
-            UIManager.Instance.Open<PlayerHUD>();
-            UIManager.Instance.Close<LobbyPanel>();
         }
     }
 }
