@@ -84,13 +84,13 @@ namespace Flicker.Module.Network
         [TargetRpc]
         public void SwitchToGameUI()
         {
-            UIManager.Instance.Close<LobbyPanel>();
+            UIManager.Instance.CloseAll(UILayer.Normal);
             UIManager.Instance.Open<PlayerHUD>();
         }
         [TargetRpc]
         public void SwitchToLobbyUI()
         {
-            UIManager.Instance.Close<PlayerHUD>();
+            UIManager.Instance.CloseAll(UILayer.HUD);
             UIManager.Instance.Open<LobbyPanel>();
         }
         //———————————————————————————————————服务端控制命令————————————————————————————————————————————
