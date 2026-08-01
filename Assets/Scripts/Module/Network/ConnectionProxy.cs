@@ -19,6 +19,7 @@ namespace Flicker.Module.Network
         private PlayerController playerController;
         private PropContainer propContainer;
         private PropCardDeck propCardDeck;
+        private BuffContainer buffContainer;
 
         void Awake()
         {
@@ -67,7 +68,7 @@ namespace Flicker.Module.Network
             string json = JsonConvert.SerializeObject(evt);
             EventTransmitInner(typeof(T).AssemblyQualifiedName,json);
         }
-        [ClientRpc]
+        [TargetRpc]
         private void EventTransmitInner(string typeName, string json)
         {
             var type = Type.GetType(typeName);
@@ -87,6 +88,18 @@ namespace Flicker.Module.Network
             playerController = gameObject.GetComponent<PlayerController>();
             propContainer = gameObject.GetComponent<PropContainer>();
             propCardDeck = gameObject.GetComponent<PropCardDeck>();
+            buffContainer = gameObject.GetComponent<BuffContainer>();
+            
+            buffContainer.onBuffAdd = (evt)=> EventTransmit<AddNewBuffEvent>(evt);
+            buffContainer.onBuffRemove = (evt)=> EventTransmit<RemoveBuffEvent>(evt);
+            buffContainer.onBuffStackChange = (evt)=> EventTransmit<BuffStackChangeEvent>(evt);
+            /** 注入道具UI发布委托 */
+            propContainer.onPropAdded = (evt) => EventTransmit<GetPropEvent>(evt);
+            propContainer.onPropUse = (evt) => EventTransmit<UsePropEvent>(evt);
+            propContainer.onGetPropNumber = (evt)=>EventTransmit<GetPropNumberEvent>(evt);
+            propContainer.onUpdatePropCDProgress = (evt)=>EventTransmit<UpdatePropCDProgressEvent>(evt);
+            /** 注入跳跃CD发布委托 */
+            playerController.onUpdateJumpCDProgress = (evt)=>EventTransmit<UpdateJumpCDProgressEvent>(evt);
         }
         //—————————————————————————————————游戏对象cmd方法———————————————————————————————————————————————
         [Command]
