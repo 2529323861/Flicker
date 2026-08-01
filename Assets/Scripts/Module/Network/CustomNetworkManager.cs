@@ -10,7 +10,7 @@ namespace Flicker.Module.Network
 {
     class ConnectionProxyWrapper
     {
-        public NetworkConnection conn;
+        public NetworkConnectionToClient conn;
         public ConnectionProxy connectionProxy;
     }
     public class CustomNetworkManager: NetworkManager
@@ -70,7 +70,7 @@ namespace Flicker.Module.Network
                     gameChar.GetComponent<PlayerController>().SetPosition(-4.0f,true);
                 }
                 wrapper.connectionProxy.BindGameObject(gameChar);
-                NetworkServer.Spawn(gameChar, wrapper.connectionProxy.connectionToClient);
+                NetworkServer.Spawn(gameChar, wrapper.conn);
                 i++;
             }
         }
