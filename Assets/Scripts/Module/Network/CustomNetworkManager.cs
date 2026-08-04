@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Sockets;
 using Flicker.Core;
 using Flicker.Module.UIEvent;
@@ -53,26 +54,47 @@ namespace Flicker.Module.Network
             connectionProxyWrappers.Remove(connectionProxyWrappers.Find((i)=>i.conn==conn));
         }
         //——————————————————————————————————————————————————————————————————————————
-        public void StartGame()
+        public void PrepareMultiPlay()
         {
+            Debug.Log($"[Prepare] 列表顺序: {string.Join(", ", connectionProxyWrappers.Select(w => w.connectionProxy.netId))}");
+            
             int i = 0;
             foreach(var wrapper in connectionProxyWrappers)
             {
+                Debug.Log($"[Prepare] i={i}, proxyNetId={wrapper.connectionProxy.netId}, 目标位置={(i == 0 ? "(4f,false)" : "(-4f,true)")}");
                 wrapper.connectionProxy.SwitchToGameUI();
 
-                GameObject gameChar = Instantiate(gameCharacterPrefab);
+                GameObject gameChar = CharacterControllerManager.Instance.Create(gameCharacterPrefab);
+                var gcc = gameChar.GetComponent<PlayerController>();
                 if (i == 0)
                 {
-                    gameChar.GetComponent<PlayerController>().SetPosition(4.0f,false);
+                    gcc.SetPosition(4.0f,false);
                 }
                 else
                 {
-                    gameChar.GetComponent<PlayerController>().SetPosition(-4.0f,true);
+                    gcc.SetPosition(-4.0f,true);
                 }
+                Debug.Log($"[Prepare] 角色 {gameChar.name} SetPosition 后 localPosition={gcc.transform.localPosition}");
+                gcc.teamTag = i == 0 ? "TeamA" : "TeamB";
+                gcc.onDestroy = ()=>{
+                    GameManager.Instance.MultiPlayEnd();
+                };
                 wrapper.connectionProxy.BindGameObject(gameChar);
                 NetworkServer.Spawn(gameChar, wrapper.conn);
                 i++;
             }
+        }
+        public void MultiPlayEnd()
+        {
+            CharacterControllerManager.Instance.RemoveAll();
+            foreach(var wrapper in connectionProxyWrappers){
+                wrapper.connectionProxy.ClearBind();
+                wrapper.connectionProxy.SwitchToLobbyUI();
+            }
+        }
+        public void HostStartGame()
+        {
+            GameManager.Instance.PrepareMultiPlay();
         }
         
         //—————————————————————————————————Handler—————————————————————————————————————————————

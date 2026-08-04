@@ -1,22 +1,26 @@
 using Flicker.Core;
+using Flicker.Module.Network;
 using UnityEngine;
 
 namespace Flicker.Module
 {
+    public enum GameMode
+    {
+        MultiPlay,
+        SinglePlay,
+    }
     public class GameManager: Singleton<GameManager>
     {
-        /// <summary>
-        /// 玩家引用
-        /// </summary>
-        GameObject playerRef = null;
+        public GameMode gameMode {get; private set;}
 
-        public void SetPlayerRef(GameObject player)
+        public void PrepareMultiPlay()
         {
-            playerRef = player;
+            gameMode = GameMode.MultiPlay;
+            ((CustomNetworkManager)CustomNetworkManager.singleton).PrepareMultiPlay();
         }
-        public GameObject GetPlayerRef()
+        public void MultiPlayEnd()
         {
-            return playerRef;
+            ((CustomNetworkManager)CustomNetworkManager.singleton).MultiPlayEnd();
         }
     }
 }

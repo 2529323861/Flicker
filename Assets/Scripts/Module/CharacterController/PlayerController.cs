@@ -40,7 +40,7 @@ namespace Flicker.Module
         }
         void Start()
         {
-            GameManager.Instance.SetPlayerRef(gameObject);
+
         }
         new void Update()
         {

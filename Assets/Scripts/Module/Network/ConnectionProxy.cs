@@ -95,9 +95,9 @@ namespace Flicker.Module.Network
         }
         //———————————————————————————————————服务端控制命令————————————————————————————————————————————
         [Command]
-        public void CmdStartGame()
+        public void CmdHostStartGame()
         {
-            ((CustomNetworkManager)CustomNetworkManager.singleton).StartGame();
+            ((CustomNetworkManager)CustomNetworkManager.singleton).HostStartGame();
         }
 
         public void BindGameObject(GameObject gameObject)
@@ -118,6 +118,13 @@ namespace Flicker.Module.Network
             propContainer.onUpdatePropCDProgress = (evt)=>EventTransmit<UpdatePropCDProgressEvent>(evt);
             /** 注入跳跃CD发布委托 */
             playerController.onUpdateJumpCDProgress = (evt)=>EventTransmit<UpdateJumpCDProgressEvent>(evt);
+        }
+        public void ClearBind()
+        {
+            playerController = null;
+            propContainer = null;
+            propCardDeck = null;
+            buffContainer = null;
         }
         //—————————————————————————————————游戏对象cmd方法———————————————————————————————————————————————
         [Command]
@@ -144,7 +151,7 @@ namespace Flicker.Module.Network
         public void LobbyPanelStartHandler(LobbyPanelStartEvent lobbyPanelStartEvent)
         {
             /** 暂时不做什么房主才能启动，先把链路跑通再做细枝末节的处理 */
-            CmdStartGame();
+            CmdHostStartGame();
         }
     }
 }
