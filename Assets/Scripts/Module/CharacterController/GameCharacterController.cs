@@ -7,6 +7,7 @@ using Flicker.Core.Service;
 using Flicker.Module.Buff;
 using Flicker.Module.CharacterEvent;
 using Flicker.Module.Context;
+using Flicker.Module.Network;
 using Flicker.Module.UIEvent;
 using Mirror.BouncyCastle.Asn1.Crmf;
 using Mirror.Transports.Encryption;
@@ -143,6 +144,11 @@ namespace Flicker.Module
         private HealthController healthController;
         private List<bool> moveDirectionStack = new();
 
+        /// <summary>
+        /// 本机应运行逻辑（服务端或单机模式）。客户端空壳为 false。
+        /// </summary>
+        protected bool _isLogicActive;
+
         public void GenerateDataPool()
         {
             moveSpeedMV = new(moveSpeed);
@@ -151,8 +157,10 @@ namespace Flicker.Module
             damageMV = new(damage);
             jumpingCDRateMV = new(jumpingCDRate);
         }
-        protected void Awake()
+        protected virtual void Awake()
         {
+            _isLogicActive = NetworkMode.IsLogicActive;
+            if (!_isLogicActive) return;  // 客户端空壳：不初始化逻辑，但生命周期正常走
 
             modifyPipeline = GetComponent<ModifyPipeline>();
             miniEventBus = GetComponent<MiniEventBus>();
@@ -181,8 +189,9 @@ namespace Flicker.Module
         /// <summary>
         /// 子类重写时必须先调用base
         /// </summary>
-        protected void Update()
+        protected virtual void Update()
         {   
+            if (!_isLogicActive) return;  // 客户端空壳：逻辑空转
             /** 维护跳跃CD */
             if (nowJumpingCDMV.value > 0)
             {

@@ -15,18 +15,10 @@ namespace Flicker.Module.Network
         /// <summary>
         /// 所有游戏角色的逻辑层组件，用于客户端时统一禁用
         /// </summary>
-        public MonoBehaviour[] logicComponents;
         public MiniEventBus miniEventBus;
         private bool _isReplayed=false;
         public override void OnStartClient()
         {
-            if (!isServer)
-            {                
-                foreach (var i in logicComponents)
-                {
-                    i.enabled = false;
-                }
-            }
             var playerController = GetComponent<PlayerController>();
             if (playerController!=null){
                 playerController.input = new FalseInput();

@@ -13,9 +13,10 @@ namespace Flicker.Module
         public IInput input=new KeyInput();
         PropContainer propContainer;
 
-        new void Awake()
+        protected override void Awake()
         {
-            base.Awake();
+            base.Awake();   // GCC 内部已处理 _isLogicActive 守卫
+            if (!_isLogicActive) return;  // 客户端空壳：不初始化逻辑
             propContainer = GetComponent<PropContainer>();
             InjectUIEvent();
         }
@@ -40,11 +41,12 @@ namespace Flicker.Module
         }
         void Start()
         {
-
+            // 生命周期正常走，客户端空壳不做事
         }
-        new void Update()
+        protected override void Update()
         {
-            base.Update();
+            base.Update();   // GCC 内部已处理 _isLogicActive 守卫
+            if (!_isLogicActive) return;  // 客户端空壳：逻辑空转
 
             if (input.EnterUp)
                 EnterMove(true);

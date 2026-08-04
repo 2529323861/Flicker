@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Flicker.Core;
 using Flicker.Module.CharacterEvent;
 using Flicker.Module.Context;
+using Flicker.Module.Network;
 using Flicker.Module.UIEvent;
 using UnityEngine;
 
@@ -59,6 +60,11 @@ namespace Flicker.Module
         /// </summary>
         public MutableValue nowGetPropCDMV;
 
+        /// <summary>
+        /// 本机应运行逻辑（服务端或单机模式）
+        /// </summary>
+        private bool _isLogicActive;
+
         public List<BasePropStrategy> props;
 
         public void GenerateDataPool()
@@ -69,6 +75,8 @@ namespace Flicker.Module
         }
         void Awake()
         {
+            _isLogicActive = NetworkMode.IsLogicActive;
+            if (!_isLogicActive) return;  // 客户端空壳：不初始化逻辑，但生命周期正常走
             props= new();
             for (int i = 0; i < 5; i++)
             {
@@ -92,6 +100,7 @@ namespace Flicker.Module
         }
         void Update()
         {
+            if (!_isLogicActive) return;  // 客户端空壳：逻辑空转
             ModifierSet values = modifyPipeline.GetModifierSet();
             if (nowGetPropCDMV.value > 0)
             {

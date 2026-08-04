@@ -56,12 +56,10 @@ namespace Flicker.Module.Network
         //——————————————————————————————————————————————————————————————————————————
         public void PrepareMultiPlay()
         {
-            Debug.Log($"[Prepare] 列表顺序: {string.Join(", ", connectionProxyWrappers.Select(w => w.connectionProxy.netId))}");
             
             int i = 0;
             foreach(var wrapper in connectionProxyWrappers)
             {
-                Debug.Log($"[Prepare] i={i}, proxyNetId={wrapper.connectionProxy.netId}, 目标位置={(i == 0 ? "(4f,false)" : "(-4f,true)")}");
                 wrapper.connectionProxy.SwitchToGameUI();
 
                 GameObject gameChar = CharacterControllerManager.Instance.Create(gameCharacterPrefab);
@@ -74,7 +72,6 @@ namespace Flicker.Module.Network
                 {
                     gcc.SetPosition(-4.0f,true);
                 }
-                Debug.Log($"[Prepare] 角色 {gameChar.name} SetPosition 后 localPosition={gcc.transform.localPosition}");
                 gcc.teamTag = i == 0 ? "TeamA" : "TeamB";
                 gcc.onDestroy = ()=>{
                     GameManager.Instance.MultiPlayEnd();
