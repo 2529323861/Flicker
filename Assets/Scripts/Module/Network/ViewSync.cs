@@ -1,5 +1,6 @@
 using System;
 using Flicker.Core;
+using Flicker.Module.CharacterEvent;
 using Mirror;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -43,6 +44,7 @@ namespace Flicker.Module.Network
 
         public void EventTransmit(Type t, object evt)
         {
+            if (t!=typeof(StateChangedEvent)) return;
             string json = JsonConvert.SerializeObject(evt);
             EventTransmitInner(t.AssemblyQualifiedName,json);
         }
