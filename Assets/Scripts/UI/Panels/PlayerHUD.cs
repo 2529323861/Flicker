@@ -33,7 +33,7 @@ namespace Flicker.UI
         public Sprite[] slotsKey;
         public GameObject buff;
         public GameObject buffParent;
-        public GameObject descriptionAnimationRoot;
+        public GameObject buffDescription;
 
         private GameObject[] slots=new GameObject[5];
         private GameObject[] props=new GameObject[5];
@@ -293,16 +293,20 @@ namespace Flicker.UI
                 Input.mousePosition,
                 null,
                 out var localPoint);
-            descriptionAnimationRoot.GetComponent<RectTransform>().anchoredPosition = localPoint;
-            var descriptionTray = descriptionAnimationRoot.transform.Find("BuffDescription");
+            buffDescription.GetComponent<RectTransform>().anchoredPosition = localPoint;
+
+
+            var descriptionTray = buffDescription.transform.Find("Root/BuffDescriptionTray");
             descriptionTray.Find("name").GetComponent<TextMeshProUGUI>().text = showBuffDescriptionEvent.name;
+
             var i = descriptionTray.Find("description").GetComponent<TextMeshProUGUI>();
             i.text = showBuffDescriptionEvent.description;
             var lineHeight = i.GetPreferredValues(i.text,i.GetComponent<RectTransform>().sizeDelta.x,0).y;
             var rt = descriptionTray.GetComponent<RectTransform>();
             rt.sizeDelta = new(rt.sizeDelta.x,lineHeight+50f);
-            descriptionAnimationRoot.SetActive(true);
-            descriptionAnimationRoot.GetComponent<Animator>().Play("UIShow");
+
+            buffDescription.SetActive(true);
+            buffDescription.GetComponent<Animator>().Play("UIShow");
         }
         /// <summary>
         /// 隐藏buff描述框
@@ -310,7 +314,7 @@ namespace Flicker.UI
         /// <param name="hideBuffDescriptionEvent"></param>
         public void HideBuffDescriptionHandler(HideBuffDescriptionEvent hideBuffDescriptionEvent)
         {
-            descriptionAnimationRoot.SetActive(false);
+            buffDescription.SetActive(false);
         }
     }
 }
