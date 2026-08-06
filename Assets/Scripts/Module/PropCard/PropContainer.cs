@@ -97,6 +97,10 @@ namespace Flicker.Module
             buffContainer = GetComponent<BuffContainer>();
             effectContainer = GetComponent<EffectContainer>();
 
+            modifyPipeline.modifierSet.getPropCD = getPropCDMV;
+            modifyPipeline.modifierSet.getPropCDRate = getPropCDRateMV;
+            modifyPipeline.modifierSet.propSlot = propSlotMV;
+            modifyPipeline.modifierSet.nowGetPropCD = nowGetPropCDMV;
         }
         void Update()
         {

@@ -179,6 +179,13 @@ namespace Flicker.Module
             maxJumpingCDMV.AddObserver(nowJumpingCDMV);
             
             SetState(GameCharacterState.Idle);
+
+            modifyPipeline.modifierSet.moveSpeed = moveSpeedMV;
+            modifyPipeline.modifierSet.hangTime = hangTimeMV;
+            modifyPipeline.modifierSet.maxJumpingCD = maxJumpingCDMV;
+            modifyPipeline.modifierSet.jumpingCDRate = jumpingCDRateMV;
+            modifyPipeline.modifierSet.damage = damageMV;
+            modifyPipeline.modifierSet.nowJumpingCD = nowJumpingCDMV;
         }
 
         void OnDrawGizmos()

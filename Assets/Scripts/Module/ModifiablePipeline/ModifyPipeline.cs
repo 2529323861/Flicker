@@ -12,7 +12,19 @@ namespace Flicker.Module
         private GameCharacterController gameCharacterController;
         private EffectContainer effectContainer;
         private PropContainer propContainer = null;
-        private ModifierSet modifierSet;
+        public ModifierSet modifierSet = new()
+            {
+                moveSpeed = new(0f),
+                hangTime = new(0f),
+                maxJumpingCD = new(0f),
+                jumpingCDRate = new(0f),
+                damage = new(0f),
+                nowJumpingCD = new(0f),
+                getPropCD = new(0f),
+                getPropCDRate = new(0f),
+                propSlot = new(0f),
+                nowGetPropCD = new(0f),
+            };
 
         void Awake(){
             this.gameCharacterController = gameObject.GetComponent<GameCharacterController>();
@@ -21,29 +33,6 @@ namespace Flicker.Module
         }
         void Start()
         {
-            modifierSet = new()
-            {
-                moveSpeed = gameCharacterController.moveSpeedMV,
-                hangTime = gameCharacterController.hangTimeMV,
-                maxJumpingCD = gameCharacterController.maxJumpingCDMV,
-                jumpingCDRate = gameCharacterController.jumpingCDRateMV,
-                damage = gameCharacterController.damageMV,
-                nowJumpingCD = gameCharacterController.nowJumpingCDMV
-            };
-            if (propContainer != null)
-            {
-                modifierSet.getPropCD = propContainer.getPropCDMV;
-                modifierSet.getPropCDRate = propContainer.getPropCDRateMV;
-                modifierSet.propSlot = propContainer.propSlotMV;
-                modifierSet.nowGetPropCD = propContainer.nowGetPropCDMV;
-            }
-            else
-            {
-                modifierSet.getPropCD = new(0f);
-                modifierSet.getPropCDRate = new(0f);
-                modifierSet.propSlot = new(0f);
-                modifierSet.nowGetPropCD = new(0f);
-            }
         }
         /// <summary>
         /// 获取修饰
