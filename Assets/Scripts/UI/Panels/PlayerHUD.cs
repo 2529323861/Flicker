@@ -85,6 +85,15 @@ namespace Flicker.UI
             UpdatePropCDBar();
             ResetBuffPos();
         }
+        public override void OnOpen(object args = null)
+        {
+            base.OnOpen(args);
+            ClearCache();
+            foreach (var i in props)
+            {
+                i.SetActive(false);
+            }
+        }
         /// <summary>
         /// 清除缓存
         /// </summary>
