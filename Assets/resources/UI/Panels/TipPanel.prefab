@@ -223,7 +223,7 @@ GameObject:
   - component: {fileID: 4391147423323660062}
   - component: {fileID: 1483318360802881343}
   m_Layer: 5
-  m_Name: TipRoot
+  m_Name: Root
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -608,6 +608,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Layer: 300
   IsFullScreen: 0
+  confirm: {fileID: 7284063395725485208}
   root: {fileID: 3416263947720737511}
   tray: {fileID: 1107215484247477383}
   title: {fileID: 3518665668034049140}
