@@ -31,7 +31,7 @@ namespace Flicker.UI
         }
         public void JoinPlayButtonCallback()
         {
-            
+            UIManager.Instance.Open<JoinInputPanel>();
         }
         public void SettingsButtonCallback()
         {

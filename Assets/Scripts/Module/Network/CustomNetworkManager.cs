@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
@@ -18,16 +19,19 @@ namespace Flicker.Module.Network
     {
         public GameObject gameCharacterPrefab;
         private List<ConnectionProxyWrapper> connectionProxyWrappers=new();
+        public bool isConnected {get;private set;} = false;
         //———————————————————————————————————钩子—————————————————————————————————————————————
         new void Awake()
         {
             base.Awake();
             EventBus.Subscribe<HostPlayClickedEvent>(HostPlayClickedHandler);
+            EventBus.Subscribe<JoinUrlEvent>(JoinUrlHandler);
             
         }
         new void OnDestroy() {
             base.OnDestroy();
             EventBus.Unsubscribe<HostPlayClickedEvent>(HostPlayClickedHandler);
+            EventBus.Unsubscribe<JoinUrlEvent>(JoinUrlHandler);
         }
         public override void OnServerConnect(NetworkConnectionToClient conn)
         {
@@ -42,16 +46,34 @@ namespace Flicker.Module.Network
         public override void OnServerAddPlayer(NetworkConnectionToClient conn)
         {
             base.OnServerAddPlayer(conn);
+            //注册连接，便于后期管理
             ConnectionProxyWrapper connectionProxyWrapper = new();
             connectionProxyWrapper.conn = conn;
             connectionProxyWrapper.connectionProxy = conn.identity.GetComponent<ConnectionProxy>();
             connectionProxyWrappers.Add(connectionProxyWrapper);
+
+            //UI切换
+            connectionProxyWrapper.connectionProxy.SwitchToLobbyUI();
 
         }
         public override void OnServerDisconnect(NetworkConnectionToClient conn)
         {
             base.OnServerDisconnect(conn);
             connectionProxyWrappers.Remove(connectionProxyWrappers.Find((i)=>i.conn==conn));
+        }
+        public override void OnClientConnect()
+        {
+            base.OnClientConnect();
+            isConnected = true;
+        }
+        public override void OnClientDisconnect()
+        {
+            base.OnClientDisconnect();
+            if (!isConnected)
+            {
+                UIManager.Instance.Open<TipPanel>(new TipMessage(){title="连接失败",content="可能是服务器地址错误，或服务端已关闭"});
+            }
+            isConnected = false;
         }
         //——————————————————————————————————————————————————————————————————————————
         public void PrepareMultiPlay()
@@ -104,10 +126,18 @@ namespace Flicker.Module.Network
             }catch(SocketException se)
             {
                 Debug.LogError($"[!] 服务器启动失败：{se}");
+                UIManager.Instance.Open<TipPanel>(new TipMessage(){title="服务器启动失败",content="请检查7777端口是否已被其它进程占用"});
                 return;
             }
             UIManager.Instance.Close<MainPanel>();
             UIManager.Instance.Open<LobbyPanel>();
+        }
+        public void JoinUrlHandler(JoinUrlEvent joinUrlEvent)
+        {
+            string url = joinUrlEvent.url.Trim();
+            url = $"kcp://{url}";
+            Debug.Log($"尝试与 {url} 建立连接");
+            CustomNetworkManager.singleton.StartClient(new Uri(url));
         }
     }
 }

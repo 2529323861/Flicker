@@ -730,7 +730,7 @@ GameObject:
   - component: {fileID: 4496587391994634358}
   - component: {fileID: 6231656351701033580}
   m_Layer: 5
-  m_Name: JoinInputRoot
+  m_Name: Root
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1035,6 +1035,7 @@ GameObject:
   - component: {fileID: 5608720001079681073}
   - component: {fileID: 2885365772074127391}
   - component: {fileID: 2255995157847811668}
+  - component: {fileID: 4283585131971832300}
   m_Layer: 5
   m_Name: JoinInputPanel
   m_TagString: Untagged
@@ -1114,6 +1115,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Layer: 300
   IsFullScreen: 0
+  join: {fileID: 1070595269709451386}
+  quit: {fileID: 16196264970552556}
+  root: {fileID: 0}
+  tMP_InputField: {fileID: 3323686533480925623}
+--- !u!95 &4283585131971832300
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6612608603038480396}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 0ec5a59be122d964381f6753d0e7a29b, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &6692893326142303350
 GameObject:
   m_ObjectHideFlags: 0
