@@ -31,6 +31,8 @@ namespace Flicker.Module
         {
             foreach (var i in GetAll())
             {
+                if (i==null) continue;
+                if (i.gameObject==null) continue;
                 Remove(i.gameObject);
             }
         }
@@ -43,6 +45,7 @@ namespace Flicker.Module
         }
         public void Remove(GameObject gameObject){
             var gcc = gameObject.GetComponent<GameCharacterController>();
+            if (gcc==null) return;
             if (gcc.GetComponent<NetworkIdentity>() == null)
             {
                 Destroy(gcc.gameObject);
