@@ -1117,7 +1117,6 @@ MonoBehaviour:
   IsFullScreen: 0
   join: {fileID: 1070595269709451386}
   quit: {fileID: 16196264970552556}
-  root: {fileID: 0}
   tMP_InputField: {fileID: 3323686533480925623}
 --- !u!95 &4283585131971832300
 Animator:

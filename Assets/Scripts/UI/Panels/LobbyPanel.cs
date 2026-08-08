@@ -11,17 +11,22 @@ namespace Flicker.UI
 {    
     public class LobbyPanel : UIPanel
     {
-        public GameObject readyButton;
-        public GameObject startButton;
-        public GameObject quitButton;
+        public Button readyButton;
+        public Button startButton;
+        public Button quitButton;
         void Awake()
         {
-            startButton.GetComponent<Button>().onClick.AddListener(StartButtonCallback);
+            startButton.onClick.AddListener(StartButtonCallback);
+            quitButton.onClick.AddListener(QuitButtonCallback);
         }
         //————————————————————————————————Handler——————————————————————————————————————————
         public void StartButtonCallback()
         {
             EventBus.Publish<LobbyPanelStartEvent>(new());
+        }
+        public void QuitButtonCallback()
+        {
+            EventBus.Publish<LobbyPanelQuitEvent>(new());
         }
     }
 }

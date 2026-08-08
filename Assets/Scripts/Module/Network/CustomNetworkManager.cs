@@ -10,6 +10,15 @@ using UnityEngine;
 
 namespace Flicker.Module.Network
 {
+    public enum NetworkConnectionState{
+        NoneNetwork,   // 无网络
+        Connectiong,   // 连接中
+        ProxyCreating, // 连接代理创建中
+        Ready,         // 准备中
+        Exiting,       // 主动离开
+        Gaming,        // 游戏中
+
+    }
     class ConnectionProxyWrapper
     {
         public NetworkConnectionToClient conn;
@@ -19,19 +28,24 @@ namespace Flicker.Module.Network
     {
         public GameObject gameCharacterPrefab;
         private List<ConnectionProxyWrapper> connectionProxyWrappers=new();
-        public bool isConnected {get;private set;} = false;
+        /// <summary>
+        /// 当前的连接状态，仅客户端自身维护，不走rpc
+        /// </summary>
+        public NetworkConnectionState networkConnectionState {get;private set;} = NetworkConnectionState.NoneNetwork;
         //———————————————————————————————————钩子—————————————————————————————————————————————
         new void Awake()
         {
             base.Awake();
             EventBus.Subscribe<HostPlayClickedEvent>(HostPlayClickedHandler);
             EventBus.Subscribe<JoinUrlEvent>(JoinUrlHandler);
+            EventBus.Subscribe<LobbyPanelQuitEvent>(LobbyPanelQuitHandler);
             
         }
         new void OnDestroy() {
             base.OnDestroy();
             EventBus.Unsubscribe<HostPlayClickedEvent>(HostPlayClickedHandler);
             EventBus.Unsubscribe<JoinUrlEvent>(JoinUrlHandler);
+            EventBus.Unsubscribe<LobbyPanelQuitEvent>(LobbyPanelQuitHandler);
         }
         public override void OnServerConnect(NetworkConnectionToClient conn)
         {
@@ -64,16 +78,40 @@ namespace Flicker.Module.Network
         public override void OnClientConnect()
         {
             base.OnClientConnect();
-            isConnected = true;
+            networkConnectionState = NetworkConnectionState.ProxyCreating;
+        }
+        /// <summary>
+        /// 这个不是Mirror框架的钩子，而是供连接代理创建后调用的钩子，补齐Mirror的生命周期
+        /// </summary>
+        public void OnClientAddedPlayer(){
+            networkConnectionState = NetworkConnectionState.Ready;
+            UIManager.Instance.Close<JoinInputPanel>();
         }
         public override void OnClientDisconnect()
         {
             base.OnClientDisconnect();
-            if (!isConnected)
-            {
-                UIManager.Instance.Open<TipPanel>(new TipMessage(){title="连接失败",content="可能是服务器地址错误，或服务端已关闭"});
+            switch (networkConnectionState){
+                case NetworkConnectionState.Connectiong:{
+                    UIManager.Instance.Open<TipPanel>(new TipMessage(){title="连接失败",content="可能是服务器地址错误，或服务端已关闭"});
+                }break;
+                case NetworkConnectionState.ProxyCreating:{
+                    UIManager.Instance.Open<TipPanel>(new TipMessage(){title="连接终止",content="目标服务器人数达到上限"});
+                }break;
+                case NetworkConnectionState.Ready:{
+                    UIManager.Instance.Open<TipPanel>(new TipMessage(){title="连接终止",content="目标服务器关闭或你已被踢出"});
+                }break;
+                case NetworkConnectionState.Gaming:{
+                    UIManager.Instance.Open<TipPanel>(new TipMessage(){title="连接终止",content="目标服务器关闭"});
+                }break;
+                default: {
+
+                }break;
             }
-            isConnected = false;
+            networkConnectionState = NetworkConnectionState.NoneNetwork;
+            UIManager.Instance.CloseAll(UILayer.Normal);
+            UIManager.Instance.CloseAll(UILayer.HUD);
+            UIManager.Instance.Open<MainPanel>();
+
         }
         //——————————————————————————————————————————————————————————————————————————
         public void PrepareMultiPlay()
@@ -134,10 +172,20 @@ namespace Flicker.Module.Network
         }
         public void JoinUrlHandler(JoinUrlEvent joinUrlEvent)
         {
+            networkConnectionState = NetworkConnectionState.Connectiong;
             string url = joinUrlEvent.url.Trim();
             url = $"kcp://{url}";
             Debug.Log($"尝试与 {url} 建立连接");
             CustomNetworkManager.singleton.StartClient(new Uri(url));
+        }
+        public void LobbyPanelQuitHandler(LobbyPanelQuitEvent lobbyPanelQuitEvent){
+            networkConnectionState = NetworkConnectionState.Exiting;
+            
+            if (NetworkServer.active){
+                StopHost();
+            }else{
+                StopClient();
+            }
         }
     }
 }

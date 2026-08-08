@@ -82,6 +82,7 @@ namespace Flicker.Module.UIEvent
     /// 多人游戏房间启动
     /// </summary>
     public struct LobbyPanelStartEvent{}
+    public struct LobbyPanelQuitEvent{}
     //—————————————————————————————————————JoinInputPanel———————————————————————————————————
     public struct JoinUrlEvent
     {

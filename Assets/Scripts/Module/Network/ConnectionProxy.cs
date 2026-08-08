@@ -60,6 +60,7 @@ namespace Flicker.Module.Network
             if (isLocalPlayer)
             {
                 EventBus.Subscribe<LobbyPanelStartEvent>(LobbyPanelStartHandler);
+                ((CustomNetworkManager)CustomNetworkManager.singleton).OnClientAddedPlayer();
             }
             base.OnStartLocalPlayer();
 
@@ -93,6 +94,7 @@ namespace Flicker.Module.Network
             UIManager.Instance.CloseAll(UILayer.HUD);
             UIManager.Instance.Open<LobbyPanel>();
         }
+
         //———————————————————————————————————服务端控制命令————————————————————————————————————————————
         [Command]
         public void CmdHostStartGame()

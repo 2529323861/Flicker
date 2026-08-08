@@ -439,9 +439,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Layer: 200
   IsFullScreen: 1
-  readyButton: {fileID: 6862983759676120681}
-  startButton: {fileID: 4391485654861843723}
-  quitButton: {fileID: 2998218981113194059}
+  readyButton: {fileID: 8912196936276159348}
+  startButton: {fileID: 3180257999507132244}
+  quitButton: {fileID: 4924858201124716246}
 --- !u!1 &2766100682852122558
 GameObject:
   m_ObjectHideFlags: 0
