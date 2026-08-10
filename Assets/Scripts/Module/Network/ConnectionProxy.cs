@@ -94,7 +94,16 @@ namespace Flicker.Module.Network
             UIManager.Instance.CloseAll(UILayer.HUD);
             UIManager.Instance.Open<LobbyPanel>();
         }
-
+        [TargetRpc]
+        public void OpenSettlementUI()
+        {
+            UIManager.Instance.Open<MultiPlaySettlementPanel>();
+        }
+        [TargetRpc]
+        public void ChangeNetworkConnectionState(NetworkConnectionState networkConnectionState)
+        {
+            ((CustomNetworkManager)CustomNetworkManager.singleton).networkConnectionState = networkConnectionState;
+        }
         //———————————————————————————————————服务端控制命令————————————————————————————————————————————
         [Command]
         public void CmdHostStartGame()
