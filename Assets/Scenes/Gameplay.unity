@@ -451,6 +451,7 @@ MonoBehaviour:
   evaluationInterval: 3
   timeInterpolationGui: 0
   gameCharacterPrefab: {fileID: 8513294268330583383, guid: fe3704e6495c30f4f8e062fd7c138df2, type: 3}
+  networkConnectionState: 0
 --- !u!1 &604883452
 GameObject:
   m_ObjectHideFlags: 0
