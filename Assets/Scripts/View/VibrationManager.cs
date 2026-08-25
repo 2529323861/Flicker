@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Flicker.Core;
-using Flicker.Core.Service;
+using Flicker.Module.ViewEvent;
 using UnityEngine;
 
 namespace Flicker.View
@@ -25,7 +25,7 @@ namespace Flicker.View
             this.amplitude = amplitude;
         }
     }
-    public class VibrationMgr: Singleton<VibrationMgr>, VibrationMgrInterface
+    public class VibrationManager: Singleton<VibrationManager>
     {   
         /// <summary>
         /// 振动数组，每次进行振动时会遍历累加振幅
@@ -54,6 +54,13 @@ namespace Flicker.View
             }
             Camera.main.transform.localPosition = offset+cameraOffset;
         }
+        public void init()
+        {
+            EventBus.Subscribe<AddVibration>((evt)=>{
+                AddVibration(evt.maxTime, new Vector3(evt.amplitudeX,evt.amplitudeY,evt.amplitudeZ));
+                });
+        }
+        
         public void AddVibration(float maxTime, Vector3 amplitude)
         {
             vibrations.Add(new Vibration(maxTime,amplitude));

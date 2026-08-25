@@ -37,6 +37,8 @@ namespace Flicker.Module.Network
         /// 结束锁，首位玩家胜利后，防止接下来的场景演出造成重复的结算调用
         /// </summary>
         private bool endLock = false;
+
+
         //———————————————————————————————————钩子—————————————————————————————————————————————
         new void Awake()
         {
@@ -119,6 +121,18 @@ namespace Flicker.Module.Network
 
         }
         //——————————————————————————————————————————————————————————————————————————
+        /// <summary>
+        /// 服务端事件转发
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="evt"></param>
+        public void EventBroadcast<T>(T evt)
+        {
+            foreach(var wrapper in connectionProxyWrappers)
+            {
+                wrapper.connectionProxy.EventTransmit(evt);
+            }
+        }
         public void PrepareMultiPlay()
         {
             endLock = false;
@@ -130,6 +144,11 @@ namespace Flicker.Module.Network
 
                 GameObject gameChar = CharacterControllerManager.Instance.Create(gameCharacterPrefab);
                 var gcc = gameChar.GetComponent<PlayerController>();
+                gcc.teamTag = i == 0 ? "TeamA" : "TeamB";
+                gcc.onDestroy = ()=>{
+                    GameManager.Instance.MultiPlayEnd();
+                };
+                wrapper.connectionProxy.BindGameObject(gameChar);
                 if (i == 0)
                 {
                     gcc.SetPosition(4.0f,false);
@@ -138,12 +157,6 @@ namespace Flicker.Module.Network
                 {
                     gcc.SetPosition(-4.0f,true);
                 }
-                gcc.teamTag = i == 0 ? "TeamA" : "TeamB";
-                gcc.onDestroy = ()=>{
-                    GameManager.Instance.MultiPlayEnd();
-                };
-                wrapper.connectionProxy.BindGameObject(gameChar);
-                NetworkServer.Spawn(gameChar, wrapper.conn);
                 i++;
             }
         }

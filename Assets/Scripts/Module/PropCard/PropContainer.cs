@@ -5,6 +5,7 @@ using Flicker.Module.CharacterEvent;
 using Flicker.Module.Context;
 using Flicker.Module.Network;
 using Flicker.Module.UIEvent;
+using Mirror;
 using UnityEngine;
 
 namespace Flicker.Module
@@ -14,7 +15,7 @@ namespace Flicker.Module
     /// <summary>
     /// 道具卡容器，用于管理道具卡的生成，使用
     /// </summary>
-    public class PropContainer : MonoBehaviour
+    public class PropContainer : NetworkBehaviour
     {
         /// <summary>
         /// 道具添加时的UI发布委托，供玩家控制器注入
@@ -60,11 +61,6 @@ namespace Flicker.Module
         /// </summary>
         public MutableValue nowGetPropCDMV;
 
-        /// <summary>
-        /// 本机应运行逻辑（服务端或单机模式）
-        /// </summary>
-        private bool _isLogicActive;
-
         public List<BasePropStrategy> props;
 
         public void GenerateDataPool()
@@ -75,8 +71,6 @@ namespace Flicker.Module
         }
         void Awake()
         {
-            _isLogicActive = NetworkMode.IsLogicActive;
-            if (!_isLogicActive) return;  // 客户端空壳：不初始化逻辑，但生命周期正常走
             props= new();
             for (int i = 0; i < 5; i++)
             {
@@ -104,7 +98,7 @@ namespace Flicker.Module
         }
         void Update()
         {
-            if (!_isLogicActive) return;  // 客户端空壳：逻辑空转
+            if (!isServer) return;  // 客户端空壳：逻辑空转
             ModifierSet values = modifyPipeline.GetModifierSet();
             if (nowGetPropCDMV.value > 0)
             {
