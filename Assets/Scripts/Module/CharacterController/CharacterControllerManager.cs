@@ -36,24 +36,17 @@ namespace Flicker.Module
                 Remove(i.gameObject);
             }
         }
-        public GameObject Create(GameObject gameObject, float y=0, bool isRightWall=false){
+        public GameObject Create(GameObject gameObject){
             GameObject result = Instantiate(gameObject);
             var gcc = result.GetComponent<GameCharacterController>();
-            gcc.SetPosition(y,isRightWall);
             Register(gcc);
+            NetworkServer.Spawn(result);
             return result;
         }
         public void Remove(GameObject gameObject){
             var gcc = gameObject.GetComponent<GameCharacterController>();
             if (gcc==null) return;
-            if (gcc.GetComponent<NetworkIdentity>() == null)
-            {
-                Destroy(gcc.gameObject);
-            }
-            else
-            {
-                NetworkServer.Destroy(gcc.gameObject);
-            }
+            NetworkServer.Destroy(gcc.gameObject);
             Unregister(gcc);
         }
     }

@@ -1,4 +1,3 @@
-using Flicker.Core.Service;
 using UnityEngine;
 using Flicker.Module;
 using Flicker.Module.Buff;
@@ -9,14 +8,11 @@ namespace Flicker.Module
 {   
     public class PlayerController : GameCharacterController
     {
-        [HideInInspector]
-        public IInput input=new KeyInput();
         PropContainer propContainer;
 
         protected override void Awake()
         {
             base.Awake();   // GCC 内部已处理 _isLogicActive 守卫
-            if (!_isLogicActive) return;  // 客户端空壳：不初始化逻辑
             propContainer = GetComponent<PropContainer>();
             InjectUIEvent();
         }
@@ -46,24 +42,7 @@ namespace Flicker.Module
         protected override void Update()
         {
             base.Update();   // GCC 内部已处理 _isLogicActive 守卫
-            if (!_isLogicActive) return;  // 客户端空壳：逻辑空转
-
-            if (input.EnterUp)
-                EnterMove(true);
-            if (input.EnterDown)
-                EnterMove(false);
-            if (input.ExitUp)
-                ExitMove(true);
-            if (input.ExitDown)
-                ExitMove(false);
-            if (input.Jump) Jump();
-            for (int i = 1; i <= 5; i++)
-            {
-                if (input.Number(i))
-                {
-                    propContainer.UseProp(i-1);
-                }
-            }
+            if (!isServer) return;  // 客户端空壳：逻辑空转
         }
         protected override void OnIntoEdge(LevelEdge levelEdge)
         {

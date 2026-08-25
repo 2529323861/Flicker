@@ -3,12 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Flicker.Core;
-using Flicker.Core.Service;
 using Flicker.Module.Buff;
 using Flicker.Module.CharacterEvent;
 using Flicker.Module.Context;
 using Flicker.Module.Network;
 using Flicker.Module.UIEvent;
+using Flicker.Module.ViewEvent;
+using Flicker.View;
+using Mirror;
 using Mirror.BouncyCastle.Asn1.Crmf;
 using Mirror.Transports.Encryption;
 using Unity.VisualScripting;
@@ -48,7 +50,7 @@ namespace Flicker.Module
     /// <summary>
     /// 游戏角色行为基类，定义跳跃，跳跃冷却等所有游戏角色都有的基本行为
     /// </summary>
-    public class GameCharacterController : MonoBehaviour 
+    public class GameCharacterController : NetworkBehaviour 
     {   
         /// <summary>
         /// 跳跃CD变更的委托，供玩家控制器注入
@@ -132,8 +134,6 @@ namespace Flicker.Module
         protected GameCharacterState state = GameCharacterState.Idle;
         public GameCharacterState State { get{return state;} }
 
-        private bool _lastTowardUp = false;
-
         /// <summary>
         /// 这一帧是否发生弹反
         /// </summary>
@@ -143,6 +143,7 @@ namespace Flicker.Module
         private MiniEventBus miniEventBus;
         private HealthController healthController;
         private List<bool> moveDirectionStack = new();
+        private GameCharacterActor gameCharacterActor;
 
         /// <summary>
         /// 本机应运行逻辑（服务端或单机模式）。客户端空壳为 false。
@@ -159,8 +160,8 @@ namespace Flicker.Module
         }
         protected virtual void Awake()
         {
-            _isLogicActive = NetworkMode.IsLogicActive;
-            if (!_isLogicActive) return;  // 客户端空壳：不初始化逻辑，但生命周期正常走
+            //View不受影响
+            gameCharacterActor = GetComponent<GameCharacterActor>();
 
             modifyPipeline = GetComponent<ModifyPipeline>();
             miniEventBus = GetComponent<MiniEventBus>();
@@ -177,8 +178,6 @@ namespace Flicker.Module
                 else nowJumpingCDMV.value *= b/a;
             };
             maxJumpingCDMV.AddObserver(nowJumpingCDMV);
-            
-            SetState(GameCharacterState.Idle);
 
             modifyPipeline.modifierSet.moveSpeed = moveSpeedMV;
             modifyPipeline.modifierSet.hangTime = hangTimeMV;
@@ -198,7 +197,7 @@ namespace Flicker.Module
         /// </summary>
         protected virtual void Update()
         {   
-            if (!_isLogicActive) return;  // 客户端空壳：逻辑空转
+            if (!isServer) return;  // 客户端空壳：逻辑空转
             /** 维护跳跃CD */
             if (nowJumpingCDMV.value > 0)
             {
@@ -279,7 +278,9 @@ namespace Flicker.Module
                     Vector2 temp = startingPoint;
                     startingPoint = distination;
                     distination = temp;
-                    ServiceLocator.GetService<VibrationMgrInterface>().AddVibration(0.4f,new Vector3(0.8f,0,0));
+
+                    ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new AddVibration(){maxTime=0.4f,amplitudeX=0.8f,amplitudeY=0f,amplitudeZ=0f});
+
                     miniEventBus.Publish<AfterParryEvent>(new AfterParryEvent());
 
                 }
@@ -304,7 +305,7 @@ namespace Flicker.Module
             }
             SetState(GameCharacterState.Idle);
             MoveRecovery();
-            ServiceLocator.GetService<VibrationMgrInterface>().AddVibration(0.2f,new Vector3(0.2f,0,0));
+            ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new AddVibration(){maxTime=0.2f,amplitudeX=0.2f,amplitudeY=0f,amplitudeZ=0f});
         }
         public void EnterMove(bool isUp)
         {
@@ -489,16 +490,20 @@ namespace Flicker.Module
 
         private void SetState(GameCharacterState newState)
         {
-            // if (state == newState && towardUp == _lastTowardUp) return;
             state = newState;
-            _lastTowardUp = towardUp;
-            miniEventBus.Publish(new StateChangedEvent { state = state, towardUp = towardUp, isRightWall = isRightWall});
+            UpdateActor(state,towardUp,isRightWall);
         }
         public void SetPosition(float y, bool isRightWall)
         {
             this.isRightWall = isRightWall;
             transform.localPosition = new(isRightWall?rightWallPos:leftWallPos,y,0);
-            SetState(state);
+            UpdateActor(state,towardUp,isRightWall);
+        }
+        [ClientRpc]
+        public void UpdateActor(GameCharacterState state, bool towardUp, bool isRightWall){
+            gameCharacterActor.ChangeAnimationStateTo(state);
+            gameCharacterActor.ChangeTowardTo(towardUp);
+            gameCharacterActor.ChangeWallTo(isRightWall);
         }
     }
 }

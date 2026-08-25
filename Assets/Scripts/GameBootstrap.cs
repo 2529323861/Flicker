@@ -1,4 +1,3 @@
-using Flicker.Core.Service;
 using Flicker.UI;
 using Flicker.View;
 using Unity.VisualScripting;
@@ -9,7 +8,7 @@ public class GameBootstrap : MonoBehaviour
     void Awake()
     {   
         //注册屏幕振动服务
-        ServiceLocator.RegisterService<VibrationMgrInterface>(VibrationMgr.Instance);
+        VibrationManager.Instance.init();
     }
     // Start is called before the first frame update
     void Start()

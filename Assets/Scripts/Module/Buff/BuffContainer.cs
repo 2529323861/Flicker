@@ -5,6 +5,7 @@ using Flicker.Module.CharacterEvent;
 using Flicker.Module.Context;
 using Flicker.Module.Network;
 using Flicker.Module.UIEvent;
+using Mirror;
 using UnityEngine;
 
 namespace Flicker.Module
@@ -20,7 +21,7 @@ namespace Flicker.Module
     /// <summary>
     /// buff容器
     /// </summary>
-    public class BuffContainer: MonoBehaviour
+    public class BuffContainer: NetworkBehaviour
     {
         MiniEventBus miniEventBus;
         /// <summary>
@@ -40,21 +41,15 @@ namespace Flicker.Module
         /// 效果容器
         /// </summary>
         private EffectContainer effectContainer;
-        /// <summary>
-        /// 本机应运行逻辑（服务端或单机模式）
-        /// </summary>
-        private bool _isLogicActive;
         void Awake()
         {
-            _isLogicActive = NetworkMode.IsLogicActive;
-            if (!_isLogicActive) return;  // 客户端空壳：不初始化逻辑，但生命周期正常走
             effectContainer = GetComponent<EffectContainer>();
             miniEventBus = GetComponent<MiniEventBus>();
         }
 
         void Update()
         {
-            if (!_isLogicActive) return;  // 客户端空壳：逻辑空转
+            if (!isServer) return;  // 客户端空壳：逻辑空转
             for (int i = buffs.Count - 1; i >= 0; i--)
             {
                 if (buffs[i].duration > 0)
