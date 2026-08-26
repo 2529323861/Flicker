@@ -104,6 +104,11 @@ namespace Flicker.Module.Network
         {
             ((CustomNetworkManager)CustomNetworkManager.singleton).networkConnectionState = networkConnectionState;
         }
+        [TargetRpc]
+        public void ShowCountDown()
+        {
+            UIManager.Instance.Open<CountDown>();
+        }
         //———————————————————————————————————服务端控制命令————————————————————————————————————————————
         [Command]
         public void CmdHostStartGame()

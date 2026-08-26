@@ -41,6 +41,10 @@ namespace Flicker.Module
         /// 弹反滞空
         /// </summary>
         ParryHanging,
+        /// <summary>
+        /// 死亡
+        /// </summary>
+        Dead,
     }
     [RequireComponent(typeof(ModifyPipeline))]
     [RequireComponent(typeof(HealthController))]
@@ -315,14 +319,14 @@ namespace Flicker.Module
         public void EnterMove(bool isUp)
         {
             moveDirectionStack.Add(isUp);
-            if (state == GameCharacterState.JumpHanging || state == GameCharacterState.ParryHanging) return;
+            if (!(state == GameCharacterState.Idle || state == GameCharacterState.Moving)) return;
             towardUp = moveDirectionStack[moveDirectionStack.Count - 1];
             SetState(GameCharacterState.Moving);
         }
         public void ExitMove(bool isUp)
         {
             moveDirectionStack.Remove(isUp);
-            if (state == GameCharacterState.JumpHanging || state == GameCharacterState.ParryHanging) return;
+            if (!(state == GameCharacterState.Idle || state == GameCharacterState.Moving)) return;
             if (moveDirectionStack.Count == 0)
             {                
                 SetState(GameCharacterState.Idle);
@@ -345,7 +349,7 @@ namespace Flicker.Module
         private void UpdateMove()
         {
             if (moveDirectionStack.Count==0) return;
-            if (state == GameCharacterState.JumpHanging || state == GameCharacterState.ParryHanging) return;
+            if (!(state == GameCharacterState.Idle || state == GameCharacterState.Moving)) return;
 
             bool isUp = moveDirectionStack[moveDirectionStack.Count-1];
             ActionContext actionContext = new();
@@ -488,6 +492,8 @@ namespace Flicker.Module
             ActionContext actionContext = new();
             miniEventBus.Publish<BeforeDie>(new BeforeDie{context=actionContext});
             if (actionContext.cancelled) return;
+
+            SetState(GameCharacterState.Dead);
 
             miniEventBus.Publish<AfterDie>(new AfterDie());
             onDestroy?.Invoke();

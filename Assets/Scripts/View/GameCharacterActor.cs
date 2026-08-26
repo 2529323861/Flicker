@@ -25,6 +25,14 @@ namespace Flicker.View
         public void ChangeAnimationStateTo(GameCharacterState gameCharacterState)
         {
             animator.SetInteger("State",(int)gameCharacterState);
+            if (gameCharacterState == GameCharacterState.Dead)
+            {
+                _spriteRenderer.sortingOrder = 1;
+            }
+            else
+            {
+                _spriteRenderer.sortingOrder = 0;
+            }
         }
     }
 }

@@ -147,13 +147,16 @@ namespace Flicker.Module.Network
                 wrapper.connectionProxy.EventTransmit(evt);
             }
         }
+        Coroutine countDownCoroutine;
         public void PrepareMultiPlay()
         {
             endLock = false;
+            IsLimited = true;
             int i = 0;
             foreach(var wrapper in connectionProxyWrappers)
             {
                 wrapper.connectionProxy.SwitchToGameUI();
+                wrapper.connectionProxy.ShowCountDown();
                 wrapper.connectionProxy.ChangeNetworkConnectionState(NetworkConnectionState.Gaming);
 
                 GameObject gameChar = CharacterControllerManager.Instance.Create(gameCharacterPrefab);
@@ -173,20 +176,36 @@ namespace Flicker.Module.Network
                 }
                 i++;
             }
+            if (countDownCoroutine != null)
+            {
+                StopCoroutine(countDownCoroutine);
+            }
+            countDownCoroutine = StartCoroutine(StartCountDown());
+        }
+        IEnumerator StartCountDown()
+        {
+            yield return new WaitForSeconds(3f);
+            IsLimited = false;
         }
         public void MultiPlayEnd()
         {
             if (endLock) return;
             endLock = true;
+            IsLimited = true;
+
+            if (countDownCoroutine != null)
+            {
+                StopCoroutine(countDownCoroutine);
+            }
+
             foreach(var wrapper in connectionProxyWrappers){
                 wrapper.connectionProxy.ChangeNetworkConnectionState(NetworkConnectionState.Ready);
-                wrapper.connectionProxy.ClearBind();
             }
             StartCoroutine(MultiPlayEnd_());
         }
         IEnumerator MultiPlayEnd_(){
             //这里主要是做2秒提供给场景完成剩余表演，也好让玩家看清是怎么结束的
-            yield return new WaitForSecondsRealtime(2f);
+            yield return new WaitForSeconds(2f);
             CharacterControllerManager.Instance.RemoveAll();
             //弹出结算UI
             foreach (var i in connectionProxyWrappers)
