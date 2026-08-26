@@ -34,6 +34,19 @@ namespace Flicker.Module.Network
         /// </summary>
         public NetworkConnectionState networkConnectionState = NetworkConnectionState.NoneNetwork;
         /// <summary>
+        /// 是否暂停，有别于是否被限制，因为剧情和倒数也能被暂停
+        /// </summary>
+        public bool IsPaused {get;private set;} = false;
+        /// <summary>
+        /// 是否被限制，准备倒数，剧情，演出时用于停止逻辑
+        /// </summary>
+        public bool IsLimited {get;private set;} = false;
+        /// <summary>
+        /// 是否禁用逻辑
+        /// </summary>
+        public bool IsLogicDisabled {get{return IsPaused||IsLimited;}}
+
+        /// <summary>
         /// 结束锁，首位玩家胜利后，防止接下来的场景演出造成重复的结算调用
         /// </summary>
         private bool endLock = false;
@@ -121,6 +134,7 @@ namespace Flicker.Module.Network
 
         }
         //——————————————————————————————————————————————————————————————————————————
+        
         /// <summary>
         /// 服务端事件转发
         /// </summary>

@@ -99,6 +99,7 @@ namespace Flicker.Module
         void Update()
         {
             if (!isServer) return;  // 客户端空壳：逻辑空转
+            if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
             ModifierSet values = modifyPipeline.GetModifierSet();
             if (nowGetPropCDMV.value > 0)
             {
@@ -159,6 +160,8 @@ namespace Flicker.Module
         }
         public void UseProp(int propSlotIndex)
         {
+            if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
+
             ModifierSet values = modifyPipeline.GetModifierSet();
             if (propSlotIndex >= values.propSlot.FinalValue) return;
             if (props[propSlotIndex]==null) return;

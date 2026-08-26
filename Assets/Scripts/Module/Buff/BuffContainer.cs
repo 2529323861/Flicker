@@ -50,6 +50,7 @@ namespace Flicker.Module
         void Update()
         {
             if (!isServer) return;  // 客户端空壳：逻辑空转
+            if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
             for (int i = buffs.Count - 1; i >= 0; i--)
             {
                 if (buffs[i].duration > 0)

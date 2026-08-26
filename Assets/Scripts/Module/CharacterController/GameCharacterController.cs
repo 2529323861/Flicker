@@ -198,6 +198,7 @@ namespace Flicker.Module
         protected virtual void Update()
         {   
             if (!isServer) return;  // 客户端空壳：逻辑空转
+            if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
             /** 维护跳跃CD */
             if (nowJumpingCDMV.value > 0)
             {
@@ -225,10 +226,6 @@ namespace Flicker.Module
             if (state != GameCharacterState.Idle && state != GameCharacterState.Moving) return;
             if (nowJumpingCDMV.value > 0 ) return;
 
-            ActionContext actionContext = new();
-            miniEventBus.Publish<BeforeJumpEvent>(new BeforeJumpEvent{context=actionContext,toRightWall=!isRightWall});
-            if (actionContext.cancelled) return;  //事件被取消
-
             ForceJump(false);
         }
         /// <summary>
@@ -236,6 +233,12 @@ namespace Flicker.Module
         /// </summary>
         public void ForceJump(bool isForce=true)
         {
+            if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
+
+            ActionContext actionContext = new();
+            miniEventBus.Publish<BeforeJumpEvent>(new BeforeJumpEvent{context=actionContext,toRightWall=!isRightWall});
+            if (actionContext.cancelled) return;  //事件被取消
+
             if (_jumpingCoroutine != null)
             {
                 StopCoroutine(_jumpingCoroutine);
@@ -264,6 +267,8 @@ namespace Flicker.Module
             while (timer <= hangTime)
             {
                 yield return null;
+
+                if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) continue;  //暂停/剧情/倒数
                 timer += Time.deltaTime;
 
                 /** 弹反检测 */
