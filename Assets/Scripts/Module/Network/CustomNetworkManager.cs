@@ -24,6 +24,7 @@ namespace Flicker.Module.Network
     {
         public NetworkConnectionToClient conn;
         public ConnectionProxy connectionProxy;
+        public bool isReady;
     }
     public class CustomNetworkManager: NetworkManager
     {
@@ -84,6 +85,7 @@ namespace Flicker.Module.Network
             ConnectionProxyWrapper connectionProxyWrapper = new();
             connectionProxyWrapper.conn = conn;
             connectionProxyWrapper.connectionProxy = conn.identity.GetComponent<ConnectionProxy>();
+            connectionProxyWrapper.isReady = false;
             connectionProxyWrappers.Add(connectionProxyWrapper);
 
             //UI切换
@@ -94,6 +96,7 @@ namespace Flicker.Module.Network
         {
             base.OnServerDisconnect(conn);
             connectionProxyWrappers.Remove(connectionProxyWrappers.Find((i)=>i.conn==conn));
+            if (connectionProxyWrappers.Count!=0) PublishLobbyPanelReadySnapshot();
         }
         public override void OnClientConnect()
         {
@@ -215,9 +218,50 @@ namespace Flicker.Module.Network
         }
         public void HostStartGame()
         {
-            GameManager.Instance.PrepareMultiPlay();
+            if (connectionProxyWrappers.Count == 2)
+            {
+                if (connectionProxyWrappers[0].isReady && connectionProxyWrappers[1].isReady)
+                {
+                    GameManager.Instance.PrepareMultiPlay();
+                }
+                else
+                {
+                    UIManager.Instance.Open<TipPanel>(new TipMessage(){title="还不能开始！",content="还有玩家未准备！"});
+                }
+            }
+            else
+            {
+                UIManager.Instance.Open<TipPanel>(new TipMessage(){title="还不能开始！",content="玩家人数不足！"});
+            }
+            
         }
-        
+        public void SwitchReady(NetworkConnectionToClient sender)
+        {
+            foreach (var i in connectionProxyWrappers)
+            {
+                if (i.conn == sender)
+                {
+                    i.isReady = !i.isReady;
+                }
+            }
+            PublishLobbyPanelReadySnapshot();
+        }
+        public void PublishLobbyPanelReadySnapshot()
+        {
+            print("快照被调用");
+            LobbyPanelReadySnapshotEvent lobbyPanelReadySnapshotEvent = new();
+            if (connectionProxyWrappers.Count == 1)
+            {    
+                lobbyPanelReadySnapshotEvent.client = false;
+            }
+            else
+            {
+                lobbyPanelReadySnapshotEvent.client = connectionProxyWrappers[1].isReady;
+            }
+            lobbyPanelReadySnapshotEvent.host = connectionProxyWrappers[0].isReady;
+
+            EventBroadcast(lobbyPanelReadySnapshotEvent);
+        }
         //—————————————————————————————————Handler—————————————————————————————————————————————
         public void HostPlayClickedHandler(HostPlayClickedEvent hostPlayClickedEvent)
         {

@@ -52,6 +52,8 @@ namespace Flicker.Module.Network
             if (isLocalPlayer)
             {                
                 EventBus.Unsubscribe<LobbyPanelStartEvent>(LobbyPanelStartHandler);
+                EventBus.Unsubscribe<LobbyPanelReadyEvent>(LobbyPanelReadyHandler);
+                EventBus.Unsubscribe<LobbyPanelReadySnapshotRequest>(LobbyPanelReadySnapshotRequestHandler);
             }
         }
         //—————————————————————————————————————客户端方法—————————————————————————————————————————————
@@ -60,6 +62,9 @@ namespace Flicker.Module.Network
             if (isLocalPlayer)
             {
                 EventBus.Subscribe<LobbyPanelStartEvent>(LobbyPanelStartHandler);
+                EventBus.Subscribe<LobbyPanelReadyEvent>(LobbyPanelReadyHandler);
+                EventBus.Subscribe<LobbyPanelReadySnapshotRequest>(LobbyPanelReadySnapshotRequestHandler);
+
                 ((CustomNetworkManager)CustomNetworkManager.singleton).OnClientAddedPlayer();
             }
             base.OnStartLocalPlayer();
@@ -110,6 +115,18 @@ namespace Flicker.Module.Network
             UIManager.Instance.Open<CountDown>();
         }
         //———————————————————————————————————服务端控制命令————————————————————————————————————————————
+        [Command]
+        public void CmdReadySnapshotRequest()
+        {
+            ((CustomNetworkManager)CustomNetworkManager.singleton).PublishLobbyPanelReadySnapshot();
+        }
+        [Command]
+        public void CmdClientReady(NetworkConnectionToClient sender = null)
+        {
+            if (sender==null) return;
+            print("服务端收到准备指令");
+            ((CustomNetworkManager)CustomNetworkManager.singleton).SwitchReady(sender);
+        }
         [Command]
         public void CmdHostStartGame()
         {
@@ -168,6 +185,14 @@ namespace Flicker.Module.Network
         {
             /** 暂时不做什么房主才能启动，先把链路跑通再做细枝末节的处理 */
             CmdHostStartGame();
+        }
+        public void LobbyPanelReadyHandler(LobbyPanelReadyEvent lobbyPanelReadyEvent)
+        {
+            CmdClientReady();
+        }
+        public void LobbyPanelReadySnapshotRequestHandler(LobbyPanelReadySnapshotRequest lobbyPanelReadySnapshotRequest)
+        {
+            CmdReadySnapshotRequest();
         }
     }
 }
