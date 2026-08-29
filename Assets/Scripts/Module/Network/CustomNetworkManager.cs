@@ -175,6 +175,7 @@ namespace Flicker.Module.Network
                     GameManager.Instance.MultiPlayEnd();
                 };
                 wrapper.connectionProxy.BindGameObject(gameChar);
+                gameChar.GetComponent<PlayerController>().SetPlayerName(wrapper.playerName);
                 if (i == 0)
                 {
                     gcc.SetPosition(4.0f,false);

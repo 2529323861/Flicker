@@ -35,8 +35,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1.2845, y: 0.0869}
-  m_SizeDelta: {x: 5.3989, y: 0.807}
+  m_AnchoredPosition: {x: -1, y: 0.0869}
+  m_SizeDelta: {x: 5.3989, y: 0.45}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &575275461471006983
 MeshRenderer:
@@ -127,7 +127,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 5.55
+  m_fontSize: 3.1
   m_fontSizeBase: 9.56
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -322,6 +322,7 @@ MonoBehaviour:
   teamTag: Player
   towardUp: 0
   isRightWall: 0
+  playerName: {fileID: 4397360555249551361}
 --- !u!58 &4602146967020674669
 CircleCollider2D:
   m_ObjectHideFlags: 0

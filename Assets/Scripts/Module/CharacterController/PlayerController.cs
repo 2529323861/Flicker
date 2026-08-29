@@ -3,11 +3,13 @@ using Flicker.Module;
 using Flicker.Module.Buff;
 using Flicker.Core;
 using Flicker.Module.UIEvent;
+using TMPro;
 
 namespace Flicker.Module
 {   
     public class PlayerController : GameCharacterController
     {
+        public TMP_Text playerName;
         PropContainer propContainer;
 
         protected override void Awake()
@@ -47,6 +49,10 @@ namespace Flicker.Module
         protected override void OnIntoEdge(LevelEdge levelEdge)
         {
             LevelManager.Instance.OnPlayerIntoEdge(levelEdge);
+        }
+        public void SetPlayerName(string name)
+        {
+            playerName.text = name;
         }
     }
 }
