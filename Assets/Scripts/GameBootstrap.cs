@@ -1,3 +1,4 @@
+using Flicker.Data;
 using Flicker.UI;
 using Flicker.View;
 using Unity.VisualScripting;
@@ -9,6 +10,7 @@ public class GameBootstrap : MonoBehaviour
     {   
         //注册屏幕振动服务
         VibrationManager.Instance.init();
+        SettingsManager.Instance.init();
     }
     // Start is called before the first frame update
     void Start()
