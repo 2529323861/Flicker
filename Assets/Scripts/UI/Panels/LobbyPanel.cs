@@ -5,6 +5,7 @@ using Flicker.Core;
 using Flicker.Module.UIEvent;
 using Flicker.UI;
 using Mirror;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,6 +20,8 @@ namespace Flicker.UI
         public Image other;
         public Sprite prepared;
         public Sprite unprepared;
+        public TMP_Text selfName;
+        public TMP_Text otherName;
         void Awake()
         {
             quitButton.onClick.AddListener(QuitButtonCallback);
@@ -31,7 +34,9 @@ namespace Flicker.UI
             {
                 startButton.interactable = false;
             }
-            EventBus.Subscribe<LobbyPanelReadySnapshotEvent>(lobbyPanelReadySnapshotHandler);
+
+            EventBus.Subscribe<LobbyPanelReadySnapshotEvent>(LobbyPanelReadySnapshotHandler);
+            EventBus.Subscribe<LobbyPanelPlayerNameUpdateEvent>(LobbyPanelPlayerNameUpdateHandler);
         }
         public override void OnOpen(object args = null)
         {
@@ -51,7 +56,7 @@ namespace Flicker.UI
         {
             EventBus.Publish<LobbyPanelReadyEvent>(new());
         }
-        public void lobbyPanelReadySnapshotHandler(LobbyPanelReadySnapshotEvent lobbyPanelReadySnapshotEvent)
+        public void LobbyPanelReadySnapshotHandler(LobbyPanelReadySnapshotEvent lobbyPanelReadySnapshotEvent)
         {
             if (NetworkServer.active)
             {
@@ -62,6 +67,19 @@ namespace Flicker.UI
             {
                 self.sprite = lobbyPanelReadySnapshotEvent.client ? prepared : unprepared;
                 other.sprite = lobbyPanelReadySnapshotEvent.host ? prepared : unprepared;
+            }
+        }
+        public void LobbyPanelPlayerNameUpdateHandler(LobbyPanelPlayerNameUpdateEvent lobbyPanelPlayerNameUpdateEvent)
+        {
+            if (NetworkServer.active)
+            {
+                selfName.text = lobbyPanelPlayerNameUpdateEvent.host;
+                otherName.text = lobbyPanelPlayerNameUpdateEvent.client;
+            }
+            else
+            {
+                selfName.text = lobbyPanelPlayerNameUpdateEvent.client;
+                otherName.text = lobbyPanelPlayerNameUpdateEvent.host;
             }
         }
     }

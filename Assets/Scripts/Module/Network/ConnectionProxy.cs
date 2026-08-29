@@ -1,5 +1,6 @@
 using System;
 using Flicker.Core;
+using Flicker.Data;
 using Flicker.Module.UIEvent;
 using Flicker.UI;
 using Mirror;
@@ -65,6 +66,8 @@ namespace Flicker.Module.Network
                 EventBus.Subscribe<LobbyPanelReadyEvent>(LobbyPanelReadyHandler);
                 EventBus.Subscribe<LobbyPanelReadySnapshotRequest>(LobbyPanelReadySnapshotRequestHandler);
 
+                CmdUpdatePlayerName();
+
                 ((CustomNetworkManager)CustomNetworkManager.singleton).OnClientAddedPlayer();
             }
             base.OnStartLocalPlayer();
@@ -115,6 +118,12 @@ namespace Flicker.Module.Network
             UIManager.Instance.Open<CountDown>();
         }
         //———————————————————————————————————服务端控制命令————————————————————————————————————————————
+        [Command]
+        public void CmdUpdatePlayerName(NetworkConnectionToClient sender = null)
+        {
+            if (sender==null) return;
+            ((CustomNetworkManager)CustomNetworkManager.singleton).UpdatePlayerName(SettingsManager.Instance.GetSetting<string>("playerName"),sender);
+        }
         [Command]
         public void CmdReadySnapshotRequest()
         {

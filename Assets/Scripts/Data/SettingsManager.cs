@@ -9,7 +9,7 @@ namespace Flicker.Data
     {
         public void init()
         {
-            RegistrySetting("player_name", ()=>{return GetRandomName();});
+            RegistrySetting("playerName", ()=>{return GetRandomName();});
         }
         private Dictionary<string, Func<object>> defaultPairs=new();
         public void RegistrySetting<T>(string key, Func<T> defaultValue){

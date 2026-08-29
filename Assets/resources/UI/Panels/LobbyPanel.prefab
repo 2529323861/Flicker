@@ -58,6 +58,8 @@ MonoBehaviour:
   other: {fileID: 122560234460146683}
   prepared: {fileID: 21300000, guid: e54e4235c8d0676408c1515a39acdfa4, type: 3}
   unprepared: {fileID: 21300000, guid: c94df13d986cf7b41bba4d45145bf2fd, type: 3}
+  selfName: {fileID: 319460414832127989}
+  otherName: {fileID: 3625925409542600979}
 --- !u!1 &325988334446599750
 GameObject:
   m_ObjectHideFlags: 0

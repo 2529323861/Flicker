@@ -25,6 +25,7 @@ namespace Flicker.Module.Network
         public NetworkConnectionToClient conn;
         public ConnectionProxy connectionProxy;
         public bool isReady;
+        public string playerName;
     }
     public class CustomNetworkManager: NetworkManager
     {
@@ -86,6 +87,7 @@ namespace Flicker.Module.Network
             connectionProxyWrapper.conn = conn;
             connectionProxyWrapper.connectionProxy = conn.identity.GetComponent<ConnectionProxy>();
             connectionProxyWrapper.isReady = false;
+            connectionProxyWrapper.playerName = "暂无玩家";
             connectionProxyWrappers.Add(connectionProxyWrapper);
 
             //UI切换
@@ -96,7 +98,11 @@ namespace Flicker.Module.Network
         {
             base.OnServerDisconnect(conn);
             connectionProxyWrappers.Remove(connectionProxyWrappers.Find((i)=>i.conn==conn));
-            if (connectionProxyWrappers.Count!=0) PublishLobbyPanelReadySnapshot();
+            if (connectionProxyWrappers.Count!=0)
+            {
+                PublishLobbyPanelReadySnapshot();
+                PublishLobbyPanelPlayerNameUpdate();
+            }
         }
         public override void OnClientConnect()
         {
@@ -261,6 +267,31 @@ namespace Flicker.Module.Network
             lobbyPanelReadySnapshotEvent.host = connectionProxyWrappers[0].isReady;
 
             EventBroadcast(lobbyPanelReadySnapshotEvent);
+        }
+        public void UpdatePlayerName(string name, NetworkConnectionToClient sender)
+        {
+            foreach (var i in connectionProxyWrappers)
+            {
+                if (i.conn == sender)
+                {
+                    i.playerName = name;
+                }
+            }
+            PublishLobbyPanelPlayerNameUpdate();
+        }
+        public void PublishLobbyPanelPlayerNameUpdate()
+        {
+            LobbyPanelPlayerNameUpdateEvent lobbyPanelPlayerNameUpdateEvent = new();
+            if (connectionProxyWrappers.Count == 1)
+            {    
+                lobbyPanelPlayerNameUpdateEvent.client = "暂无玩家";
+            }
+            else
+            {
+                lobbyPanelPlayerNameUpdateEvent.client = connectionProxyWrappers[1].playerName;
+            }
+            lobbyPanelPlayerNameUpdateEvent.host = connectionProxyWrappers[0].playerName;
+            EventBroadcast(lobbyPanelPlayerNameUpdateEvent);
         }
         //—————————————————————————————————Handler—————————————————————————————————————————————
         public void HostPlayClickedHandler(HostPlayClickedEvent hostPlayClickedEvent)

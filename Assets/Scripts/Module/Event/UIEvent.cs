@@ -93,6 +93,11 @@ namespace Flicker.Module.UIEvent
         public bool client;
     }
     public struct LobbyPanelReadySnapshotRequest{}
+    public struct LobbyPanelPlayerNameUpdateEvent
+    {
+        public string host;
+        public string client;
+    }
     //—————————————————————————————————————JoinInputPanel———————————————————————————————————
     public struct JoinUrlEvent
     {
