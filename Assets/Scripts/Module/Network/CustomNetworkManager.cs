@@ -214,8 +214,8 @@ namespace Flicker.Module.Network
             StartCoroutine(MultiPlayEnd_());
         }
         IEnumerator MultiPlayEnd_(){
-            //这里主要是做2秒提供给场景完成剩余表演，也好让玩家看清是怎么结束的
-            yield return new WaitForSeconds(2f);
+            //这里主要是做1秒提供给场景完成剩余表演，也好让玩家看清是怎么结束的
+            yield return new WaitForSeconds(1f);
             CharacterControllerManager.Instance.RemoveAll();
             //弹出结算UI
             foreach (var i in connectionProxyWrappers)

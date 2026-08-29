@@ -26,14 +26,7 @@ namespace Flicker.UI
         {
             quitButton.onClick.AddListener(QuitButtonCallback);
             readyButton.onClick.AddListener(ReadyButtonCallback);
-            if (NetworkServer.active)
-            {
-                startButton.onClick.AddListener(StartButtonCallback);
-            }
-            else
-            {
-                startButton.interactable = false;
-            }
+            startButton.onClick.AddListener(StartButtonCallback);
 
             EventBus.Subscribe<LobbyPanelReadySnapshotEvent>(LobbyPanelReadySnapshotHandler);
             EventBus.Subscribe<LobbyPanelPlayerNameUpdateEvent>(LobbyPanelPlayerNameUpdateHandler);
@@ -41,6 +34,7 @@ namespace Flicker.UI
         public override void OnOpen(object args = null)
         {
             base.OnOpen(args);
+            startButton.interactable = NetworkServer.active;
             EventBus.Publish<LobbyPanelReadySnapshotRequest>(new());
         }
         //————————————————————————————————Handler——————————————————————————————————————————

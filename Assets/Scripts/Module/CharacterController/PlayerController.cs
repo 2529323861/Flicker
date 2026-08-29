@@ -4,6 +4,7 @@ using Flicker.Module.Buff;
 using Flicker.Core;
 using Flicker.Module.UIEvent;
 using TMPro;
+using Mirror;
 
 namespace Flicker.Module
 {   
@@ -50,6 +51,7 @@ namespace Flicker.Module
         {
             LevelManager.Instance.OnPlayerIntoEdge(levelEdge);
         }
+        [ClientRpc]
         public void SetPlayerName(string name)
         {
             playerName.text = name;

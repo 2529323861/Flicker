@@ -66,7 +66,7 @@ namespace Flicker.Module.Network
                 EventBus.Subscribe<LobbyPanelReadyEvent>(LobbyPanelReadyHandler);
                 EventBus.Subscribe<LobbyPanelReadySnapshotRequest>(LobbyPanelReadySnapshotRequestHandler);
 
-                CmdUpdatePlayerName();
+                CmdUpdatePlayerName(SettingsManager.Instance.GetSetting<string>("playerName"));
 
                 ((CustomNetworkManager)CustomNetworkManager.singleton).OnClientAddedPlayer();
             }
@@ -119,10 +119,10 @@ namespace Flicker.Module.Network
         }
         //———————————————————————————————————服务端控制命令————————————————————————————————————————————
         [Command]
-        public void CmdUpdatePlayerName(NetworkConnectionToClient sender = null)
+        public void CmdUpdatePlayerName(string name, NetworkConnectionToClient sender = null)
         {
             if (sender==null) return;
-            ((CustomNetworkManager)CustomNetworkManager.singleton).UpdatePlayerName(SettingsManager.Instance.GetSetting<string>("playerName"),sender);
+            ((CustomNetworkManager)CustomNetworkManager.singleton).UpdatePlayerName(name,sender);
         }
         [Command]
         public void CmdReadySnapshotRequest()
