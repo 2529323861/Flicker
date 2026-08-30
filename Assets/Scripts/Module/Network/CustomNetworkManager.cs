@@ -176,7 +176,9 @@ namespace Flicker.Module.Network
                     GameManager.Instance.MultiPlayEnd();
                 };
                 wrapper.connectionProxy.BindGameObject(gameChar);
+
                 gameChar.GetComponent<PlayerController>().SetPlayerName(wrapper.playerName);
+
                 if (i == 0)
                 {
                     gcc.SetPosition(4.0f,false);
@@ -186,6 +188,7 @@ namespace Flicker.Module.Network
                     gcc.SetPosition(-4.0f,true);
                 }
                 i++;
+                gameChar.GetComponent<PropContainer>().AddProp(); //开局获得一个随机道具
             }
 
             if (i == 1 && Debugger.isDebug)

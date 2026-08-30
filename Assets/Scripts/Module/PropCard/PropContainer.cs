@@ -134,6 +134,10 @@ namespace Flicker.Module
             }
             return result;
         }
+        public void AddProp()
+        {
+            AddProp(propCardDeck.GetProp());
+        }
         /// <summary>
         /// 添加道具卡到当前槽位，若超出当前槽位值则不赋值
         /// </summary>
