@@ -225,6 +225,10 @@ namespace Flicker.Module.Network
         }
         public void HostStartGame()
         {
+            if (Debugger.isDebug) {
+                GameManager.Instance.PrepareMultiPlay();
+                return;
+                }
             if (connectionProxyWrappers.Count == 2)
             {
                 if (connectionProxyWrappers[0].isReady && connectionProxyWrappers[1].isReady)
