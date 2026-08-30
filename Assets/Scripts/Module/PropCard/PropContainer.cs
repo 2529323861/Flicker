@@ -155,7 +155,7 @@ namespace Flicker.Module
             props[i]=basePropStrategy;
             miniEventBus.Publish<AfterAddPropEvent>(new());
 
-            onPropAdded(new(){basePropStrategyMetaData=basePropStrategy.GetMetaData(),slotIndex=i});
+            onPropAdded?.Invoke(new(){basePropStrategyMetaData=basePropStrategy.GetMetaData(),slotIndex=i});
         }
         public void UseProp(int propSlotIndex)
         {
