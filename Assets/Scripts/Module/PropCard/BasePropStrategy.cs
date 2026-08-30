@@ -1,6 +1,13 @@
 
 namespace Flicker.Module
 {
+    public enum Quality
+    {
+        Ordinary,
+        Rare,
+        Epic,
+        Legend
+    }
     public struct BasePropStrategyMetaData
     {
         /// <summary>
@@ -23,6 +30,10 @@ namespace Flicker.Module
         /// 道具描述
         /// </summary>
         public string description;
+        /// <summary>
+        /// 稀有度
+        /// </summary>
+        public Quality quality;
     }
     /// <summary>
     /// 道具卡策略体基类
@@ -49,6 +60,10 @@ namespace Flicker.Module
         /// </summary>
         public string factoryId = "00000";
         /// <summary>
+        /// 稀有度
+        /// </summary>
+        public Quality quality = Quality.Ordinary;
+        /// <summary>
         /// 道具资源路径
         /// </summary>
         public string path = "Unknown";
@@ -65,6 +80,7 @@ namespace Flicker.Module
             basePropStrategyMetaData.factoryId = factoryId;
             basePropStrategyMetaData.path = path;
             basePropStrategyMetaData.description = description;
+            basePropStrategyMetaData.quality = quality;
             return basePropStrategyMetaData;
         }
     }
