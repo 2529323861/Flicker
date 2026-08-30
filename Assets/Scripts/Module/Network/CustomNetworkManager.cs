@@ -30,6 +30,7 @@ namespace Flicker.Module.Network
     public class CustomNetworkManager: NetworkManager
     {
         public GameObject gameCharacterPrefab;
+        public GameObject mockCharacterPrefab;
         private List<ConnectionProxyWrapper> connectionProxyWrappers=new();
         /// <summary>
         /// 当前的连接状态，仅客户端自身维护，不走rpc
@@ -186,6 +187,14 @@ namespace Flicker.Module.Network
                 }
                 i++;
             }
+
+            if (i == 1 && Debugger.isDebug)
+            {
+                GameObject gameChar = CharacterControllerManager.Instance.Create(mockCharacterPrefab);
+                var gcc = gameChar.GetComponent<GameCharacterController>();
+                gcc.SetPosition(-4.0f,true);
+            }
+
             if (countDownCoroutine != null)
             {
                 StopCoroutine(countDownCoroutine);

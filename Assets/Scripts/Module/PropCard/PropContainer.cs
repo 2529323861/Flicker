@@ -10,7 +10,6 @@ using UnityEngine;
 
 namespace Flicker.Module
 {
-    [RequireComponent(typeof(PlayerController))]
     [RequireComponent(typeof(PropCardDeck))]
     /// <summary>
     /// 道具卡容器，用于管理道具卡的生成，使用
