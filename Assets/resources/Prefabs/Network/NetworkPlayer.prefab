@@ -316,6 +316,7 @@ MonoBehaviour:
   maxJumpingCD: 2
   jumpingCDRate: 1
   damage: 1
+  stiffenTime: 3
   collisionRadius: 0.5
   leftWallPos: -4.1
   rightWallPos: 4.1

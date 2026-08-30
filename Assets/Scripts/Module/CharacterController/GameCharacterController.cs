@@ -92,6 +92,12 @@ namespace Flicker.Module
         public ModifiableValue damageMV;
 
         /// <summary>
+        /// 僵直时间
+        /// </summary>
+        public float stiffenTime;
+        public ModifiableValue stiffenTimeMV;
+
+        /// <summary>
         /// 碰撞半径
         /// </summary>
         public float collisionRadius;
@@ -161,6 +167,7 @@ namespace Flicker.Module
             maxJumpingCDMV = new(maxJumpingCD);
             damageMV = new(damage);
             jumpingCDRateMV = new(jumpingCDRate);
+            stiffenTimeMV = new(stiffenTime);
         }
         protected virtual void Awake()
         {
@@ -189,6 +196,7 @@ namespace Flicker.Module
             modifyPipeline.modifierSet.jumpingCDRate = jumpingCDRateMV;
             modifyPipeline.modifierSet.damage = damageMV;
             modifyPipeline.modifierSet.nowJumpingCD = nowJumpingCDMV;
+            modifyPipeline.modifierSet.stiffenTime = stiffenTimeMV;
         }
 
         void OnDrawGizmos()
@@ -309,8 +317,8 @@ namespace Flicker.Module
             }
             else
             {
-                /** 这里改为施加僵直buff */
-                gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),3);
+                values = modifyPipeline.GetModifierSet(); //重新获取修饰
+                gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),values.stiffenTime.FinalValue);
             }
             SetState(GameCharacterState.Idle);
             MoveRecovery();

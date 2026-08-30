@@ -40,6 +40,11 @@ namespace Flicker.Module
         /// 获取道具卡冷却速率
         /// </summary>
         public ModifiableValue getPropCDRate;
+
+        /// <summary>
+        /// 僵直时间
+        /// </summary>
+        public ModifiableValue stiffenTime;
         /// <summary>
         /// 剩余僵直时间
         /// </summary>
@@ -63,6 +68,7 @@ namespace Flicker.Module
             propSlot.ClearModify();
             getPropCD.ClearModify();
             getPropCDRate.ClearModify();
+            stiffenTime.ClearModify();
         }
     }
 }

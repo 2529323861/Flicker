@@ -24,6 +24,7 @@ namespace Flicker.Module
                 getPropCDRate = new(0f),
                 propSlot = new(0f),
                 nowGetPropCD = new(0f),
+                stiffenTime = new(0f)
             };
 
         void Awake(){
