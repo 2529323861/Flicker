@@ -6,6 +6,7 @@ namespace Flicker.Module.Buff.PropBuff
         public RushGelBuff()
         {
             name = "疾行凝胶";
+            path = "RushGel";
             description = "移速提高150%";
             isStackable = true;
         }

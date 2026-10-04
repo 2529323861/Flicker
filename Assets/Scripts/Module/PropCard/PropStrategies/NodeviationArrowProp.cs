@@ -1,4 +1,4 @@
-using Flicker.Module.CharacterEvent;
+using Flicker.Module.Buff.PropBuff;
 
 namespace Flicker.Module.Prop
 {
@@ -13,26 +13,7 @@ namespace Flicker.Module.Prop
         }
         public override void OnUse()
         {
-            BaseBuffStrategy buff = new()
-            {
-                name = name,
-                description = description,
-            };
-
-            BaseEffectStrategy effect = new();
-            /** 弹反结果相位把本次跳跃的反向开关关掉，随后自搞 */
-            effect.onAdd = (b) => b.Listen<ParryResultEvent>(OnParried);
-
-            void OnParried(ParryResultEvent parryResultEvent)
-            {
-                parryResultEvent.context.jump.reverse = false;
-                buffContainer.RemoveBuff(buff);
-            }
-
-            buff.onAdd = (b) => effectContainer.AddEffect(effect, b);
-            buff.onRemove = (b) => effectContainer.RemoveEffect(effect);
-
-            buffContainer.AddBuff(buff, -1f);
+            buffContainer.AddBuff(new NodeviationArrowBuff(), -1f);
         }
     }
 }
