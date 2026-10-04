@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Flicker.Module
@@ -89,13 +90,21 @@ namespace Flicker.Module
         /// </summary>
         public int maxStacks = 1;
         /// <summary>
+        /// 添加钩子委托，与重写 OnAdd 二选一
+        /// </summary>
+        public Action<BaseBuffStrategy> onAdd;
+        /// <summary>
+        /// 移除钩子委托，与重写 OnRemove 二选一
+        /// </summary>
+        public Action<BaseBuffStrategy> onRemove;
+        /// <summary>
         /// 添加时触发
         /// </summary>
-        public virtual void OnAdd(){}
+        public virtual void OnAdd(){ onAdd?.Invoke(this); }
         /// <summary>
         /// 移除时触发
         /// </summary>
-        public virtual void OnRemove(){}
+        public virtual void OnRemove(){ onRemove?.Invoke(this); }
         /// <summary>
         /// 叠层变化时触发
         /// </summary>

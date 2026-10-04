@@ -38,6 +38,7 @@ namespace Flicker.Module
         private ModifyPipeline modifyPipeline;
         private PropCardDeck propCardDeck;
         private MiniEventBus miniEventBus;
+        private GameCharacterController gameCharacterController;
         /// <summary>
         /// 道具卡槽位数
         /// </summary>
@@ -86,6 +87,7 @@ namespace Flicker.Module
             miniEventBus = GetComponent<MiniEventBus>();
             buffContainer = GetComponent<BuffContainer>();
             effectContainer = GetComponent<EffectContainer>();
+            gameCharacterController = GetComponent<GameCharacterController>();
 
             modifyPipeline.modifierSet.Register(ModifierSet.Key.GetPropCD, getPropCDMV);
             modifyPipeline.modifierSet.Register(ModifierSet.Key.GetPropCDRate, getPropCDRateMV);
@@ -163,6 +165,9 @@ namespace Flicker.Module
             {
                 i++;
             }
+            context.prop.BindGameCharacterController(gameCharacterController);
+            context.prop.BindBuffContainer(buffContainer);
+            context.prop.BindEffectContainer(effectContainer);
             props[i]=context.prop;
             miniEventBus.Publish<AfterAddPropEvent>(new(){context=context});
 
@@ -191,7 +196,7 @@ namespace Flicker.Module
 
             /** 相位三：按结果执行 */
             props[propSlotIndex] = null;
-            context.prop.OnUse(buffContainer,effectContainer);
+            context.prop.OnUse();
 
             miniEventBus.Publish<AfterUsePropEvent>(new(){context=context});
 

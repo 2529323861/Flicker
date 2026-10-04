@@ -108,19 +108,6 @@ namespace Flicker.Module
         }
 
         /// <summary>
-        /// 校验实体是否注册齐了它声明的属性
-        /// </summary>
-        /// <param name="required">应当注册的键</param>
-        /// <returns>缺失的键</returns>
-        public IEnumerable<Key> FindMissing(IEnumerable<Key> required)
-        {
-            foreach (var key in required)
-            {
-                if (!declared.Contains(key)) yield return key;
-            }
-        }
-
-        /// <summary>
         /// 清空所有修饰，供管线每帧重算前调用
         /// </summary>
         public void ClearModify()

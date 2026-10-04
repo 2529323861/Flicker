@@ -11,7 +11,7 @@ namespace Flicker.Module.Prop
             path = "RushGel";
             description = "使用后3秒内，移动速度提高150%。";
         }
-        public override void OnUse(BuffContainer buffContainer, EffectContainer effectContainer)
+        public override void OnUse()
         {
             buffContainer.AddBuff(new RushGelBuff(),3);
         }
