@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace Flicker.Module
 {
     /// <summary>
-    /// 可修饰数据包装类
+    /// 可修饰数据包装类，只负责结算：base + 加区 → 乘区
     /// </summary>
     public class ModifiableValue
     {
@@ -12,7 +12,6 @@ namespace Flicker.Module
         /// </summary>
         float _baseValue;
         public float BaseValue { get{ return _baseValue; } }
-        private float _lastFinalValue;
 
         /// <summary>
         /// 最终值，供管线导出
@@ -32,17 +31,11 @@ namespace Flicker.Module
                 {
                     result *= i;
                 }
-                if (result != _lastFinalValue)
-                {                    
-                    NotifyAllObservers(_lastFinalValue,result);
-                    _lastFinalValue = result;
-                }
                 return result;
 
             }
 
         }
-        List<MutableValue> observers = new();
 
         /// <summary>
         /// 加法区
@@ -55,7 +48,6 @@ namespace Flicker.Module
         List<float> multipliers = new();
         public ModifiableValue(float baseValue){
             _baseValue = baseValue;
-            _lastFinalValue =baseValue;
         }
 
         /// <summary>
@@ -73,27 +65,6 @@ namespace Flicker.Module
         public void AddMultiplier(float multiplier)
         {
             multipliers.Add(multiplier);
-        }
-        public void NotifyAllObservers(float bv,float fv)
-        {
-            foreach (var i in observers)
-            {
-                i.onUpdate(bv, fv);
-            }
-        }
-        public void AddObserver(MutableValue observer)
-        {
-            if (!observers.Contains(observer))
-            {
-                observers.Add(observer);
-            }
-        }
-        public void RemoveObserver(MutableValue observer)
-        {
-            if (observers.Contains(observer))
-            {
-                observers.Remove(observer);
-            }
         }
         public void ClearModify()
         {

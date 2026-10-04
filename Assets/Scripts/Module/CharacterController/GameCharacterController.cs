@@ -119,15 +119,10 @@ namespace Flicker.Module
 
         public bool towardUp;
 
-        // /// <summary>
-        // /// 剩余僵直时间
-        // /// </summary>
-        // public MutableValue nowStiffTimeMV;
-        
         /// <summary>
-        /// 剩余跳跃冷却时间
+        /// 剩余跳跃冷却比例，0 = 就绪，1 = 刚进入冷却
         /// </summary>
-        public MutableValue nowJumpingCDMV;
+        public float jumpCDRatio;
         /// <summary>
         /// 当前墙面
         /// </summary>
@@ -148,6 +143,14 @@ namespace Flicker.Module
         /// 这一帧是否发生弹反
         /// </summary>
         private bool parryAtFrame = false;
+        /// <summary>
+        /// 当前跳跃的上下文，供弹反相位修改
+        /// </summary>
+        private JumpContext _jumpingContext = null;
+        /// <summary>
+        /// 本帧待执行的弹反上下文
+        /// </summary>
+        private ParryContext _parryContext = null;
 
         private ModifyPipeline modifyPipeline;
         private MiniEventBus miniEventBus;
@@ -180,23 +183,15 @@ namespace Flicker.Module
 
             GenerateDataPool();
 
-            nowJumpingCDMV = new MutableValue(0f);
+            /** 冷却比例以"上限"为不变量，上限变化时比例不变，无需观察者做等比缩放 */
+            jumpCDRatio = Ratio.Empty;
 
-            /** 对于依赖于属性类数据的瞬时数据进行观察者绑定，实现等比缩放 */
-            nowJumpingCDMV.onUpdate = (a, b) =>
-            {
-                if (a==0) nowJumpingCDMV.value = 0;
-                else nowJumpingCDMV.value *= b/a;
-            };
-            maxJumpingCDMV.AddObserver(nowJumpingCDMV);
-
-            modifyPipeline.modifierSet.moveSpeed = moveSpeedMV;
-            modifyPipeline.modifierSet.hangTime = hangTimeMV;
-            modifyPipeline.modifierSet.maxJumpingCD = maxJumpingCDMV;
-            modifyPipeline.modifierSet.jumpingCDRate = jumpingCDRateMV;
-            modifyPipeline.modifierSet.damage = damageMV;
-            modifyPipeline.modifierSet.nowJumpingCD = nowJumpingCDMV;
-            modifyPipeline.modifierSet.stiffenTime = stiffenTimeMV;
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.MoveSpeed, moveSpeedMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.HangTime, hangTimeMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.MaxJumpingCD, maxJumpingCDMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.JumpingCDRate, jumpingCDRateMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.Damage, damageMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.StiffenTime, stiffenTimeMV);
         }
 
         void OnDrawGizmos()
@@ -212,18 +207,12 @@ namespace Flicker.Module
             if (!isServer) return;  // 客户端空壳：逻辑空转
             if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
             /** 维护跳跃CD */
-            if (nowJumpingCDMV.value > 0)
+            if (jumpCDRatio > 0)
             {
-                ModifierSet values = modifyPipeline.GetModifierSet();
-                float jumpingCDRate = values.jumpingCDRate.FinalValue;
-
-                nowJumpingCDMV.value -= Time.deltaTime*jumpingCDRate;
-                if (nowJumpingCDMV.value < 0)
-                {
-                    nowJumpingCDMV.value = 0;
-                }
+                float jumpingCDRate = modifyPipeline.GetModifierSet().Final(ModifierSet.Key.JumpingCDRate);
+                jumpCDRatio = Ratio.Advance(jumpCDRatio, maxJumpingCDMV.FinalValue, -Time.deltaTime * jumpingCDRate);
             }
-            onUpdateJumpCDProgress?.Invoke(new(){jumpCDProgress=nowJumpingCDMV.value/maxJumpingCDMV.FinalValue});
+            onUpdateJumpCDProgress?.Invoke(new(){jumpCDProgress=jumpCDRatio});
 
             miniEventBus.Publish<UpdateEvent>(new UpdateEvent());
 
@@ -231,43 +220,57 @@ namespace Flicker.Module
             UpdateMove();
         }
         /// <summary>
-        /// 跳跃
+        /// 跳跃。受状态与跳跃CD限制
         /// </summary>
-        public void Jump()
-        {
-            if (state != GameCharacterState.Idle && state != GameCharacterState.Moving) return;
-            if (nowJumpingCDMV.value > 0 ) return;
-
-            ForceJump(false);
-        }
+        public void Jump() => PerformJump(ignoreCD: false);
         /// <summary>
-        /// 强制跳跃，无视CD，无视状态
+        /// 强制跳跃。不受跳跃CD限制
         /// </summary>
-        public void ForceJump(bool isForce=true)
+        public void ForceJump() => PerformJump(ignoreCD: true);
+        /// <summary>
+        /// 跳跃执行
+        /// </summary>
+        /// <param name="ignoreCD">是否无视跳跃冷却</param>
+        private void PerformJump(bool ignoreCD)
         {
             if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
+            if (state != GameCharacterState.Idle && state != GameCharacterState.Moving) return;
+            if (!ignoreCD && jumpCDRatio > 0) return;
 
-            ActionContext actionContext = new();
-            miniEventBus.Publish<BeforeJumpEvent>(new BeforeJumpEvent{context=actionContext,toRightWall=!isRightWall});
-            if (actionContext.cancelled) return;  //事件被取消
+            ModifierSet attributes = modifyPipeline.GetModifierSet();
+            JumpContext context = new()
+            {
+                attributes = attributes,
+                toRightWall = !isRightWall,
+                ignoreCD = ignoreCD
+            };
 
+            /** 相位一：决定本次跳跃是否发生 */
+            miniEventBus.Publish<BeforeJumpEvent>(new BeforeJumpEvent{context=context});
+            if (context.cancelled) return;  //事件被取消
+
+            /** 相位二：修饰本次跳跃的行为参数 */
+            miniEventBus.Publish<JumpResultEvent>(new JumpResultEvent{context=context});
+
+            /** 相位三：按上下文执行。
+             *  状态闸门已保证不会在跳跃进行中重入，此分支当前不可达，
+             *  保留以备后续二段跳等"可空中起跳"的改动 */
             if (_jumpingCoroutine != null)
             {
                 StopCoroutine(_jumpingCoroutine);
             }
-            _jumpingCoroutine = StartCoroutine(JumpingCoroutine(isForce));
+            _jumpingContext = context;
+            _jumpingCoroutine = StartCoroutine(JumpingCoroutine(context));
         }
         /// <summary>
         /// 供Jump方法使用的跳跃协程
         /// </summary>
         /// <returns></returns>
-        IEnumerator JumpingCoroutine(bool isForce=true)
+        IEnumerator JumpingCoroutine(JumpContext context)
         {   
             
             
-            ModifierSet values = modifyPipeline.GetModifierSet();
-            float hangTime = values.hangTime.FinalValue;
-            float maxJumpingCD = values.maxJumpingCD.FinalValue;
+            float hangTime = context.attributes.Final(ModifierSet.Key.HangTime);
 
             SetState(GameCharacterState.JumpHanging);
             float timer = 0;
@@ -275,7 +278,7 @@ namespace Flicker.Module
 
             Vector3 startingPoint = transform.localPosition;
             Vector3 distination = startingPoint;
-            distination.x = isRightWall ? leftWallPos : rightWallPos;
+            distination.x = context.toRightWall ? rightWallPos : leftWallPos;
             while (timer <= hangTime)
             {
                 yield return null;
@@ -289,37 +292,44 @@ namespace Flicker.Module
                 if (parryAtFrame)
                 {
                     parryAtFrame = false;                      
-                    /** 如果在这一帧中触发了弹反，先复位触发，切换状态，然后倒置计时器，交换移动终/起点 */
+                    /** 复位触发，切换状态。若未被取消反向，则倒置计时器并交换移动终/起点 */
                     SetState(GameCharacterState.ParryHanging);
-                    timer = hangTime - timer;
-                    Vector2 temp = startingPoint;
-                    startingPoint = distination;
-                    distination = temp;
+                    if (context.reverse)
+                    {
+                        timer = hangTime - timer;
+                        Vector2 temp = startingPoint;
+                        startingPoint = distination;
+                        distination = temp;
+                    }
 
                     ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new AddVibration(){maxTime=0.4f,amplitudeX=0.8f,amplitudeY=0f,amplitudeZ=0f});
 
-                    miniEventBus.Publish<AfterParryEvent>(new AfterParryEvent());
-
+                    miniEventBus.Publish<AfterParryEvent>(new AfterParryEvent{context=_parryContext});
+                    _parryContext = null;
                 }
                 transform.localPosition = Vector3.Lerp(startingPoint,distination,timer/hangTime);
             }
             transform.localPosition = distination;
-            nowJumpingCDMV.value = maxJumpingCD;
+            /** 进入冷却：比例 = 本次冷却时长 / 当前上限。上限为 0 时视为无冷却 */
+            jumpCDRatio = Ratio.ToRatio(context.attributes.Final(ModifierSet.Key.MaxJumpingCD), context.attributes.Final(ModifierSet.Key.MaxJumpingCD));
 
-            if (!isForce)
-            {
-                miniEventBus.Publish<AfterJumpEvent>(new AfterJumpEvent{toRightWall=!isRightWall});
-            }
+            miniEventBus.Publish<AfterJumpEvent>(new AfterJumpEvent{context=context});
+
             if (state == GameCharacterState.JumpHanging)
             {
                 AttackDetect();
-                isRightWall = !isRightWall;
             }
             else
             {
-                values = modifyPipeline.GetModifierSet(); //重新获取修饰
-                gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),values.stiffenTime.FinalValue);
+                float stiffenTime = modifyPipeline.GetModifierSet().Final(ModifierSet.Key.StiffenTime);
+                gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),stiffenTime);
             }
+
+            /** 被弹反弹回时落点仍是出发墙，墙面保持不变；
+             *  其余情况（含被弹反但未反向）均到达目标墙，墙面随之转置 */
+            bool bouncedBack = state == GameCharacterState.ParryHanging && context.reverse;
+            if (!bouncedBack) isRightWall = context.toRightWall;
+
             SetState(GameCharacterState.Idle);
             MoveRecovery();
             ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new AddVibration(){maxTime=0.2f,amplitudeX=0.2f,amplitudeY=0f,amplitudeZ=0f});
@@ -359,15 +369,24 @@ namespace Flicker.Module
             if (moveDirectionStack.Count==0) return;
             if (!(state == GameCharacterState.Idle || state == GameCharacterState.Moving)) return;
 
-            bool isUp = moveDirectionStack[moveDirectionStack.Count-1];
-            ActionContext actionContext = new();
-            miniEventBus.Publish<BeforeMoveEvent>(new BeforeMoveEvent{context=actionContext,isUp = isUp});
-            if (actionContext.cancelled) return;
+            MoveContext context = new()
+            {
+                attributes = modifyPipeline.GetModifierSet(),
+                isUp = moveDirectionStack[moveDirectionStack.Count-1]
+            };
 
+            /** 相位一：决定本次移动是否发生 */
+            miniEventBus.Publish<BeforeMoveEvent>(new BeforeMoveEvent{context=context});
+            if (context.cancelled) return;
+
+            /** 相位二：修饰本次移动的行为参数 */
+            miniEventBus.Publish<MoveResultEvent>(new MoveResultEvent{context=context});
+
+            /** 相位三：按上下文执行 */
+            bool isUp = context.isUp;
             towardUp = isUp;
 
-            ModifierSet values = modifyPipeline.GetModifierSet();
-            float moveSpeed = values.moveSpeed.FinalValue;
+            float moveSpeed = context.attributes.Final(ModifierSet.Key.MoveSpeed);
 
             float deltaY = moveSpeed * Time.deltaTime * (isUp ? 1 : -1);
             Vector3 temp = transform.localPosition;
@@ -386,7 +405,7 @@ namespace Flicker.Module
             }
             transform.localPosition = new Vector3(temp.x,targetY,temp.z);
 
-            miniEventBus.Publish<AfterMoveEvent>(new AfterMoveEvent{isUp = isUp});
+            miniEventBus.Publish<AfterMoveEvent>(new AfterMoveEvent{context=context});
         }
         /// <summary>
         /// 到达边缘
@@ -427,9 +446,23 @@ namespace Flicker.Module
         public void Parry(GameObject opponent)
         {
             if (state != GameCharacterState.JumpHanging) return;
-            ActionContext actionContext = new();
-            miniEventBus.Publish<BeforeParryEvent>(new BeforeParryEvent{context=actionContext,opponent=opponent});
-            if (actionContext.cancelled) return;  //事件是否被取消
+
+            ParryContext context = new()
+            {
+                attributes = modifyPipeline.GetModifierSet(),
+                opponent = opponent,
+                jump = _jumpingContext
+            };
+
+            /** 相位一：决定本次弹反是否发生 */
+            miniEventBus.Publish<BeforeParryEvent>(new BeforeParryEvent{context=context});
+            if (context.cancelled) return;  //事件是否被取消
+
+            /** 相位二：修饰本次弹反的行为参数，可改写发起方跳跃的上下文 */
+            miniEventBus.Publish<ParryResultEvent>(new ParryResultEvent{context=context});
+
+            /** 相位三：标记本帧弹反，由跳跃协程执行并发布 AfterParryEvent */
+            _parryContext = context;
             parryAtFrame = true;
         }
 
@@ -448,6 +481,8 @@ namespace Flicker.Module
 
             RaycastHit2D[] raycastHit2Ds = topHit.Concat(bottomHit).Concat(centerHit).ToArray();
             List<GameObject> attacked = new();
+            /** 属性整个侦测只取一次，循环内不重复结算修饰 */
+            ModifierSet attributes = modifyPipeline.GetModifierSet();
             foreach (var i in raycastHit2Ds)
             {
                 if (i.collider.gameObject.TryGetComponent<GameCharacterController>(out var gameCharacterController) && //是游戏角色
@@ -458,19 +493,25 @@ namespace Flicker.Module
                     (i.collider.gameObject.transform.localPosition - transform.localPosition).magnitude <= collisionRadius + gameCharacterController.collisionRadius //碰撞
                     )
                 {
-                    ModifierSet modifierSet =  modifyPipeline.GetModifierSet();
-                    int damage = (int)modifierSet.damage.FinalValue;
+                    AttackContext context = new()
+                    {
+                        attributes = attributes,
+                        victim = i.collider.gameObject,
+                        damage = new ModifiableValue(attributes.Final(ModifierSet.Key.Damage))
+                    };
 
-                    DamageContext damageContext = new();
-                    damageContext.damage = damage;
+                    /** 相位一：决定本次攻击是否发生 */
+                    miniEventBus.Publish<BeforeAttackEvent>(new BeforeAttackEvent{context=context});
+                    if (context.cancelled) continue;  //事件是否被取消
 
-                    miniEventBus.Publish<BeforeAttackEvent>(new BeforeAttackEvent{context=damageContext,victim=i.collider.gameObject});
-                    if (damageContext.cancelled) continue;  //事件是否被取消
+                    /** 相位二：确定本次攻击的伤害 */
+                    miniEventBus.Publish<AttackResultEvent>(new AttackResultEvent{context=context});
 
-                    gameCharacterController.BeAttacked(gameObject,(int)damageContext.damage);
+                    /** 相位三：按结果执行 */
+                    gameCharacterController.BeAttacked(gameObject,context.damage.FinalValue);
                     attacked.Add(i.collider.gameObject);
 
-                    miniEventBus.Publish<AfterAttackEvent>(new AfterAttackEvent{victim=i.collider.gameObject});
+                    miniEventBus.Publish<AfterAttackEvent>(new AfterAttackEvent{context=context});
                 }
             }
             
@@ -479,16 +520,26 @@ namespace Flicker.Module
         /// 受击
         /// </summary>
         /// <param name="attacker">攻击者</param>
-        public void BeAttacked(GameObject attacker, int damage)
+        /// <param name="damage">攻击方传入的伤害</param>
+        public void BeAttacked(GameObject attacker, float damage)
         {
-            DamageContext damageContext = new();
-            damageContext.damage = damage;
-            /** 暂时先不考虑道具卡和藏品造成的修饰，后面再引入 */
-            miniEventBus.Publish<BeforeBeAttackedEvent>(new BeforeBeAttackedEvent{context=damageContext,attacker=attacker});
-            if (damageContext.cancelled) return;  //事件是否被取消
+            BeAttackedContext context = new()
+            {
+                attributes = modifyPipeline.GetModifierSet(),
+                attacker = attacker,
+                damage = new ModifiableValue(damage)
+            };
 
-            healthController.ReduceHealth((int)damageContext.damage);
-            miniEventBus.Publish<AfterBeAttackedEvent>(new AfterBeAttackedEvent{attacker=attacker});
+            /** 相位一：决定本次受击是否发生 */
+            miniEventBus.Publish<BeforeBeAttackedEvent>(new BeforeBeAttackedEvent{context=context});
+            if (context.cancelled) return;  //事件是否被取消
+
+            /** 相位二：确定本次承受的伤害 */
+            miniEventBus.Publish<BeAttackedResultEvent>(new BeAttackedResultEvent{context=context});
+
+            /** 相位三：按结果执行 */
+            healthController.ReduceHealth((int)context.damage.FinalValue);
+            miniEventBus.Publish<AfterBeAttackedEvent>(new AfterBeAttackedEvent{context=context});
 
             if (healthController.health <= 0) Die();
         }
@@ -497,13 +548,22 @@ namespace Flicker.Module
         /// </summary>
         public void Die()
         {
-            ActionContext actionContext = new();
-            miniEventBus.Publish<BeforeDie>(new BeforeDie{context=actionContext});
-            if (actionContext.cancelled) return;
+            DieContext context = new()
+            {
+                attributes = modifyPipeline.GetModifierSet()
+            };
 
+            /** 相位一：决定本次死亡是否发生 */
+            miniEventBus.Publish<BeforeDie>(new BeforeDie{context=context});
+            if (context.cancelled) return;
+
+            /** 相位二：确定本次死亡的临时变量 */
+            miniEventBus.Publish<DieResultEvent>(new DieResultEvent{context=context});
+
+            /** 相位三：按结果执行 */
             SetState(GameCharacterState.Dead);
 
-            miniEventBus.Publish<AfterDie>(new AfterDie());
+            miniEventBus.Publish<AfterDie>(new AfterDie{context=context});
             onDestroy?.Invoke();
         }
 

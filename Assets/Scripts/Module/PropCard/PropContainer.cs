@@ -38,6 +38,7 @@ namespace Flicker.Module
         private ModifyPipeline modifyPipeline;
         private PropCardDeck propCardDeck;
         private MiniEventBus miniEventBus;
+        private GameCharacterController gameCharacterController;
         /// <summary>
         /// 道具卡槽位数
         /// </summary>
@@ -56,9 +57,9 @@ namespace Flicker.Module
         public ModifiableValue getPropCDRateMV;
 
         /// <summary>
-        /// 当前获取道具卡CD
+        /// 当前获取道具卡冷却比例，0 = 就绪，1 = 刚触发过
         /// </summary>
-        public MutableValue nowGetPropCDMV;
+        public float propCDRatio;
 
         public List<BasePropStrategy> props;
 
@@ -76,46 +77,44 @@ namespace Flicker.Module
                 props.Add(null);
             }
             GenerateDataPool();
-            nowGetPropCDMV = new(getPropCD);
-            nowGetPropCDMV.onUpdate = (a, b) =>
-            {
-                if (a==0) nowGetPropCDMV.value = 0;
-                else nowGetPropCDMV.value *= b/a;
-            };
-            getPropCDMV.AddObserver(nowGetPropCDMV);
+
+            /** 冷却比例以"上限"为不变量，上限变化时比例不变，无需观察者做等比缩放。
+             *  初始为满冷却；上限为 0 时视为无冷却，与旧逻辑一致 */
+            propCDRatio = Ratio.ToRatio(getPropCD, getPropCD);
 
             modifyPipeline = GetComponent<ModifyPipeline>();
             propCardDeck = GetComponent<PropCardDeck>();
             miniEventBus = GetComponent<MiniEventBus>();
             buffContainer = GetComponent<BuffContainer>();
             effectContainer = GetComponent<EffectContainer>();
+            gameCharacterController = GetComponent<GameCharacterController>();
 
-            modifyPipeline.modifierSet.getPropCD = getPropCDMV;
-            modifyPipeline.modifierSet.getPropCDRate = getPropCDRateMV;
-            modifyPipeline.modifierSet.propSlot = propSlotMV;
-            modifyPipeline.modifierSet.nowGetPropCD = nowGetPropCDMV;
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.GetPropCD, getPropCDMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.GetPropCDRate, getPropCDRateMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.PropSlot, propSlotMV);
         }
         void Update()
         {
             if (!isServer) return;  // 客户端空壳：逻辑空转
             if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
             ModifierSet values = modifyPipeline.GetModifierSet();
-            if (nowGetPropCDMV.value > 0)
+            if (propCDRatio > 0)
             {
-                if (GetNowPropCount() < values.propSlot.FinalValue){
+                float getPropCD = values.Final(ModifierSet.Key.GetPropCD);
+                if (GetNowPropCount() < values.Final(ModifierSet.Key.PropSlot)){
                     //只有还有空槽位的时候，CD才会流动，防止同时使用上限+1个道具
-                    float getPropCDRate = values.getPropCDRate.FinalValue;
-                    nowGetPropCDMV.value -= Time.deltaTime*getPropCDRate;
+                    float getPropCDRate = values.Final(ModifierSet.Key.GetPropCDRate);
+                    propCDRatio = Ratio.Advance(propCDRatio, getPropCD, -Time.deltaTime*getPropCDRate);
                 }
-                if (nowGetPropCDMV.value < 0)
+                if (propCDRatio <= 0)
                 {
-                    nowGetPropCDMV.value = values.getPropCD.FinalValue;
+                    propCDRatio = Ratio.ToRatio(getPropCD, getPropCD);
                     AddProp(propCardDeck.GetProp());
                 }
             }
             
-            onGetPropNumber?.Invoke(new(){propSlot=(int)values.propSlot.FinalValue});
-            onUpdatePropCDProgress?.Invoke(new(){propCDProgress=values.nowGetPropCD.value/values.getPropCD.FinalValue});
+            onGetPropNumber?.Invoke(new(){propSlot=(int)values.Final(ModifierSet.Key.PropSlot)});
+            onUpdatePropCDProgress?.Invoke(new(){propCDProgress=propCDRatio});
         }
         /// <summary>
         /// 获取当前道具容器中的道具数，超出槽位的不计
@@ -123,9 +122,9 @@ namespace Flicker.Module
         /// <returns></returns>
         public int GetNowPropCount()
         {   
-            ModifierSet values = modifyPipeline.GetModifierSet();
+            float propSlot = modifyPipeline.GetModifierSet().Final(ModifierSet.Key.PropSlot);
             int result = 0;
-            for (int i = 0; i < values.propSlot.FinalValue; i++)
+            for (int i = 0; i < propSlot; i++)
             {
                 if (props[i] != null)
                 {
@@ -145,39 +144,61 @@ namespace Flicker.Module
         public void AddProp(BasePropStrategy basePropStrategy)
         {
             ModifierSet values = modifyPipeline.GetModifierSet();
-            if (GetNowPropCount()>=values.propSlot.FinalValue) return;
+            if (GetNowPropCount()>=values.Final(ModifierSet.Key.PropSlot)) return;
 
-            ActionContext context = new();
-            miniEventBus.Publish<BeforeAddPropEvent>(new(){context=context,basePropStrategy=basePropStrategy});
+            AddPropContext context = new()
+            {
+                attributes = values,
+                prop = basePropStrategy
+            };
+
+            /** 相位一：决定本次获得道具是否发生 */
+            miniEventBus.Publish<BeforeAddPropEvent>(new(){context=context});
             if (context.cancelled) return;
 
+            /** 相位二：确定本次获得道具的临时变量 */
+            miniEventBus.Publish<AddPropResultEvent>(new(){context=context});
+
+            /** 相位三：按结果执行 */
             int i=0;
             while (props[i] != null)
             {
                 i++;
             }
-            props[i]=basePropStrategy;
-            miniEventBus.Publish<AfterAddPropEvent>(new());
+            context.prop.BindGameCharacterController(gameCharacterController);
+            context.prop.BindBuffContainer(buffContainer);
+            context.prop.BindEffectContainer(effectContainer);
+            props[i]=context.prop;
+            miniEventBus.Publish<AfterAddPropEvent>(new(){context=context});
 
-            onPropAdded?.Invoke(new(){basePropStrategyMetaData=basePropStrategy.GetMetaData(),slotIndex=i});
+            onPropAdded?.Invoke(new(){basePropStrategyMetaData=context.prop.GetMetaData(),slotIndex=i});
         }
         public void UseProp(int propSlotIndex)
         {
             if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
 
             ModifierSet values = modifyPipeline.GetModifierSet();
-            if (propSlotIndex >= values.propSlot.FinalValue) return;
+            if (propSlotIndex >= values.Final(ModifierSet.Key.PropSlot)) return;
             if (props[propSlotIndex]==null) return;
 
-            ActionContext context = new();
-            miniEventBus.Publish<BeforeUsePropEvent>(new(){context=context,basePropStrategy=props[propSlotIndex]});
+            UsePropContext context = new()
+            {
+                attributes = values,
+                prop = props[propSlotIndex]
+            };
+
+            /** 相位一：决定本次使用道具是否发生 */
+            miniEventBus.Publish<BeforeUsePropEvent>(new(){context=context});
             if (context.cancelled) return;
 
-            BasePropStrategy basePropStrategy = props[propSlotIndex];
-            props[propSlotIndex] = null;
-            basePropStrategy.OnUse(buffContainer,effectContainer);
+            /** 相位二：确定本次使用道具的临时变量 */
+            miniEventBus.Publish<UsePropResultEvent>(new(){context=context});
 
-            miniEventBus.Publish<AfterUsePropEvent>(new());
+            /** 相位三：按结果执行 */
+            props[propSlotIndex] = null;
+            context.prop.OnUse();
+
+            miniEventBus.Publish<AfterUsePropEvent>(new(){context=context});
 
             onPropUse?.Invoke(new(){propSlotIndex=propSlotIndex});
         }

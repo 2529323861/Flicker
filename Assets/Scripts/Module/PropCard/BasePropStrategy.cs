@@ -71,7 +71,46 @@ namespace Flicker.Module
         /// 道具描述
         /// </summary>
         public string description = "默认描述";
-        public virtual void OnUse(BuffContainer buffContainer, EffectContainer effectContainer){}
+        /// <summary>
+        /// 使用者的游戏角色控制器绑定
+        /// </summary>
+        protected GameCharacterController gameCharacterController;
+        /// <summary>
+        /// buff容器绑定
+        /// </summary>
+        protected BuffContainer buffContainer;
+        /// <summary>
+        /// 效果容器绑定
+        /// </summary>
+        protected EffectContainer effectContainer;
+        /// <summary>
+        /// 使用道具，容器已在道具入槽时完成控制器与容器绑定
+        /// </summary>
+        public virtual void OnUse(){}
+        /// <summary>
+        /// 绑定游戏角色控制器，道具进入容器时调用
+        /// </summary>
+        /// <param name="gameCharacterController">使用者的游戏角色控制器</param>
+        public void BindGameCharacterController(GameCharacterController gameCharacterController)
+        {
+            this.gameCharacterController = gameCharacterController;
+        }
+        /// <summary>
+        /// 绑定buff容器，道具进入容器时调用
+        /// </summary>
+        /// <param name="buffContainer">使用者身上的buff容器</param>
+        public void BindBuffContainer(BuffContainer buffContainer)
+        {
+            this.buffContainer = buffContainer;
+        }
+        /// <summary>
+        /// 绑定效果容器，道具进入容器时调用
+        /// </summary>
+        /// <param name="effectContainer">使用者身上的效果容器</param>
+        public void BindEffectContainer(EffectContainer effectContainer)
+        {
+            this.effectContainer = effectContainer;
+        }
         public BasePropStrategyMetaData GetMetaData()
         {
             BasePropStrategyMetaData basePropStrategyMetaData = new();

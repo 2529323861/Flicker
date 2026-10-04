@@ -11,9 +11,9 @@ namespace Flicker.Module.Effect
             this.factor = factor;
         }
 
-        public override void Apply(ModifierSet ModifierSet)
+        public override void Apply(ModifierSet modifierSet)
         {
-            ModifierSet.moveSpeed.AddMultiplier(factor);
+            modifierSet.Get(ModifierSet.Key.MoveSpeed).AddMultiplier(factor);
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Flicker.Core;
 using UnityEngine;
@@ -18,20 +19,43 @@ namespace Flicker.Module
         /// </summary>
         private BuffContainer buffContainer;
         private List<BaseEffectStrategy> effects = new();
+        /// <summary>
+        /// 遍历期间被移除的效果，遍历结束后统一清理
+        /// </summary>
+        private List<BaseEffectStrategy> pendingRemove = new();
+        /// <summary>
+        /// 当前是否处于遍历中
+        /// </summary>
+        private bool iterating = false;
+
         void Awake()
         {
             miniEventBus = GetComponent<MiniEventBus>();
             buffContainer = GetComponent<BuffContainer>();
         }
-        public List<BaseEffectStrategy> GetEffectStrategies()
+
+        /// <summary>
+        /// 遍历所有效果。
+        /// 遍历期间移除的效果延迟到遍历结束后生效，避免改动正在遍历的列表
+        /// </summary>
+        /// <param name="action">对每个效果执行的操作</param>
+        public void ForEachEffect(Action<BaseEffectStrategy> action)
         {
-            List<BaseEffectStrategy> result = new();
-            foreach (var i in effects)
+            iterating = true;
+            for (int i = 0; i < effects.Count; i++)
             {
-                result.Add(i);
+                action(effects[i]);
             }
-            return result;
+            iterating = false;
+
+            if (pendingRemove.Count == 0) return;
+            for (int i = 0; i < pendingRemove.Count; i++)
+            {
+                RemoveEffectNow(pendingRemove[i]);
+            }
+            pendingRemove.Clear();
         }
+
         public void AddEffect(BaseEffectStrategy baseEffectStrategy, BaseBuffStrategy sourceBuff=null)
         {
             effects.Add(baseEffectStrategy);
@@ -39,11 +63,24 @@ namespace Flicker.Module
             baseEffectStrategy.BindBaseBuffStrategy(sourceBuff);
             baseEffectStrategy.BindMiniEventBus(miniEventBus);
             baseEffectStrategy.BindBuffContainer(buffContainer);
+            baseEffectStrategy.BindEffectContainer(this);
             baseEffectStrategy.OnAdd();
         }
         public void RemoveEffect(BaseEffectStrategy baseEffectStrategy)
         {
+            /** 遍历中移除会改动列表，延迟到遍历结束后执行 */
+            if (iterating)
+            {
+                if (!pendingRemove.Contains(baseEffectStrategy)) pendingRemove.Add(baseEffectStrategy);
+                return;
+            }
+            RemoveEffectNow(baseEffectStrategy);
+        }
+        private void RemoveEffectNow(BaseEffectStrategy baseEffectStrategy)
+        {
             effects.Remove(baseEffectStrategy);
+            /** 先清理经 Listen 注册的订阅，再走子类移除钩子 */
+            baseEffectStrategy.UnlistenAll();
             baseEffectStrategy.OnRemove();
         }
     }

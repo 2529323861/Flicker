@@ -19,6 +19,7 @@ namespace Flicker.Module
             RegisterProp("00001",()=>new RushGelProp());
             RegisterProp("00002",()=>new EmergenceSporeProp());
             RegisterProp("00003",()=>new ReverseFlowHourglassProp());
+            RegisterProp("00004",()=>new NodeviationArrowProp());
 
         }
         public void RegisterProp(string id, Func<BasePropStrategy> func)
