@@ -318,13 +318,18 @@ namespace Flicker.Module
             if (state == GameCharacterState.JumpHanging)
             {
                 AttackDetect();
-                isRightWall = context.toRightWall;
             }
             else
             {
                 float stiffenTime = modifyPipeline.GetModifierSet().Final(ModifierSet.Key.StiffenTime);
                 gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),stiffenTime);
             }
+
+            /** 被弹反弹回时落点仍是出发墙，墙面保持不变；
+             *  其余情况（含被弹反但未反向）均到达目标墙，墙面随之转置 */
+            bool bouncedBack = state == GameCharacterState.ParryHanging && context.reverse;
+            if (!bouncedBack) isRightWall = context.toRightWall;
+
             SetState(GameCharacterState.Idle);
             MoveRecovery();
             ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new AddVibration(){maxTime=0.2f,amplitudeX=0.2f,amplitudeY=0f,amplitudeZ=0f});
