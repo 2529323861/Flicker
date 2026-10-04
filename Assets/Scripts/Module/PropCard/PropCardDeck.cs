@@ -19,7 +19,7 @@ namespace Flicker.Module
         void Awake()
         {
             /** 暂时令deck为固定对象 */
-            deck.Add("00001");
+            deck.Add("00004");
             // deck.Add("00002");
             // deck.Add("00003");
         }
