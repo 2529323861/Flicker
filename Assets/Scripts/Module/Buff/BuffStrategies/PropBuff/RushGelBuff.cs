@@ -14,7 +14,7 @@ namespace Flicker.Module.Buff.PropBuff
             this.baseEffectStrategy = new BaseEffectStrategy();
             baseEffectStrategy.apply = (b, m) =>
             {
-                m.moveSpeed.AddMultiplier(2.5f);
+                m.Get(ModifierSet.Key.MoveSpeed).AddMultiplier(2.5f);
             };
             effectContainer.AddEffect(baseEffectStrategy);
         }

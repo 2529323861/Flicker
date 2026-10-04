@@ -119,15 +119,10 @@ namespace Flicker.Module
 
         public bool towardUp;
 
-        // /// <summary>
-        // /// 剩余僵直时间
-        // /// </summary>
-        // public MutableValue nowStiffTimeMV;
-        
         /// <summary>
-        /// 剩余跳跃冷却时间
+        /// 剩余跳跃冷却比例，0 = 就绪，1 = 刚进入冷却
         /// </summary>
-        public MutableValue nowJumpingCDMV;
+        public float jumpCDRatio;
         /// <summary>
         /// 当前墙面
         /// </summary>
@@ -180,23 +175,15 @@ namespace Flicker.Module
 
             GenerateDataPool();
 
-            nowJumpingCDMV = new MutableValue(0f);
+            /** 冷却比例以"上限"为不变量，上限变化时比例不变，无需观察者做等比缩放 */
+            jumpCDRatio = Ratio.Empty;
 
-            /** 对于依赖于属性类数据的瞬时数据进行观察者绑定，实现等比缩放 */
-            nowJumpingCDMV.onUpdate = (a, b) =>
-            {
-                if (a==0) nowJumpingCDMV.value = 0;
-                else nowJumpingCDMV.value *= b/a;
-            };
-            maxJumpingCDMV.AddObserver(nowJumpingCDMV);
-
-            modifyPipeline.modifierSet.moveSpeed = moveSpeedMV;
-            modifyPipeline.modifierSet.hangTime = hangTimeMV;
-            modifyPipeline.modifierSet.maxJumpingCD = maxJumpingCDMV;
-            modifyPipeline.modifierSet.jumpingCDRate = jumpingCDRateMV;
-            modifyPipeline.modifierSet.damage = damageMV;
-            modifyPipeline.modifierSet.nowJumpingCD = nowJumpingCDMV;
-            modifyPipeline.modifierSet.stiffenTime = stiffenTimeMV;
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.MoveSpeed, moveSpeedMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.HangTime, hangTimeMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.MaxJumpingCD, maxJumpingCDMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.JumpingCDRate, jumpingCDRateMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.Damage, damageMV);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.StiffenTime, stiffenTimeMV);
         }
 
         void OnDrawGizmos()
@@ -212,18 +199,12 @@ namespace Flicker.Module
             if (!isServer) return;  // 客户端空壳：逻辑空转
             if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
             /** 维护跳跃CD */
-            if (nowJumpingCDMV.value > 0)
+            if (jumpCDRatio > 0)
             {
-                ModifierSet values = modifyPipeline.GetModifierSet();
-                float jumpingCDRate = values.jumpingCDRate.FinalValue;
-
-                nowJumpingCDMV.value -= Time.deltaTime*jumpingCDRate;
-                if (nowJumpingCDMV.value < 0)
-                {
-                    nowJumpingCDMV.value = 0;
-                }
+                float jumpingCDRate = modifyPipeline.GetModifierSet().Final(ModifierSet.Key.JumpingCDRate);
+                jumpCDRatio = Ratio.Advance(jumpCDRatio, maxJumpingCDMV.FinalValue, -Time.deltaTime * jumpingCDRate);
             }
-            onUpdateJumpCDProgress?.Invoke(new(){jumpCDProgress=nowJumpingCDMV.value/maxJumpingCDMV.FinalValue});
+            onUpdateJumpCDProgress?.Invoke(new(){jumpCDProgress=jumpCDRatio});
 
             miniEventBus.Publish<UpdateEvent>(new UpdateEvent());
 
@@ -236,7 +217,7 @@ namespace Flicker.Module
         public void Jump()
         {
             if (state != GameCharacterState.Idle && state != GameCharacterState.Moving) return;
-            if (nowJumpingCDMV.value > 0 ) return;
+            if (jumpCDRatio > 0 ) return;
 
             ForceJump(false);
         }
@@ -266,8 +247,8 @@ namespace Flicker.Module
             
             
             ModifierSet values = modifyPipeline.GetModifierSet();
-            float hangTime = values.hangTime.FinalValue;
-            float maxJumpingCD = values.maxJumpingCD.FinalValue;
+            float hangTime = values.Final(ModifierSet.Key.HangTime);
+            float maxJumpingCD = values.Final(ModifierSet.Key.MaxJumpingCD);
 
             SetState(GameCharacterState.JumpHanging);
             float timer = 0;
@@ -304,7 +285,8 @@ namespace Flicker.Module
                 transform.localPosition = Vector3.Lerp(startingPoint,distination,timer/hangTime);
             }
             transform.localPosition = distination;
-            nowJumpingCDMV.value = maxJumpingCD;
+            /** 进入冷却：比例 = 本次冷却时长 / 当前上限。上限为 0 时视为无冷却 */
+            jumpCDRatio = Ratio.ToRatio(maxJumpingCD, maxJumpingCD);
 
             if (!isForce)
             {
@@ -318,7 +300,7 @@ namespace Flicker.Module
             else
             {
                 values = modifyPipeline.GetModifierSet(); //重新获取修饰
-                gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),values.stiffenTime.FinalValue);
+                gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),values.Final(ModifierSet.Key.StiffenTime));
             }
             SetState(GameCharacterState.Idle);
             MoveRecovery();
@@ -367,7 +349,7 @@ namespace Flicker.Module
             towardUp = isUp;
 
             ModifierSet values = modifyPipeline.GetModifierSet();
-            float moveSpeed = values.moveSpeed.FinalValue;
+            float moveSpeed = values.Final(ModifierSet.Key.MoveSpeed);
 
             float deltaY = moveSpeed * Time.deltaTime * (isUp ? 1 : -1);
             Vector3 temp = transform.localPosition;
@@ -459,7 +441,7 @@ namespace Flicker.Module
                     )
                 {
                     ModifierSet modifierSet =  modifyPipeline.GetModifierSet();
-                    int damage = (int)modifierSet.damage.FinalValue;
+                    int damage = (int)modifierSet.Final(ModifierSet.Key.Damage);
 
                     DamageContext damageContext = new();
                     damageContext.damage = damage;
