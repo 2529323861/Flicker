@@ -63,6 +63,7 @@ namespace Flicker.Module
             baseEffectStrategy.BindBaseBuffStrategy(sourceBuff);
             baseEffectStrategy.BindMiniEventBus(miniEventBus);
             baseEffectStrategy.BindBuffContainer(buffContainer);
+            baseEffectStrategy.BindEffectContainer(this);
             baseEffectStrategy.OnAdd();
         }
         public void RemoveEffect(BaseEffectStrategy baseEffectStrategy)
@@ -78,6 +79,8 @@ namespace Flicker.Module
         private void RemoveEffectNow(BaseEffectStrategy baseEffectStrategy)
         {
             effects.Remove(baseEffectStrategy);
+            /** 先清理经 Listen 注册的订阅，再走子类移除钩子 */
+            baseEffectStrategy.UnlistenAll();
             baseEffectStrategy.OnRemove();
         }
     }

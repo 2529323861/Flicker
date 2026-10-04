@@ -430,6 +430,8 @@ namespace Flicker.Module
 
             RaycastHit2D[] raycastHit2Ds = topHit.Concat(bottomHit).Concat(centerHit).ToArray();
             List<GameObject> attacked = new();
+            /** 属性整个侦测只取一次，循环内不重复结算修饰 */
+            ModifierSet attributes = modifyPipeline.GetModifierSet();
             foreach (var i in raycastHit2Ds)
             {
                 if (i.collider.gameObject.TryGetComponent<GameCharacterController>(out var gameCharacterController) && //是游戏角色
@@ -440,19 +442,25 @@ namespace Flicker.Module
                     (i.collider.gameObject.transform.localPosition - transform.localPosition).magnitude <= collisionRadius + gameCharacterController.collisionRadius //碰撞
                     )
                 {
-                    ModifierSet modifierSet =  modifyPipeline.GetModifierSet();
-                    int damage = (int)modifierSet.Final(ModifierSet.Key.Damage);
+                    AttackContext context = new()
+                    {
+                        attributes = attributes,
+                        victim = i.collider.gameObject,
+                        damage = new ModifiableValue(attributes.Final(ModifierSet.Key.Damage))
+                    };
 
-                    DamageContext damageContext = new();
-                    damageContext.damage = damage;
+                    /** 相位一：决定本次攻击是否发生 */
+                    miniEventBus.Publish<BeforeAttackEvent>(new BeforeAttackEvent{context=context});
+                    if (context.cancelled) continue;  //事件是否被取消
 
-                    miniEventBus.Publish<BeforeAttackEvent>(new BeforeAttackEvent{context=damageContext,victim=i.collider.gameObject});
-                    if (damageContext.cancelled) continue;  //事件是否被取消
+                    /** 相位二：确定本次攻击的伤害 */
+                    miniEventBus.Publish<AttackResultEvent>(new AttackResultEvent{context=context});
 
-                    gameCharacterController.BeAttacked(gameObject,(int)damageContext.damage);
+                    /** 相位三：按结果执行 */
+                    gameCharacterController.BeAttacked(gameObject,context.damage.FinalValue);
                     attacked.Add(i.collider.gameObject);
 
-                    miniEventBus.Publish<AfterAttackEvent>(new AfterAttackEvent{victim=i.collider.gameObject});
+                    miniEventBus.Publish<AfterAttackEvent>(new AfterAttackEvent{context=context});
                 }
             }
             
@@ -461,16 +469,26 @@ namespace Flicker.Module
         /// 受击
         /// </summary>
         /// <param name="attacker">攻击者</param>
-        public void BeAttacked(GameObject attacker, int damage)
+        /// <param name="damage">攻击方传入的伤害</param>
+        public void BeAttacked(GameObject attacker, float damage)
         {
-            DamageContext damageContext = new();
-            damageContext.damage = damage;
-            /** 暂时先不考虑道具卡和藏品造成的修饰，后面再引入 */
-            miniEventBus.Publish<BeforeBeAttackedEvent>(new BeforeBeAttackedEvent{context=damageContext,attacker=attacker});
-            if (damageContext.cancelled) return;  //事件是否被取消
+            BeAttackedContext context = new()
+            {
+                attributes = modifyPipeline.GetModifierSet(),
+                attacker = attacker,
+                damage = new ModifiableValue(damage)
+            };
 
-            healthController.ReduceHealth((int)damageContext.damage);
-            miniEventBus.Publish<AfterBeAttackedEvent>(new AfterBeAttackedEvent{attacker=attacker});
+            /** 相位一：决定本次受击是否发生 */
+            miniEventBus.Publish<BeforeBeAttackedEvent>(new BeforeBeAttackedEvent{context=context});
+            if (context.cancelled) return;  //事件是否被取消
+
+            /** 相位二：确定本次承受的伤害 */
+            miniEventBus.Publish<BeAttackedResultEvent>(new BeAttackedResultEvent{context=context});
+
+            /** 相位三：按结果执行 */
+            healthController.ReduceHealth((int)context.damage.FinalValue);
+            miniEventBus.Publish<AfterBeAttackedEvent>(new AfterBeAttackedEvent{context=context});
 
             if (healthController.health <= 0) Die();
         }

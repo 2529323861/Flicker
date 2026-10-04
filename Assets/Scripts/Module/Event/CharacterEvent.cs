@@ -36,35 +36,47 @@ namespace Flicker.Module.CharacterEvent
         public GameObject opponent;
     }
     /// <summary>
-    /// 攻击前事件
+    /// 攻击前事件，决定本次攻击是否发生
     /// </summary>
     public struct BeforeAttackEvent
     {
-        public DamageContext context;
-        public GameObject victim;
+        public AttackContext context;
     }
     /// <summary>
-    /// 攻击后事件
+    /// 攻击结果事件，修饰本次攻击产生的临时变量
+    /// </summary>
+    public struct AttackResultEvent
+    {
+        public AttackContext context;
+    }
+    /// <summary>
+    /// 攻击后事件，已按 context 执行完毕
     /// </summary>
     public struct AfterAttackEvent
     {
-        public GameObject victim;
+        public AttackContext context;
     }
 
     /// <summary>
-    /// 受击前事件
+    /// 受击前事件，决定本次受击是否发生
     /// </summary>
     public struct BeforeBeAttackedEvent
     {
-        public DamageContext context;
-        public GameObject attacker;
+        public BeAttackedContext context;
     }
     /// <summary>
-    /// 受击后事件
+    /// 受击结果事件，修饰本次承受的伤害
+    /// </summary>
+    public struct BeAttackedResultEvent
+    {
+        public BeAttackedContext context;
+    }
+    /// <summary>
+    /// 受击后事件，已按 context 执行完毕
     /// </summary>
     public struct AfterBeAttackedEvent
     {
-        public GameObject attacker;
+        public BeAttackedContext context;
     }
 
 
