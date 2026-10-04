@@ -144,19 +144,29 @@ namespace Flicker.Module
             ModifierSet values = modifyPipeline.GetModifierSet();
             if (GetNowPropCount()>=values.Final(ModifierSet.Key.PropSlot)) return;
 
-            ActionContext context = new();
-            miniEventBus.Publish<BeforeAddPropEvent>(new(){context=context,basePropStrategy=basePropStrategy});
+            AddPropContext context = new()
+            {
+                attributes = values,
+                prop = basePropStrategy
+            };
+
+            /** 相位一：决定本次获得道具是否发生 */
+            miniEventBus.Publish<BeforeAddPropEvent>(new(){context=context});
             if (context.cancelled) return;
 
+            /** 相位二：确定本次获得道具的临时变量 */
+            miniEventBus.Publish<AddPropResultEvent>(new(){context=context});
+
+            /** 相位三：按结果执行 */
             int i=0;
             while (props[i] != null)
             {
                 i++;
             }
-            props[i]=basePropStrategy;
-            miniEventBus.Publish<AfterAddPropEvent>(new());
+            props[i]=context.prop;
+            miniEventBus.Publish<AfterAddPropEvent>(new(){context=context});
 
-            onPropAdded?.Invoke(new(){basePropStrategyMetaData=basePropStrategy.GetMetaData(),slotIndex=i});
+            onPropAdded?.Invoke(new(){basePropStrategyMetaData=context.prop.GetMetaData(),slotIndex=i});
         }
         public void UseProp(int propSlotIndex)
         {
@@ -166,15 +176,24 @@ namespace Flicker.Module
             if (propSlotIndex >= values.Final(ModifierSet.Key.PropSlot)) return;
             if (props[propSlotIndex]==null) return;
 
-            ActionContext context = new();
-            miniEventBus.Publish<BeforeUsePropEvent>(new(){context=context,basePropStrategy=props[propSlotIndex]});
+            UsePropContext context = new()
+            {
+                attributes = values,
+                prop = props[propSlotIndex]
+            };
+
+            /** 相位一：决定本次使用道具是否发生 */
+            miniEventBus.Publish<BeforeUsePropEvent>(new(){context=context});
             if (context.cancelled) return;
 
-            BasePropStrategy basePropStrategy = props[propSlotIndex];
-            props[propSlotIndex] = null;
-            basePropStrategy.OnUse(buffContainer,effectContainer);
+            /** 相位二：确定本次使用道具的临时变量 */
+            miniEventBus.Publish<UsePropResultEvent>(new(){context=context});
 
-            miniEventBus.Publish<AfterUsePropEvent>(new());
+            /** 相位三：按结果执行 */
+            props[propSlotIndex] = null;
+            context.prop.OnUse(buffContainer,effectContainer);
+
+            miniEventBus.Publish<AfterUsePropEvent>(new(){context=context});
 
             onPropUse?.Invoke(new(){propSlotIndex=propSlotIndex});
         }

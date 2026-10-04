@@ -4,36 +4,49 @@ using UnityEngine;
 namespace Flicker.Module.CharacterEvent
 {
     /// <summary>
-    /// 跳跃前事件
+    /// 跳跃前事件，决定本次跳跃是否发生
     /// </summary>
     public struct BeforeJumpEvent
     {
-        public ActionContext context;
-        public bool toRightWall;
+        public JumpContext context;
     }
 
     /// <summary>
-    /// 跳跃后事件
+    /// 跳跃结果事件，修饰本次跳跃的行为参数
+    /// </summary>
+    public struct JumpResultEvent
+    {
+        public JumpContext context;
+    }
+
+    /// <summary>
+    /// 跳跃后事件，已按 context 执行完毕
     /// </summary>
     public struct AfterJumpEvent
     {
-        public bool toRightWall;
+        public JumpContext context;
     }
 
     /// <summary>
-    /// 弹反前事件
+    /// 弹反前事件，决定本次弹反是否发生
     /// </summary>
     public struct BeforeParryEvent
     {
-        public ActionContext context;
-        public GameObject opponent;
+        public ParryContext context;
     }
     /// <summary>
-    /// 弹反后事件
+    /// 弹反结果事件，可改写发起方跳跃的上下文
+    /// </summary>
+    public struct ParryResultEvent
+    {
+        public ParryContext context;
+    }
+    /// <summary>
+    /// 弹反后事件，已按 context 执行完毕
     /// </summary>
     public struct AfterParryEvent
     {
-        public GameObject opponent;
+        public ParryContext context;
     }
     /// <summary>
     /// 攻击前事件，决定本次攻击是否发生
@@ -81,36 +94,53 @@ namespace Flicker.Module.CharacterEvent
 
 
     /// <summary>
-    /// 移动前事件
+    /// 移动前事件，决定本次移动是否发生
     /// </summary>
     public struct BeforeMoveEvent
     {
-        public ActionContext context;
-        public bool isUp;
+        public MoveContext context;
     }
 
     /// <summary>
-    /// 移动后事件
+    /// 移动结果事件，修饰本次移动的行为参数
+    /// </summary>
+    public struct MoveResultEvent
+    {
+        public MoveContext context;
+    }
+
+    /// <summary>
+    /// 移动后事件，已按 context 执行完毕
     /// </summary>
     public struct AfterMoveEvent
     {
-        public bool isUp;
+        public MoveContext context;
     }
     /// <summary>
     /// 传递引擎更新事件,用于dot效果自治间隔触发
     /// </summary>
     public struct UpdateEvent{}
     /// <summary>
-    /// 死亡前事件
+    /// 死亡前事件，决定本次死亡是否发生
     /// </summary>
     public struct BeforeDie
     {
-        public ActionContext context;
+        public DieContext context;
     }
     /// <summary>
-    /// 死亡后事件
+    /// 死亡结果事件
     /// </summary>
-    public struct AfterDie{}
+    public struct DieResultEvent
+    {
+        public DieContext context;
+    }
+    /// <summary>
+    /// 死亡后事件，已按 context 执行完毕
+    /// </summary>
+    public struct AfterDie
+    {
+        public DieContext context;
+    }
 
     public struct StateChangedEvent
     {
@@ -124,59 +154,97 @@ namespace Flicker.Module.CharacterEvent
     /// </summary>
     public struct BeforeAddBuffEvent
     {
-        public ActionContext context;
-        public BaseBuffStrategy baseBuffStrategy;
+        public AddBuffContext context;
+    }
+    /// <summary>
+    /// 获得buff结果事件，可修饰持续时间
+    /// </summary>
+    public struct AddBuffResultEvent
+    {
+        public AddBuffContext context;
     }
     /// <summary>
     /// 获得buff后事件
     /// </summary>
-    public struct AfterAddBuffEvent{}
+    public struct AfterAddBuffEvent
+    {
+        public AddBuffContext context;
+    }
     /// <summary>
     /// buff叠层前事件
     /// </summary>
     public struct BeforeBuffStackEvent
     {
-        public ActionContext context;
-        public BaseBuffStrategy baseBuffStrategy;
+        public BuffStackContext context;
+    }
+    /// <summary>
+    /// buff叠层结果事件，可修饰持续时间
+    /// </summary>
+    public struct BuffStackResultEvent
+    {
+        public BuffStackContext context;
     }
     /// <summary>
     /// buff叠层后事件
     /// </summary>
-    public struct AfterBuffStackEvent{}
+    public struct AfterBuffStackEvent
+    {
+        public BuffStackContext context;
+    }
     /// <summary>
     /// 移除buff前事件
     /// </summary>
     public struct BeforeRemoveBuffEvent
     {
-        public ActionContext context;
-        public BaseBuffStrategy baseBuffStrategy;
+        public RemoveBuffContext context;
     }
     /// <summary>
     /// 移除buff后事件
     /// </summary>
-    public struct AfterRemoveBuffEvent{}
+    public struct AfterRemoveBuffEvent
+    {
+        public RemoveBuffContext context;
+    }
     /// <summary>
     /// 获得道具前事件
     /// </summary>
     public struct BeforeAddPropEvent
     {
-        public ActionContext context;
-        public BasePropStrategy basePropStrategy;
+        public AddPropContext context;
+    }
+    /// <summary>
+    /// 获得道具结果事件
+    /// </summary>
+    public struct AddPropResultEvent
+    {
+        public AddPropContext context;
     }
     /// <summary>
     /// 获得道具后事件
     /// </summary>
-    public struct AfterAddPropEvent{}
+    public struct AfterAddPropEvent
+    {
+        public AddPropContext context;
+    }
     /// <summary>
     /// 使用道具前事件
     /// </summary>
     public struct BeforeUsePropEvent
     {
-        public ActionContext context;
-        public BasePropStrategy basePropStrategy;
+        public UsePropContext context;
+    }
+    /// <summary>
+    /// 使用道具结果事件
+    /// </summary>
+    public struct UsePropResultEvent
+    {
+        public UsePropContext context;
     }
     /// <summary>
     /// 使用道具后事件
     /// </summary>
-    public struct AfterUsePropEvent{}
+    public struct AfterUsePropEvent
+    {
+        public UsePropContext context;
+    }
 }
