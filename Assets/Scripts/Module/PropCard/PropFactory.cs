@@ -22,6 +22,7 @@ namespace Flicker.Module
             RegisterProp("00004",()=>new NodeviationArrowProp());
             RegisterProp("00005",()=>new CompensationVoucherProp());
             RegisterProp("00006",()=>new NamelessHaloProp());
+            RegisterProp("00007",()=>new PulseClockProp());
 
         }
         public void RegisterProp(string id, Func<BasePropStrategy> func)
