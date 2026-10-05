@@ -89,6 +89,7 @@ namespace Flicker.UI
         {
             base.OnOpen(args);
             ClearCache();
+            InitBuffIcon();
             foreach (var i in props)
             {
                 i.SetActive(false);
@@ -101,7 +102,17 @@ namespace Flicker.UI
         {
             propCache=new bool[5]{false,false,false,false,false};
             jumpCDProgressCache=0;
-            buffWrappers = new();
+        }
+        /// <summary>
+        /// 初始化buff图标，移除所有残留图标
+        /// </summary>
+        public void InitBuffIcon()
+        {
+            foreach (var i in buffWrappers)
+            {
+                Destroy(i.buffUI);
+            }
+            buffWrappers.Clear();
         }
         //—————————————————————————————————跳跃CD部分———————————————————————————————————————————
         /// <summary>
