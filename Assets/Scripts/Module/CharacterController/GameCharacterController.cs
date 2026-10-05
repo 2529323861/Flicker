@@ -307,9 +307,9 @@ namespace Flicker.Module
                     miniEventBus.Publish<AfterParryEvent>(new AfterParryEvent{context=_parryContext});
                     _parryContext = null;
                 }
-                transform.localPosition = Vector3.Lerp(startingPoint,distination,timer/hangTime);
+                transform.localPosition = LerpFlightPosition(startingPoint,distination,timer/hangTime);
             }
-            transform.localPosition = distination;
+            transform.localPosition = LandFlightPosition(distination);
             /** 进入冷却：比例 = 本次冷却时长 / 当前上限。上限为 0 时视为无冷却 */
             jumpCDRatio = Ratio.ToRatio(context.attributes.Final(ModifierSet.Key.MaxJumpingCD), context.attributes.Final(ModifierSet.Key.MaxJumpingCD));
 
@@ -417,9 +417,40 @@ namespace Flicker.Module
 
             float moveSpeed = context.attributes.Final(ModifierSet.Key.MoveSpeed);
 
-            float deltaY = moveSpeed * Time.deltaTime * (isUp ? 1 : -1);
-            Vector3 temp = transform.localPosition;
-            float targetY = temp.y+deltaY;
+            MoveAlongWall(moveSpeed * Time.deltaTime * (isUp ? 1 : -1));
+
+            miniEventBus.Publish<AfterMoveEvent>(new AfterMoveEvent{context=context});
+        }
+        /// <summary>
+        /// 飞行插值位置。只接管横向（x），纵向（y）留给移动与冲刺
+        /// </summary>
+        /// <param name="startingPoint">飞行起点</param>
+        /// <param name="distination">飞行终点</param>
+        /// <param name="t">插值系数</param>
+        private Vector3 LerpFlightPosition(Vector3 startingPoint, Vector3 distination, float t)
+        {
+            Vector3 position = transform.localPosition;
+            position.x = Mathf.Lerp(startingPoint.x,distination.x,t);
+            return position;
+        }
+        /// <summary>
+        /// 飞行落点位置。同 LerpFlightPosition，只接管横向
+        /// </summary>
+        /// <param name="distination">飞行终点</param>
+        private Vector3 LandFlightPosition(Vector3 distination)
+        {
+            Vector3 position = transform.localPosition;
+            position.x = distination.x;
+            return position;
+        }
+        /// <summary>
+        /// 沿当前墙面移动指定距离，处理边界限制与碰壁回调
+        /// </summary>
+        /// <param name="deltaY">纵向位移，正数向上</param>
+        public void MoveAlongWall(float deltaY)
+        {
+            Vector3 position = transform.localPosition;
+            float targetY = position.y+deltaY;
             if (!isRightWall)
             {
                 if (targetY > LevelManager.Instance.leftTop) OnIntoEdge(LevelEdge.LeftTop);
@@ -432,9 +463,7 @@ namespace Flicker.Module
                 if (targetY < LevelManager.Instance.rightBottom) OnIntoEdge(LevelEdge.RightBottom);
                 targetY = Mathf.Clamp(targetY,LevelManager.Instance.rightBottom,LevelManager.Instance.rightTop);
             }
-            transform.localPosition = new Vector3(temp.x,targetY,temp.z);
-
-            miniEventBus.Publish<AfterMoveEvent>(new AfterMoveEvent{context=context});
+            transform.localPosition = new Vector3(position.x,targetY,position.z);
         }
         /// <summary>
         /// 到达边缘
