@@ -117,6 +117,38 @@ namespace Flicker.Module.CharacterEvent
         public MoveContext context;
     }
     /// <summary>
+    /// 落地事件。本次跳跃的全部结算（攻击、僵直、墙面）均已完成。
+    /// 单相，不可取消也不可修饰，仅作必然发生的通知
+    /// </summary>
+    public struct LandEvent
+    {
+    }
+
+    /// <summary>
+    /// 僵直前事件，决定本次僵直是否发生
+    /// </summary>
+    public struct BeforeStiffenEvent
+    {
+        public StiffenContext context;
+    }
+
+    /// <summary>
+    /// 僵直结果事件
+    /// </summary>
+    public struct StiffenResultEvent
+    {
+        public StiffenContext context;
+    }
+
+    /// <summary>
+    /// 僵直后事件，已按 context 执行完毕
+    /// </summary>
+    public struct AfterStiffenEvent
+    {
+        public StiffenContext context;
+    }
+
+    /// <summary>
     /// 传递引擎更新事件,用于dot效果自治间隔触发
     /// </summary>
     public struct UpdateEvent{}

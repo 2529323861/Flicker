@@ -41,6 +41,13 @@ namespace Flicker.Module.Context
     }
 
     /// <summary>
+    /// 僵直上下文
+    /// </summary>
+    public class StiffenContext: ActionContext
+    {
+    }
+
+    /// <summary>
     /// 移动上下文
     /// </summary>
     public class MoveContext: ActionContext

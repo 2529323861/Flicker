@@ -313,16 +313,20 @@ namespace Flicker.Module
             /** 进入冷却：比例 = 本次冷却时长 / 当前上限。上限为 0 时视为无冷却 */
             jumpCDRatio = Ratio.ToRatio(context.attributes.Final(ModifierSet.Key.MaxJumpingCD), context.attributes.Final(ModifierSet.Key.MaxJumpingCD));
 
-            miniEventBus.Publish<AfterJumpEvent>(new AfterJumpEvent{context=context});
-
+            /** 攻击结算。命中时发布 AfterAttackEvent，供落地补偿判定 */
             if (state == GameCharacterState.JumpHanging)
             {
                 AttackDetect();
             }
-            else
+
+            /** 落地事件：此时命中与弹反结果均已确定，
+             *  而僵直尚未结算，故可据此改写尚未生效的后果 */
+            miniEventBus.Publish<AfterJumpEvent>(new AfterJumpEvent{context=context});
+
+            /** 僵直结算 */
+            if (state == GameCharacterState.ParryHanging)
             {
-                float stiffenTime = modifyPipeline.GetModifierSet().Final(ModifierSet.Key.StiffenTime);
-                gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),stiffenTime);
+                Stiffen();
             }
 
             /** 被弹反弹回时落点仍是出发墙，墙面保持不变；
@@ -333,6 +337,31 @@ namespace Flicker.Module
             SetState(GameCharacterState.Idle);
             MoveRecovery();
             ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new AddVibration(){maxTime=0.2f,amplitudeX=0.2f,amplitudeY=0f,amplitudeZ=0f});
+
+            /** 落地：本次跳跃全部结算已完毕，仅作必然发生的通知 */
+            miniEventBus.Publish<LandEvent>(new LandEvent());
+        }
+        /// <summary>
+        /// 僵直
+        /// </summary>
+        private void Stiffen()
+        {
+            StiffenContext context = new()
+            {
+                attributes = modifyPipeline.GetModifierSet()
+            };
+
+            /** 相位一：决定本次僵直是否发生 */
+            miniEventBus.Publish<BeforeStiffenEvent>(new BeforeStiffenEvent{context=context});
+            if (context.cancelled) return;
+
+            /** 相位二：确定本次僵直的临时变量 */
+            miniEventBus.Publish<StiffenResultEvent>(new StiffenResultEvent{context=context});
+
+            /** 相位三：按结果执行 */
+            gameObject.GetComponent<BuffContainer>().AddBuff(new StiffnessBuff(),context.attributes.Final(ModifierSet.Key.StiffenTime));
+
+            miniEventBus.Publish<AfterStiffenEvent>(new AfterStiffenEvent{context=context});
         }
         public void EnterMove(bool isUp)
         {
