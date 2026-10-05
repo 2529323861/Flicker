@@ -88,6 +88,10 @@ namespace Flicker.Module
         /// </summary>
         public virtual void OnUse(){}
         /// <summary>
+        /// 道具自身的使用条件。不满足则本次使用不发生，也不消耗道具
+        /// </summary>
+        public virtual bool CanUse(){ return true; }
+        /// <summary>
         /// 绑定游戏角色控制器，道具进入容器时调用
         /// </summary>
         /// <param name="gameCharacterController">使用者的游戏角色控制器</param>

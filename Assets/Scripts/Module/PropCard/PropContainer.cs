@@ -181,6 +181,9 @@ namespace Flicker.Module
             if (propSlotIndex >= values.Final(ModifierSet.Key.PropSlot)) return;
             if (props[propSlotIndex]==null) return;
 
+            /** 道具自身的先决条件，不满足则不消耗也不触发任何钩子 */
+            if (!props[propSlotIndex].CanUse()) return;
+
             UsePropContext context = new()
             {
                 attributes = values,
