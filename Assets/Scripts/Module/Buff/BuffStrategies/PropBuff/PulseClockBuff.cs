@@ -67,7 +67,7 @@ namespace Flicker.Module.Buff.PropBuff
                 b.Listen<BeforeMoveEvent>(OnBeforeMove);
                 /** 冲刺期间免疫攻击 */
                 b.Listen<BeforeBeAttackedEvent>(OnBeforeBeAttacked);
-                /** 逐帧推进冲刺与后段计时 */
+                /** 逐帧推进冲刺。后段会另行订阅续接计时 */
                 b.Listen<UpdateEvent>(OnUpdate);
             };
             effectContainer.AddEffect(frontEffect, this);
@@ -111,6 +111,8 @@ namespace Flicker.Module.Buff.PropBuff
 
             this.backEffect = new BaseEffectStrategy();
             backEffect.apply = (b, m) => m.Get(ModifierSet.Key.MoveSpeed).AddMultiplier(MoveSpeedMultiplier);
+            /** 订阅随后段生命周期，直至 buff 被移除 */
+            backEffect.onAdd = (b) => b.Listen<UpdateEvent>(OnUpdate);
             effectContainer.AddEffect(backEffect);
 
             backTimer = BackDuration;

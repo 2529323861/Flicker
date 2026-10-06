@@ -3,7 +3,8 @@ using Flicker.Module.CharacterEvent;
 namespace Flicker.Module.Buff.PropBuff
 {
     /// <summary>
-    /// 不偏矢：下一次弹反后保持原方向，但自身僵直时间增加25%，落地后自动移除
+    /// 不偏矢：下一次跳跃期间弹反不改变方向，但自身僵直时间增加25%。
+    /// 跳跃结束时自摘，因此未发生弹反也会失效
     /// </summary>
     public class NodeviationArrowBuff : BaseBuffStrategy
     {
@@ -21,7 +22,7 @@ namespace Flicker.Module.Buff.PropBuff
         {
             name = "不偏矢";
             path = "NodeviationArrow";
-            description = "下一次弹反不改变方向，僵直时间增加25%";
+            description = "下一次跳跃期间弹反不改变方向，僵直时间增加25%（跳跃结束即失效）";
             isStackable = true;
         }
         public override void OnAdd()

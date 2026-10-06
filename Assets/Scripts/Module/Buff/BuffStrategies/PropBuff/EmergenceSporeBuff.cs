@@ -46,11 +46,9 @@ namespace Flicker.Module.Buff.PropBuff
             this.frontEffect = new BaseEffectStrategy();
             /** 持久修饰滞空时间，跳跃读取修饰集时生效 */
             frontEffect.apply = (b, m) => m.Get(ModifierSet.Key.HangTime).AddMultiplier(HangTimeMultiplier);
-            frontEffect.onAdd = (b) =>
-            {
-                b.Listen<AfterJumpEvent>(OnLanded);
-                b.Listen<UpdateEvent>(OnUpdate);
-            };
+            /** 只订阅前段终结事件。UpdateEvent 由后段自行订阅，
+             *  否则本 effect 被移除时订阅会一起丢失 */
+            frontEffect.onAdd = (b) => b.Listen<AfterJumpEvent>(OnLanded);
             effectContainer.AddEffect(frontEffect, this);
         }
         public override void OnRemove()
@@ -68,6 +66,8 @@ namespace Flicker.Module.Buff.PropBuff
 
             this.backEffect = new BaseEffectStrategy();
             backEffect.apply = (b, m) => m.Get(ModifierSet.Key.MoveSpeed).AddMultiplier(MoveSpeedMultiplier);
+            /** 订阅随后段生命周期，直至 buff 被移除 */
+            backEffect.onAdd = (b) => b.Listen<UpdateEvent>(OnUpdate);
             effectContainer.AddEffect(backEffect);
 
             backTimer = BackDuration;
