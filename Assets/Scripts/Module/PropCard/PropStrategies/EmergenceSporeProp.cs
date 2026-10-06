@@ -9,11 +9,11 @@ namespace Flicker.Module.Prop
             name = "羽化孢子";
             factoryId = "00002";
             path = "EmergenceSpore";
-            description = "使用后3秒内，下一次跳跃的滞空时间减少80%。";
+            description = "下一次跳跃的滞空时间减少80%，落地后移速下降50%，持续5秒。";
         }
         public override void OnUse()
         {
-            buffContainer.AddBuff(new EmergenceSporeBuff(), 3f);
+            buffContainer.AddBuff(new EmergenceSporeBuff(), -1f);
         }
     }
 }

@@ -1,29 +1,47 @@
 using Flicker.Module.CharacterEvent;
+using UnityEngine;
 
 namespace Flicker.Module.Buff.PropBuff
 {
     /// <summary>
     /// 补偿券：下一次跳跃的落地补偿。
-    /// 未命中返还70%跳跃冷却；被弹反则本次僵直减半；命中则无补偿
+    /// 未命中返还70%跳跃冷却；命中（含被弹反）则道具获取冷却提升50%，持续7秒
     /// </summary>
     public class CompensationVoucherBuff : BaseBuffStrategy
     {
         /// <summary>
-        /// 本次跳跃的结果：0 = 未命中，1 = 弹反，2 = 命中
+        /// 跳跃冷却是按"剩余比例"存储的，返还70%即剩余30%
         /// </summary>
-        private int status = 0;
+        public const float JumpCDRemainRatio = 0.3f;
+        /// <summary>
+        /// 后段道具获取冷却倍率
+        /// </summary>
+        public const float GetPropCDMultiplier = 1.5f;
+        /// <summary>
+        /// 后段持续时间
+        /// </summary>
+        public const float BackDuration = 7f;
+
+        /// <summary>
+        /// 本次跳跃是否命中，被弹反视作命中
+        /// </summary>
+        private bool hitted = false;
         BaseEffectStrategy baseEffectStrategy;
         /// <summary>
-        /// 僵直减半的临时修饰，仅在僵直结算前挂载
+        /// 后段修饰：道具获取冷却提升
         /// </summary>
-        BaseEffectStrategy stiffenEffect;
+        BaseEffectStrategy backEffect;
+        /// <summary>
+        /// 后段剩余时间，非正数表示尚未进入后段或已结束
+        /// </summary>
+        float backTimer = 0f;
         GameCharacterController gameCharacterController;
         public CompensationVoucherBuff()
         {
             name = "补偿券";
             /** 暂无美术资源，补齐 BuffIcon/CompensationVoucher.png 后改为 "CompensationVoucher" */
             path = "Unknown";
-            description = "未命中返还70%跳跃冷却；被弹反则僵直减半";
+            description = "未命中返还70%跳跃冷却；命中则道具获取冷却提升50%，持续7秒";
             isStackable = true;
         }
         public override void OnAdd()
@@ -36,53 +54,49 @@ namespace Flicker.Module.Buff.PropBuff
                 b.Listen<AfterAttackEvent>(OnHitted);
                 b.Listen<AfterParryEvent>(OnParried);
                 b.Listen<AfterJumpEvent>(OnLanded);
-                b.Listen<LandEvent>(OnLandFinished);
+                b.Listen<UpdateEvent>(OnUpdate);
             };
             effectContainer.AddEffect(baseEffectStrategy, this);
         }
         public override void OnRemove()
         {
-            /** 仅弹反路径挂载过临时修饰 */
-            if (stiffenEffect != null) effectContainer.RemoveEffect(stiffenEffect);
+            if (backEffect != null) effectContainer.RemoveEffect(backEffect);
             effectContainer.RemoveEffect(baseEffectStrategy);
         }
         private void OnHitted(AfterAttackEvent afterAttackEvent)
         {
-            status = 2;
+            hitted = true;
         }
         private void OnParried(AfterParryEvent afterParryEvent)
         {
-            status = 1;
+            /** 被弹反视作命中 */
+            hitted = true;
         }
         /// <summary>
-        /// 落地结算。此时命中与弹反均已确定，且僵直尚未结算
+        /// 落地结算
         /// </summary>
         private void OnLanded(AfterJumpEvent afterJumpEvent)
         {
-            if (status == 0)
+            if (!hitted)
             {
-                /** 未命中：返还70%跳跃冷却，剩余冷却为30% */
-                gameCharacterController.jumpCDRatio *= 0.3f;
+                /** 未命中：返还70%跳跃冷却，随后自摘 */
+                gameCharacterController.jumpCDRatio *= JumpCDRemainRatio;
+                buffContainer.RemoveBuff(this);
+                return;
             }
-            else if (status == 1)
-            {
-                /** 被弹反：挂上僵直减半的修饰，待僵直结算后摘除 */
-                this.stiffenEffect = new BaseEffectStrategy();
-                stiffenEffect.apply = (b, m) => m.Get(ModifierSet.Key.StiffenTime).AddMultiplier(0.5f);
-                effectContainer.AddEffect(stiffenEffect);
-            }
+
+            /** 命中：切换为后段，附加道具获取冷却惩罚并开始计时 */
+            this.backEffect = new BaseEffectStrategy();
+            backEffect.apply = (b, m) => m.Get(ModifierSet.Key.GetPropCD).AddMultiplier(GetPropCDMultiplier);
+            effectContainer.AddEffect(backEffect);
+
+            backTimer = BackDuration;
         }
-        /// <summary>
-        /// 跳跃结算完毕。无论僵直是否发生都会走到这里，在此保证清理并自摘
-        /// </summary>
-        private void OnLandFinished(LandEvent landEvent)
+        private void OnUpdate(UpdateEvent updateEvent)
         {
-            if (stiffenEffect != null)
-            {
-                effectContainer.RemoveEffect(stiffenEffect);
-                stiffenEffect = null;
-            }
-            buffContainer.RemoveBuff(this);
+            if (backTimer <= 0f) return;
+            backTimer -= Time.deltaTime;
+            if (backTimer <= 0f) buffContainer.RemoveBuff(this);
         }
     }
 }
