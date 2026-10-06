@@ -22,22 +22,38 @@ namespace Flicker.Module.Context
     }
 
     /// <summary>
-    /// 跳跃上下文
+    /// 跳跃上下文。飞行期间持有全部轨迹状态，由 Coroutine 逐帧推进，
+    /// 效果层通过修改上下文字段来干预轨迹
     /// </summary>
     public class JumpContext: ActionContext
     {
         /// <summary>
-        /// 本次冲向的墙
+        /// 本次飞行的终点墙。起点墙为其反面，二者必然相反
         /// </summary>
         public bool toRightWall;
+
         /// <summary>
-        /// 是否无视跳跃冷却
+        /// 本次滞空时长，起跳时快照，仅用于把时间增量换算为进度增量
         /// </summary>
-        public bool ignoreCD;
+        public float hangTime;
         /// <summary>
-        /// 弹反后是否反向继续，由弹反相位修改
+        /// 飞行进度，0 为出发墙，1 为终点墙。
+        /// 由飞行协程逐帧推进，效果层可直接改写以改变轨迹
         /// </summary>
-        public bool reverse = true;
+        public float progress;
+
+        /// <summary>
+        /// 折返：进度翻折并调转终点墙，落点随之回到出发墙。
+        ///
+        /// 这是纯状态操作，不做任何通知——调用两次即完全还原。
+        /// 因此效果可以"提前折返"来抵消弹反帧的折返（不偏矢即如此实现）。
+        /// 需要广播"发生了折返"时应另立事件，不要在此处添加副作用
+        /// </summary>
+        public void FoldBack()
+        {
+            progress = 1f - progress;
+            toRightWall = !toRightWall;
+        }
     }
 
     /// <summary>

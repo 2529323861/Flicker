@@ -242,7 +242,8 @@ namespace Flicker.Module
             {
                 attributes = attributes,
                 toRightWall = !isRightWall,
-                ignoreCD = ignoreCD
+                /** 起跳时快照滞空时长，此后只读；attributes 是共享实例会被重算 */
+                hangTime = attributes.Final(ModifierSet.Key.HangTime)
             };
 
             /** 相位一：决定本次跳跃是否发生 */
@@ -270,21 +271,18 @@ namespace Flicker.Module
         {   
             
             
-            float hangTime = context.attributes.Final(ModifierSet.Key.HangTime);
-
             SetState(GameCharacterState.JumpHanging);
-            float timer = 0;
 
+            /** 视图脏检查：精灵当前显示的墙。飞行期间 toRightWall 可能被效果改写，
+             *  此处逐帧比对并按需刷新朝向 */
+            bool renderedWall = isRightWall;
 
-            Vector3 startingPoint = transform.localPosition;
-            Vector3 distination = startingPoint;
-            distination.x = context.toRightWall ? rightWallPos : leftWallPos;
-            while (timer <= hangTime)
+            while (context.progress <= 1f)
             {
                 yield return null;
 
                 if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) continue;  //暂停/剧情/倒数
-                timer += Time.deltaTime;
+                context.progress += Time.deltaTime / context.hangTime;
 
                 /** 弹反检测 */
                 if (state == GameCharacterState.JumpHanging)
@@ -292,24 +290,26 @@ namespace Flicker.Module
                 if (parryAtFrame)
                 {
                     parryAtFrame = false;                      
-                    /** 复位触发，切换状态。若未被取消反向，则倒置计时器并交换移动终/起点 */
+                    /** 复位触发，切换状态，无条件折返回出发墙。
+                     *  不偏矢等"不换向"效果已在 Result 相位提前折返一次，两次调用相互抵消 */
                     SetState(GameCharacterState.ParryHanging);
-                    if (context.reverse)
-                    {
-                        timer = hangTime - timer;
-                        Vector2 temp = startingPoint;
-                        startingPoint = distination;
-                        distination = temp;
-                    }
+                    context.FoldBack();
 
                     ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new AddVibration(){maxTime=0.4f,amplitudeX=0.8f,amplitudeY=0f,amplitudeZ=0f});
 
                     miniEventBus.Publish<AfterParryEvent>(new AfterParryEvent{context=_parryContext});
                     _parryContext = null;
                 }
-                transform.localPosition = LerpFlightPosition(startingPoint,distination,timer/hangTime);
+
+                if (context.toRightWall != renderedWall)
+                {
+                    renderedWall = context.toRightWall;
+                    UpdateActor(state,towardUp,renderedWall);
+                }
+
+                transform.localPosition = LerpFlightPosition(context);
             }
-            transform.localPosition = LandFlightPosition(distination);
+            transform.localPosition = LandFlightPosition(context);
             /** 进入冷却：比例 = 本次冷却时长 / 当前上限。上限为 0 时视为无冷却 */
             jumpCDRatio = Ratio.ToRatio(context.attributes.Final(ModifierSet.Key.MaxJumpingCD), context.attributes.Final(ModifierSet.Key.MaxJumpingCD));
 
@@ -329,10 +329,8 @@ namespace Flicker.Module
                 Stiffen();
             }
 
-            /** 被弹反弹回时落点仍是出发墙，墙面保持不变；
-             *  其余情况（含被弹反但未反向）均到达目标墙，墙面随之转置 */
-            bool bouncedBack = state == GameCharacterState.ParryHanging && context.reverse;
-            if (!bouncedBack) isRightWall = context.toRightWall;
+            /** 落点墙即上下文中的终点墙，折返已将其调转 */
+            isRightWall = context.toRightWall;
 
             SetState(GameCharacterState.Idle);
             MoveRecovery();
@@ -422,25 +420,27 @@ namespace Flicker.Module
             miniEventBus.Publish<AfterMoveEvent>(new AfterMoveEvent{context=context});
         }
         /// <summary>
-        /// 飞行插值位置。只接管横向（x），纵向（y）留给移动与冲刺
+        /// 飞行插值位置。只接管横向（x），纵向（y）留给移动与冲刺。
+        /// 起点墙由终点墙推出，二者必然相反
         /// </summary>
-        /// <param name="startingPoint">飞行起点</param>
-        /// <param name="distination">飞行终点</param>
-        /// <param name="t">插值系数</param>
-        private Vector3 LerpFlightPosition(Vector3 startingPoint, Vector3 distination, float t)
+        /// <param name="context">跳跃上下文</param>
+        private Vector3 LerpFlightPosition(JumpContext context)
         {
+            float fromX = context.toRightWall ? leftWallPos : rightWallPos;
+            float toX = context.toRightWall ? rightWallPos : leftWallPos;
+
             Vector3 position = transform.localPosition;
-            position.x = Mathf.Lerp(startingPoint.x,distination.x,t);
+            position.x = Mathf.Lerp(fromX,toX,Mathf.Clamp01(context.progress));
             return position;
         }
         /// <summary>
         /// 飞行落点位置。同 LerpFlightPosition，只接管横向
         /// </summary>
-        /// <param name="distination">飞行终点</param>
-        private Vector3 LandFlightPosition(Vector3 distination)
+        /// <param name="context">跳跃上下文</param>
+        private Vector3 LandFlightPosition(JumpContext context)
         {
             Vector3 position = transform.localPosition;
-            position.x = distination.x;
+            position.x = context.toRightWall ? rightWallPos : leftWallPos;
             return position;
         }
         /// <summary>
