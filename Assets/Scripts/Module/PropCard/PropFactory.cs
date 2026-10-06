@@ -28,6 +28,7 @@ namespace Flicker.Module
             RegisterProp("00010",()=>new LeadStabilizerProp());
             RegisterProp("00011",()=>new IdleShaftProp());
             RegisterProp("00012",()=>new WindBellProp());
+            RegisterProp("00013",()=>new AnchorClawProp());
 
         }
         public void RegisterProp(string id, Func<BasePropStrategy> func)
