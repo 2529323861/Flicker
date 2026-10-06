@@ -84,6 +84,10 @@ namespace Flicker.Module
         /// </summary>
         protected EffectContainer effectContainer;
         /// <summary>
+        /// 道具容器绑定
+        /// </summary>
+        protected PropContainer propContainer;
+        /// <summary>
         /// 使用道具，容器已在道具入槽时完成控制器与容器绑定
         /// </summary>
         public virtual void OnUse(){}
@@ -114,6 +118,14 @@ namespace Flicker.Module
         public void BindEffectContainer(EffectContainer effectContainer)
         {
             this.effectContainer = effectContainer;
+        }
+        /// <summary>
+        /// 绑定道具容器，道具进入容器时调用
+        /// </summary>
+        /// <param name="propContainer">使用者身上的道具容器</param>
+        public void BindPropContainer(PropContainer propContainer)
+        {
+            this.propContainer = propContainer;
         }
         public BasePropStrategyMetaData GetMetaData()
         {

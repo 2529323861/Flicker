@@ -98,19 +98,21 @@ namespace Flicker.Module
             if (!isServer) return;  // 客户端空壳：逻辑空转
             if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
             ModifierSet values = modifyPipeline.GetModifierSet();
-            if (propCDRatio > 0)
+            float getPropCD = values.Final(ModifierSet.Key.GetPropCD);
+            bool hasSlot = GetNowPropCount() < values.Final(ModifierSet.Key.PropSlot);
+
+            /** CD 流动：有空槽位时才推进，防止同时持有超过上限的道具 */
+            if (hasSlot && propCDRatio > 0)
             {
-                float getPropCD = values.Final(ModifierSet.Key.GetPropCD);
-                if (GetNowPropCount() < values.Final(ModifierSet.Key.PropSlot)){
-                    //只有还有空槽位的时候，CD才会流动，防止同时使用上限+1个道具
-                    float getPropCDRate = values.Final(ModifierSet.Key.GetPropCDRate);
-                    propCDRatio = Ratio.Advance(propCDRatio, getPropCD, -Time.deltaTime*getPropCDRate);
-                }
-                if (propCDRatio <= 0)
-                {
-                    propCDRatio = Ratio.ToRatio(getPropCD, getPropCD);
-                    AddProp(propCardDeck.GetProp());
-                }
+                float getPropCDRate = values.Final(ModifierSet.Key.GetPropCDRate);
+                propCDRatio = Ratio.Advance(propCDRatio, getPropCD, -Time.deltaTime*getPropCDRate);
+            }
+
+            /** 比例归零即发放。外部清空 CD（如空转轴）也走这条路径 */
+            if (hasSlot && propCDRatio <= 0 && getPropCD > 0)
+            {
+                propCDRatio = Ratio.ToRatio(getPropCD, getPropCD);
+                AddProp(propCardDeck.GetProp());
             }
             
             onGetPropNumber?.Invoke(new(){propSlot=(int)values.Final(ModifierSet.Key.PropSlot)});
@@ -168,6 +170,7 @@ namespace Flicker.Module
             context.prop.BindGameCharacterController(gameCharacterController);
             context.prop.BindBuffContainer(buffContainer);
             context.prop.BindEffectContainer(effectContainer);
+            context.prop.BindPropContainer(this);
             props[i]=context.prop;
             miniEventBus.Publish<AfterAddPropEvent>(new(){context=context});
 

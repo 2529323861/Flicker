@@ -10,7 +10,7 @@ namespace Flicker.Module.Prop
             name = "逆流沙漏";
             factoryId = "00003";
             path = "ReverseFlowHourglass";
-            description = "立即重置跳跃冷却，并且下一次跳跃的冷却时间减少50%。";
+            description = "立刻清零跳跃冷却，但跳跃冷却上限上升30%，下次跳跃后解除。";
         }
         public override void OnUse()
         {
