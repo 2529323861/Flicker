@@ -76,6 +76,7 @@ Assets/Scripts/
 │   │   └── BuffStrategies/        # 具体 Buff 实现
 │   │       ├── AccelerateBuff.cs, ShieldBuff.cs, StiffnessBuff.cs
 │   │       └── PropBuff/          # 道具卡专用 Buff（命名类，图标在 buff 栏显示）
+│   │           └── StaticShell/   # 同一道具的多个 Buff 收进同名字文件夹
 │   ├── CharacterController/   # 角色行为
 │   │   ├── GameCharacterController.cs  # 实体行为基类（跳跃/移动/弹反/攻击/僵直/边界）
 │   │   ├── PlayerController.cs         # 玩家输入 + UI 事件注入
@@ -227,6 +228,45 @@ GCC.onUpdateJumpCDProgress   = (f) => EventBus.Publish(...)
 
 因此**半空冲刺成立**：跳跃飞行途中纵向位移不会被飞行插值抹掉。若飞行改为绝对写入整个坐标，这个能力会立刻失效。
 
+### 轨迹操控
+
+跳跃的轨迹状态全部在 `JumpContext` 中，由协程逐帧推进，效果层通过改字段干预：
+
+```csharp
+public bool toRightWall;   // 终点墙（起点墙为其反面，二者必然相反）
+public float hangTime;     // 秒 → 进度的换算系数，起跳时快照
+public float progress;     // 0 = 出发墙，1 = 终点墙
+
+public void FoldBack()     // 便捷调用：折返
+{
+    progress = 1f - progress;
+    toRightWall = !toRightWall;
+}
+```
+
+| 意图 | 写法 |
+| --- | --- |
+| 折返 | `context.FoldBack()` |
+| 改去另一面墙 | `context.toRightWall = !context.toRightWall` |
+| 跳到某处 | `context.progress = 目标值` |
+| 前进 / 后退一段 | `context.progress += / -= 增量` |
+
+**起点墙不单独存储**，由 `toRightWall` 推出——避免"起点终点不一致"的失同步。
+
+**`FoldBack` 只是两行常用操作的简写**，没有独立语义、没有副作用、**调用两次即完全还原**。因此效果可以"提前折返"来抵消弹反帧的折返，**不偏矢即如此实现**：
+
+```csharp
+// 跳动弹反帧（GCC）：无条件折返
+context.FoldBack();
+
+// 不偏矢（ParryResult 相位，早于上面那行）
+parryResultEvent.context.jump.FoldBack();   // 两次抵消，净效果为不换向
+```
+
+**约定**：不要在 `FoldBack` 中添加副作用（通知、表现、记账）。需要广播"发生了折返"时另立事件。
+
+**视图同步**：飞行协程逐帧比对 `toRightWall` 与已渲染的墙，变化时调 `UpdateActor` 刷新朝向。所以折返立刻反映到精灵图，而不偏矢的净零变化不会触发刷新。
+
 ### Mirror 预留
 
 下一步接入 Mirror 做本地联机原型测试。委托注入 + `isLocalPlayer` 判断体系已就绪，整个 Buff/管线/事件系统全是本地计算，不受网络同步影响。
@@ -269,6 +309,8 @@ ModifyPipeline.GetModifierSet()
 
 **Buff 图标路径**位于 `Resources/Images/UI/BuffIcon/<path>`，与道具图标（`PropIcon/`）是两个目录，**不能复用道具的 path**。
 
+**`BuffContainer` 还提供 `RemoveBuff<T>()`** —— 按类型移除，不存在则静默跳过。适用于"目标可能不存在"的移除（如借风铃解除僵直时僵直可能本来就没有）。
+
 ### Effect 系统
 
 | 基类                   | 关键成员                                                                                           |
@@ -296,7 +338,7 @@ ModifyPipeline.GetModifierSet()
 | `PropCardDeck`     | 7Bag 随机抽卡                      |
 | `PropFactory`      | 道具 id → 工厂委托 注册中心（Singleton） |
 
-**道具的绑定**：入槽时由 `PropContainer` 统一注入使用者的 `gameCharacterController` 与 `buffContainer` / `effectContainer`，因此 `OnUse()` **无参数**，需要什么直接用基类的 `protected` 字段。
+**道具的绑定**：入槽时由 `PropContainer` 统一注入使用者的 `gameCharacterController` 与 `buffContainer` / `effectContainer` / `propContainer`，因此 `OnUse()` **无参数**，需要什么直接用基类的 `protected` 字段。
 
 **三层使用判断**：
 
@@ -306,7 +348,15 @@ ModifyPipeline.GetModifierSet()
 | 外部否决 | Effect | 订阅 `BeforeUsePropEvent` 写 `cancelled` |
 | 效果修饰 | Effect | 订阅 `UsePropResultEvent` |
 
+`CanUse()` 的检查位于 `BeforeUsePropEvent` **之前**——道具自己都用不了，没有必要先叫醒订阅者。
+
+**"能用"与"执行得下去"必须一致**：若 `CanUse` 放行但 `OnUse` 找不到目标（如无名光环找不到合法敌人），会空引用。共用同一个判定方法（如 `IsSwappable`）可保证一致。
+
+**道具获取冷却**：`propCDRatio` 是比例，0 = 就绪。`PropContainer.Update` 的**发放判定独立于推进**，所以外部把比例置 0（空转轴）会在下一帧直接发放。
+
 道具使用流程：`PropContainer.UseProp()` → 槽位/`CanUse`/Before 检查 → `BasePropStrategy.OnUse()` → 创建 Buff 或直接加 Effect。
+
+**道具清单见 `Doc/道具系统子策划案.md`**。
 
 ### 关卡管理器（LevelManager）
 
@@ -323,7 +373,7 @@ ModifyPipeline.GetModifierSet()
 
 | 行为 | 上下文 | Result 相位可写 |
 | --- | --- | --- |
-| 跳跃 | `JumpContext` | `toRightWall`、`reverse` |
+| 跳跃 | `JumpContext` | `toRightWall`、`progress`、`hangTime` |
 | 移动 | `MoveContext` | `isUp` |
 | 弹反 | `ParryContext` | `jump` 指向的跳跃上下文 |
 | 攻击 | `AttackContext` | `damage`（`ModifiableValue`） |
@@ -372,7 +422,7 @@ ShowBuffDescriptionEvent / HideBuffDescriptionEvent
 | 类 | 字段 |
 | --- | --- |
 | `ActionContext`（基类） | `ModifierSet attributes`（只读引用）、`bool cancelled` |
-| `JumpContext` | `toRightWall`、`ignoreCD`、`reverse`（弹反相位可改，false 则弹反不换向） |
+| `JumpContext` | `toRightWall`、`hangTime`、`progress`（轨迹状态，效果层可写）+ `FoldBack()` |
 | `MoveContext` | `isUp` |
 | `ParryContext` | `opponent`、`jump`（本次弹反所属的跳跃上下文） |
 | `AttackContext` | `victim`、`damage` |
@@ -412,12 +462,50 @@ ShowBuffDescriptionEvent / HideBuffDescriptionEvent
 - **数值修饰一律走修饰集**（`apply` 写 `ModifiableValue`），不要复制属性到上下文
 - "下一次……"类效果用**匿名/命名 Buff + 持久修饰 + 触发后自摘**实现
 - 若清理依赖某个可能被取消的事件，需要一个**必定发布的末段事件**兜底（如 `LandEvent`）
+- 同起同落的多项修饰放进**一个 `apply`**，不要为此拆成多个 buff
+
+### 两段式 Buff
+
+前段由事件终结、后段独立计时时，**一个 buff 类内部切换两个 effect**，不写成两个 buff：
+
+```csharp
+BaseEffectStrategy frontEffect;   // 前段
+BaseEffectStrategy backEffect;    // 后段
+float backTimer = 0f;             // 0 = 尚未进入后段
+
+private void OnStageEnd(...)      // 前段结束
+{
+    effectContainer.RemoveEffect(frontEffect); frontEffect = null;
+    backEffect = new BaseEffectStrategy();
+    backEffect.apply = ...;       // 后段修饰
+    effectContainer.AddEffect(backEffect);
+    backTimer = BackDuration;
+}
+
+private void OnUpdate(UpdateEvent e)
+{
+    if (backTimer <= 0f) return;              // 前段期间空转
+    backTimer -= Time.deltaTime;
+    if (backTimer <= 0f) buffContainer.RemoveBuff(this);
+}
+```
+
+`backTimer` 兼作阶段标志（`0` = 未进入后段），无需额外字段。`OnRemove` 需清理两个可能为 null 的 effect。
+
+### 轨迹
+
+- 轨迹状态（`toRightWall` / `progress`）在 `JumpContext` 里，效果层直接改字段干预
+- `FoldBack()` 是纯状态操作，**调用两次即还原**；不要在里面加副作用
+- 效果只该**读** `progress`，推进由协程负责（效果自己加会一帧推进两次）
+- 要广播"发生了折返"需另立事件，不要在 `FoldBack` 里发通知
 
 ### 道具
 
-- `OnUse()` 无参数，靠基类绑定的 `gameCharacterController` / `buffContainer` / `effectContainer`
+- `OnUse()` 无参数，靠基类绑定的 `gameCharacterController` / `buffContainer` / `effectContainer` / `propContainer`
 - 道具能用但"没目标"时用 `CanUse()` 返回 false，**不要**在 `OnUse` 里静默 return（会白白消耗）
+- `CanUse()` 与 `OnUse` 的目标搜索逻辑应**共用同一个判定方法**，避免"能用但执行时空引用"
 - 图标：道具 `Resources/Images/UI/PropIcon/<path>`，Buff `Resources/Images/UI/BuffIcon/<path>`，**两个目录不能复用**
+- 清空道具获取冷却只需 `propContainer.propCDRatio = Ratio.Empty`，下一帧即发放
 
 ### 行为
 
@@ -425,6 +513,8 @@ ShowBuffDescriptionEvent / HideBuffDescriptionEvent
 - `towardUp` / `isRightWall` 必须先更新再调 `SetState()`
 - 纵向位移一律走 `GCC.MoveAlongWall(deltaY)`，以共享边界限制与碰壁回调
 - 飞行只写 x 轴，纵向（y）留给移动与冲刺
+- 飞行判断"是否回到出发墙"读 `context.toRightWall`，**不要从 `state` 反推**
+- 飞行期间 `toRightWall` 可能被效果改写，视图朝向由协程逐帧脏检查刷新
 
 ### UI 解耦
 
