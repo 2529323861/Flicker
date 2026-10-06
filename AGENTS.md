@@ -473,12 +473,23 @@ BaseEffectStrategy frontEffect;   // 前段
 BaseEffectStrategy backEffect;    // 后段
 float backTimer = 0f;             // 0 = 尚未进入后段
 
-private void OnStageEnd(...)      // 前段结束
+public override void OnAdd()
+{
+    frontEffect = new BaseEffectStrategy();
+    frontEffect.apply = ...;                                        // 前段修饰
+    frontEffect.onAdd = (b) => b.Listen<AfterJumpEvent>(OnStageEnd); // 只订"何时切段"
+    effectContainer.AddEffect(frontEffect, this);
+}
+
+private void OnStageEnd(...)      // 前段结束，交接
 {
     effectContainer.RemoveEffect(frontEffect); frontEffect = null;
+
     backEffect = new BaseEffectStrategy();
-    backEffect.apply = ...;       // 后段修饰
+    backEffect.apply = ...;                                         // 后段修饰
+    backEffect.onAdd = (b) => b.Listen<UpdateEvent>(OnUpdate);      // ← 订阅交接
     effectContainer.AddEffect(backEffect);
+
     backTimer = BackDuration;
 }
 
@@ -491,6 +502,16 @@ private void OnUpdate(UpdateEvent e)
 ```
 
 `backTimer` 兼作阶段标志（`0` = 未进入后段），无需额外字段。`OnRemove` 需清理两个可能为 null 的 effect。
+
+**订阅交接（关键）**：`Listen` 只是"订阅 + 记住退订"的合并，**订阅的生命周期跟着声明它的那个 effect**。`EffectContainer.RemoveEffect` 会调 `UnlistenAll()`，因此移除前段时，**它名下的所有订阅一起退订**。
+
+| 订阅要活多久 | 挂在哪 |
+| --- | --- |
+| 只在前段（如冲刺期间锁移动） | `frontEffect`，随它退役，无需处理 |
+| 前后段都要（如 `UpdateEvent` 计时） | **必须交接**：后段重新声明一次 |
+| 整个 buff（如记录状态、等落地结算） | 那个**全程不退役**的 effect（常是 `baseEffectStrategy`） |
+
+**典型症状**：切换阶段后 `backTimer` 不再递减 → buff 永不自摘 → 后段 debuff 变成永续。写两段式必须检查有无订阅需要交接。
 
 ### 轨迹
 
