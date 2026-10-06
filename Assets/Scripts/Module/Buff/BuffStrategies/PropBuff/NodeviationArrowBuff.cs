@@ -42,7 +42,9 @@ namespace Flicker.Module.Buff.PropBuff
         }
         private void OnParried(ParryResultEvent parryResultEvent)
         {
-            parryResultEvent.context.jump.reverse = false;
+            /** 提前折返一次，与弹反帧的无条件折返相互抵消，净效果为不换向。
+             *  之所以能这样写，是因为 FoldBack 是纯状态操作、调用两次即还原 */
+            parryResultEvent.context.jump.FoldBack();
 
             /** 僵直结算会重新读取修饰集，故此处挂载即时生效 */
             this.stiffenEffect = new BaseEffectStrategy();
