@@ -17,7 +17,7 @@ namespace Flicker.Module.Buff.PropBuff
         {
             name = "触电";
             /** 暂无美术资源，补齐 BuffIcon/ElectricShock.png 后改为 "ElectricShock" */
-            path = "Unknown";
+            path = "StaticShell";
             description = "下一次僵直时间提升75%";
             isStackable = true;
             maxStacks = 1;

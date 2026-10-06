@@ -20,6 +20,7 @@ namespace Flicker.Module.Buff.PropBuff
         public NodeviationArrowBuff()
         {
             name = "不偏矢";
+            path = "NodeviationArrow";
             description = "下一次弹反不改变方向，僵直时间增加25%";
             isStackable = true;
         }

@@ -17,7 +17,7 @@ namespace Flicker.Module.Buff.PropBuff
         {
             name = "应激";
             /** 暂无美术资源，补齐 BuffIcon/Stress.png 后改为 "Stress" */
-            path = "Unknown";
+            path = "StaticShell";
             description = "下一次僵直时间提升25%";
             isStackable = true;
             maxStacks = 1;

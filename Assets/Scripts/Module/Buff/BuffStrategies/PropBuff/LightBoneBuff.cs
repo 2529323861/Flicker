@@ -18,8 +18,7 @@ namespace Flicker.Module.Buff.PropBuff
         public LightBoneBuff()
         {
             name = "轻质骨";
-            /** 暂无美术资源，补齐 BuffIcon/LightBone.png 后改为 "LightBone" */
-            path = "Unknown";
+            path = "LightBone";
             description = "跳跃冷却上限减少40%，僵直时长提升30%";
             isStackable = true;
         }

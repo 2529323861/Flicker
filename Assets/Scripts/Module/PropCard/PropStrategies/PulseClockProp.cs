@@ -8,8 +8,7 @@ namespace Flicker.Module.Prop
         {
             name = "脉冲发条";
             factoryId = "00007";
-            /** 暂无美术资源，补齐 PropIcon/PulseClock.png 后改为 "PulseClock" */
-            path = "Unknown";
+            path = "PulseClock";
             description = "沿当前方向冲刺3单位距离，期间不可被攻击，随后移速下降30%持续4秒。";
         }
         public override void OnUse()

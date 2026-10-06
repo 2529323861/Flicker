@@ -16,8 +16,7 @@ namespace Flicker.Module.Buff.PropBuff
         public WindBellBuff()
         {
             name = "借风铃";
-            /** 暂无美术资源，补齐 BuffIcon/WindBell.png 后改为 "WindBell" */
-            path = "Unknown";
+            path = "WindBell";
             description = "本次跳跃滞空时间增加30%，不造成攻击";
             isStackable = true;
         }

@@ -40,7 +40,7 @@ namespace Flicker.Module.Buff.PropBuff
         {
             name = "补偿券";
             /** 暂无美术资源，补齐 BuffIcon/CompensationVoucher.png 后改为 "CompensationVoucher" */
-            path = "Unknown";
+            path = "CompensationVoucher";
             description = "未命中返还70%跳跃冷却；命中则道具获取冷却提升50%，持续7秒";
             isStackable = true;
         }

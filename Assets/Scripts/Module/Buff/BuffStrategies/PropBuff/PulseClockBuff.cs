@@ -50,8 +50,7 @@ namespace Flicker.Module.Buff.PropBuff
         public PulseClockBuff(bool isUp)
         {
             name = "脉冲发条";
-            /** 暂无美术资源，补齐 BuffIcon/PulseClock.png 后改为 "PulseClock" */
-            path = "Unknown";
+            path = "PulseClock";
             description = "沿当前方向冲刺3单位距离，期间不可被攻击，随后移速下降30%持续4秒";
             /** 逐帧动作需允许多个实例并存，否则连续使用会被吞掉 */
             isStackable = false;

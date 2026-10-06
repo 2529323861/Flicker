@@ -9,8 +9,7 @@ namespace Flicker.Module.Prop
         {
             name = "空转轴";
             factoryId = "00011";
-            /** 暂无美术资源，补齐 PropIcon/IdleShaft.png 后改为 "IdleShaft" */
-            path = "Unknown";
+            path = "IdleShaft";
             description = "立刻清空道具获取冷却，但道具获取冷却上升20%，下次抽到道具后解除。";
         }
         public override void OnUse()

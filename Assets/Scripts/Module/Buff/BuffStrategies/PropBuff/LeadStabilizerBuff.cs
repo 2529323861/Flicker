@@ -17,9 +17,8 @@ namespace Flicker.Module.Buff.PropBuff
         BaseEffectStrategy baseEffectStrategy;
         public LeadStabilizerBuff()
         {
-            name = "铅制稳定器";
-            /** 暂无美术资源，补齐 BuffIcon/LeadStabilizer.png 后改为 "LeadStabilizer" */
-            path = "Unknown";
+            name = "铅质稳定器";
+            path = "LeadStabilizer";
             description = "僵直时长降低50%，移速降低30%";
             isStackable = true;
         }

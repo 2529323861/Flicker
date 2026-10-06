@@ -20,6 +20,18 @@ namespace Flicker.Module
         {
             /** 暂时令deck为固定对象 */
             deck.Add("00001");
+            deck.Add("00002");
+            deck.Add("00003");
+            deck.Add("00004");
+            deck.Add("00005");
+            deck.Add("00006");
+            deck.Add("00007");
+            deck.Add("00008");
+            deck.Add("00009");
+            deck.Add("00010");
+            deck.Add("00011");
+            deck.Add("00012");
+            deck.Add("00013");
             // deck.Add("00002");
             // deck.Add("00003");
         }

@@ -8,8 +8,7 @@ namespace Flicker.Module.Prop
         {
             name = "无名光环";
             factoryId = "00006";
-            /** 暂无美术资源，补齐 PropIcon/NamelessHalo.png 后改为 "NamelessHalo" */
-            path = "Unknown";
+            path = "NamelessHalo";
             description = "与最远的一名敌人交换位置。";
         }
         /// <summary>

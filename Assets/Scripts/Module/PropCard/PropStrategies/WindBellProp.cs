@@ -9,8 +9,7 @@ namespace Flicker.Module.Prop
         {
             name = "借风铃";
             factoryId = "00012";
-            /** 暂无美术资源，补齐 PropIcon/WindBell.png 后改为 "WindBell" */
-            path = "Unknown";
+            path = "WindBell";
             description = "立刻起跳，无视跳跃冷却，立刻恢复僵直，滞空时间增加30%，本次跳跃不造成攻击。";
         }
         /// <summary>

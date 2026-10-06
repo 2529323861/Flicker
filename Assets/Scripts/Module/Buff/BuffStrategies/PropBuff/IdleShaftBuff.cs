@@ -22,7 +22,7 @@ namespace Flicker.Module.Buff.PropBuff
         {
             name = "空转轴";
             /** 暂无美术资源，补齐 BuffIcon/IdleShaft.png 后改为 "IdleShaft" */
-            path = "Unknown";
+            path = "IdleShaft";
             description = "道具获取冷却上升20%，下次抽到道具后解除";
             isStackable = true;
         }

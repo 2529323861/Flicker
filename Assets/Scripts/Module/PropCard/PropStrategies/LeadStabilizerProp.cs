@@ -6,10 +6,9 @@ namespace Flicker.Module.Prop
     {
         public LeadStabilizerProp()
         {
-            name = "铅制稳定器";
+            name = "铅质稳定器";
             factoryId = "00010";
-            /** 暂无美术资源，补齐 PropIcon/LeadStabilizer.png 后改为 "LeadStabilizer" */
-            path = "Unknown";
+            path = "LeadStabilizer";
             description = "使用后7秒内，僵直时长降低50%，但移速降低30%。";
         }
         public override void OnUse()
