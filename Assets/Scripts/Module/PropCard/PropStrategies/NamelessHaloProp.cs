@@ -13,15 +13,29 @@ namespace Flicker.Module.Prop
             description = "与最远的一名敌人交换位置。";
         }
         /// <summary>
-        /// 需要场上有敌人才能使用
+        /// 目标是否可作为换位对象。
+        /// 跳跃或僵直中的角色位置由协程与状态机接管，换位会与其冲突，故排除
+        /// </summary>
+        private bool IsSwappable(GameCharacterController target)
+        {
+            if (target == gameCharacterController) return false;  //跳过自己
+            if (target.teamTag == gameCharacterController.teamTag) return false;  //只找敌人
+
+            var state = target.State;
+            return state == GameCharacterState.Idle || state == GameCharacterState.Moving;
+        }
+        /// <summary>
+        /// 需要自身可自由移动，且场上有可换位的敌人
         /// </summary>
         public override bool CanUse()
         {
+            /** 自身跳跃或僵直中时位置由协程接管，换位会与状态机冲突 */
+            var selfState = gameCharacterController.State;
+            if (selfState != GameCharacterState.Idle && selfState != GameCharacterState.Moving) return false;
+
             foreach (var i in CharacterControllerManager.Instance.GetAll())
             {
-                if (i == gameCharacterController) continue;  //跳过自己
-                if (i.teamTag == gameCharacterController.teamTag) continue;  //只找敌人
-                return true;
+                if (IsSwappable(i)) return true;
             }
             return false;
         }
@@ -34,8 +48,7 @@ namespace Flicker.Module.Prop
             float maxDistance = 0f;
             foreach (var i in CharacterControllerManager.Instance.GetAll())
             {
-                if (i == gameCharacterController) continue;  //跳过自己
-                if (i.teamTag == gameCharacterController.teamTag) continue;  //只找敌人
+                if (!IsSwappable(i)) continue;
 
                 float distance = Vector3.Distance(selfPosition, i.transform.localPosition);
                 if (farthest == null || distance > maxDistance)
