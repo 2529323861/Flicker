@@ -24,6 +24,8 @@ namespace Flicker.Module
             RegisterProp("00006",()=>new NamelessHaloProp());
             RegisterProp("00007",()=>new PulseClockProp());
             RegisterProp("00008",()=>new StaticShellProp());
+            RegisterProp("00009",()=>new LightBoneProp());
+            RegisterProp("00010",()=>new LeadStabilizerProp());
 
         }
         public void RegisterProp(string id, Func<BasePropStrategy> func)
