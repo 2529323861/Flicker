@@ -199,6 +199,20 @@ namespace Flicker.Module
             }
         }
         /// <summary>
+        /// 按类型移除buff。不存在则不做任何事
+        /// </summary>
+        public void RemoveBuff<T>() where T : BaseBuffStrategy
+        {
+            for (int i = buffs.Count - 1; i >= 0; i--)
+            {
+                if (buffs[i].baseBuffStrategy is T)
+                {
+                    RemoveBuff(buffs[i].baseBuffStrategy);
+                    return;
+                }
+            }
+        }
+        /// <summary>
         /// 清除所有buff
         /// </summary>
         public void ClearBuff()
