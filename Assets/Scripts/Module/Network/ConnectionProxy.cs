@@ -208,7 +208,6 @@ namespace Flicker.Module.Network
         //————————————————————————————————————Handler—————————————————————————————————————————————————
         public void LobbyPanelStartHandler(LobbyPanelStartEvent lobbyPanelStartEvent)
         {
-            /** 暂时不做什么房主才能启动，先把链路跑通再做细枝末节的处理 */
             CmdHostStartGame();
         }
         public void LobbyPanelReadyHandler(LobbyPanelReadyEvent lobbyPanelReadyEvent)
