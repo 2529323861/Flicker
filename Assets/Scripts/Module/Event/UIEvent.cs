@@ -1,4 +1,6 @@
 
+using System.Collections.Generic;
+
 namespace Flicker.Module.UIEvent
 {    
     //—————————————————————————————————PlayerHUD——————————————————————————————————
@@ -98,7 +100,21 @@ namespace Flicker.Module.UIEvent
         public string host;
         public string client;
     }
-    //—————————————————————————————————————JoinInputPanel———————————————————————————————————
+    /// <summary>请求全部道具元信息（面板打开时）</summary>
+    public struct PropPoolRequestEvent { }
+
+    /// <summary>全部道具元信息（响应）</summary>
+    public struct PropPoolEvent
+    {
+        public List<BasePropStrategyMetaData> metaDatas;
+    }
+
+    /// <summary>更新道具一栏的描述框，携带被指向的道具元信息</summary>
+    public struct UpdatePropDescriptionEvent
+    {
+        public BasePropStrategyMetaData metaData;
+    }
+        //—————————————————————————————————————JoinInputPanel———————————————————————————————————
     public struct JoinUrlEvent
     {
         public string url;
