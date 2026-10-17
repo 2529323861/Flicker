@@ -189,6 +189,8 @@ namespace Flicker.Module.Network
                 {
                     gcc.SetPosition(-4.0f,true);
                 }
+                /** 注入大厅提交的卡组，必须在开局抽卡之前 */
+                gameChar.GetComponent<PropCardDeck>().SetDeck(wrapper.deck);
                 i++;
                 gameChar.GetComponent<PropContainer>().AddProp(); //开局获得一个随机道具
             }

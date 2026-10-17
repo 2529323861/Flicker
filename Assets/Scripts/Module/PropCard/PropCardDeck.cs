@@ -36,6 +36,21 @@ namespace Flicker.Module
             // deck.Add("00003");
         }
         /// <summary>
+        /// 注入卡组，覆盖 Awake 中的默认卡组，并立即重建当前包。
+        /// 传 null 或空集合时不覆盖，保留默认卡组（供调试直开等未提交卡组的场景使用）
+        /// </summary>
+        /// <param name="newDeck">要注入的卡组</param>
+        public void SetDeck(IEnumerable<string> newDeck)
+        {
+            if (newDeck == null) return;
+            List<string> incoming = new(newDeck);
+            if (incoming.Count == 0) return;
+
+            deck.Clear();
+            deck.AddRange(incoming);
+            ResetBag();
+        }
+        /// <summary>
         /// 重置当前包
         /// </summary>
         public void ResetBag()
