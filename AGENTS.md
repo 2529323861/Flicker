@@ -201,7 +201,19 @@ GCC.onUpdateJumpCDProgress   = (f) => EventBus.Publish(...)
 
 **非本地玩家不注入** — Mirror 后加 `if (!isLocalPlayer) return;` 全部切断，零开销。
 
-删除所有 UI 代码时逻辑完全正常。UI 层订阅 EventBus，不导入逻辑层命名空间。
+删除所有 UI 代码时逻辑完全正常 —— 这是本条约束的验收标准。
+
+**约束的实质是「UI 不参与逻辑处理」，不是「UI 不许 import 逻辑层」**：
+
+| | 规则 |
+| --- | --- |
+| ❌ | UI 不**驱动**逻辑：不在 UI 里改游戏数值/状态、不做战斗判定、不调用会改变世界状态的模块方法。状态变更一律以命令（`Cmd*`）或事件进入逻辑层。 |
+| ❌ | 逻辑层不**依赖** UI：逻辑层不引用任何 `Flicker.UI` 类型。 |
+| ✅ | UI 可以 import 逻辑层做**只读**用途：取 DTO（`BasePropStrategyMetaData`）、渲染枚举、调只读查询（`PropFactory.GetAllMetaDatas`）。`LobbyPanel` / `PlayerHUD` 已是此形态。 |
+| ✅ | UI 可以直接读**数据层**（`SettingsManager` 等静态/本地配置）：这类数据各端一致，或「不一致也在允许范围内」，不必再套一层事件。 |
+| ✅ | UI 可以持有并持久化**只属于本地的数据**（如卡组草稿），因为它不参与游戏状态。 |
+
+判定口径：**看谁决定结果**。UI 只负责显示与收集输入，结果由逻辑层决定。
 
 ### 关卡边界管理
 
@@ -541,4 +553,6 @@ private void OnUpdate(UpdateEvent e)
 
 - 逻辑层不直接调用 `EventBus.Publish`，改为暴露 `Action` 委托，由 `PlayerController.InjectUIEvent()` 统一注入；Mirror 后非本地玩家不注入，零开销切断 UI 事件流
 - MiniEventBus 事件发布顺序：局部操作 → MiniEventBus(After) → UI 委托，从内到外
+- **UI 不参与逻辑处理**：不驱动状态变更、不做判定；但允许 import 逻辑层取 DTO / 调只读查询，允许直接读数据层的静态与本地配置（详见「UI 解耦」节）
+- 双方可见的权威状态（玩家名、准备态、血量、CD）**必须**走服务端 → EventBus，UI 不得从本地数据层近似读取
 - 不可叠加 Buff 使用 `isStackable = true, maxStacks = 1` 实现，再次获得时刷新 duration 不叠层（**例外**：按距离/次数终止的动作型 Buff 用 `isStackable = false`，否则重复使用会被吞掉）

@@ -114,6 +114,12 @@ namespace Flicker.Module.UIEvent
     {
         public BasePropStrategyMetaData metaData;
     }
+
+    /// <summary>卡组格被点击，携带格子下标</summary>
+    public struct DeckSlotClickedEvent
+    {
+        public int index;
+    }
         //—————————————————————————————————————JoinInputPanel———————————————————————————————————
     public struct JoinUrlEvent
     {

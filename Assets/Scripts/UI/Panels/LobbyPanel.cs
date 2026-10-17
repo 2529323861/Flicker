@@ -1,11 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using Flicker.Core;
+using Flicker.Data;
 using Flicker.Module;
 using Flicker.Module.UIEvent;
 using Flicker.UI;
 using Mirror;
+using Mirror.BouncyCastle.Bcpg;
+using Mirror.Examples.RigidbodyBenchmark;
+using Newtonsoft.Json;
 using TMPro;
 using Unity.Collections;
 using UnityEngine;
@@ -35,6 +40,7 @@ namespace Flicker.UI
             EventBus.Subscribe<LobbyPanelReadySnapshotEvent>(LobbyPanelReadySnapshotHandler);
             EventBus.Subscribe<LobbyPanelPlayerNameUpdateEvent>(LobbyPanelPlayerNameUpdateHandler);
             EventBus.Subscribe<UpdatePropDescriptionEvent>(UpdatePropDescriptionHandler);
+            EventBus.Subscribe<DeckSlotClickedEvent>(DeckSlotClickedHandler);
         }
         public override void OnOpen(object args = null)
         {
@@ -46,6 +52,11 @@ namespace Flicker.UI
             {
                 EventBus.Subscribe<PropPoolEvent>(PropPoolHandler);
                 EventBus.Publish<PropPoolRequestEvent>(new());
+
+                InitDecks();
+                sectionChosen.onClick.AddListener(sectionChosenButtonCallBack);
+                sectionChosen.interactable = false;
+
                 opened = true;
             }
         }
@@ -95,11 +106,13 @@ namespace Flicker.UI
         /// </summary>
         public RectTransform scrollViewContent;
         public GameObject sectionSlot;
+        private Dictionary<string,BasePropStrategyMetaData> basePropStrategyMetaDatas = new();
         public void PropPoolHandler(PropPoolEvent propPoolEvent)
         {
             foreach (var i in propPoolEvent.metaDatas)
             {
                 AddSectionSlot(i);
+                basePropStrategyMetaDatas.Add(i.factoryId,i);
             }
             scrollViewContent.sizeDelta = new(){x=scrollViewContent.sizeDelta.x,y=15+(125+15)*Mathf.CeilToInt(propPoolEvent.metaDatas.Count / 6f)};
         }
@@ -113,6 +126,7 @@ namespace Flicker.UI
         public TMP_Text sectionDescription;
         public RectTransform descriptionScrollViewContent;
         public Image sectionIcon;
+        public Button sectionChosen;
         private BasePropStrategyMetaData nowChosenProp;
         public void UpdatePropDescriptionHandler(UpdatePropDescriptionEvent updatePropDescriptionEvent)
         {
@@ -126,6 +140,75 @@ namespace Flicker.UI
             float descriptionHeight = sectionDescription.GetPreferredValues(sectionDescription.text,sectionDescription.GetComponent<RectTransform>().sizeDelta.x,0).y;
 
             descriptionScrollViewContent.sizeDelta = new(){x=descriptionScrollViewContent.sizeDelta.x,y=nameHeight+descriptionHeight};
+            foreach (var i in deckSlots)
+            {
+                if (i.FactoryId == nowChosenProp.factoryId)
+                {
+                    //有重复的，禁用选择
+                    sectionChosen.interactable = false;
+                    return;
+                }
+            }
+            //没有重复的，允许选择
+            sectionChosen.interactable = true;
+        }
+        public void sectionChosenButtonCallBack()
+        {
+            deckCache[chosenDeckSlot] = nowChosenProp.factoryId;
+            deckSlots[chosenDeckSlot].SetProp(nowChosenProp);
+            SettingsManager.Instance.SetSetting("pvpDeck",JsonConvert.SerializeObject(deckCache));
+            sectionChosen.interactable = false;
+        }
+        //————————————————————————————————————卡组编辑————————————————————————————————————————————
+        public RectTransform deckContent;
+        public GameObject deckSlot;
+        private List<DeckSlot> deckSlots = new();
+        private int chosenDeckSlot = 0;
+        private List<string> deckCache = new();
+        private void InitDecks()
+        {
+            string deckString = SettingsManager.Instance.GetSetting<string>("pvpDeck");
+            try {
+                deckCache = JsonConvert.DeserializeObject<List<string>>(deckString);
+            }catch
+            {
+                SettingsManager.Instance.ResetSetting("pvpDeck");
+                deckString = SettingsManager.Instance.GetSetting<string>("pvpDeck");
+                deckCache = JsonConvert.DeserializeObject<List<string>>(deckString);
+            }
+            if (deckCache.Count!=7){
+                SettingsManager.Instance.ResetSetting("pvpDeck");
+                deckString = SettingsManager.Instance.GetSetting<string>("pvpDeck");
+                deckCache = JsonConvert.DeserializeObject<List<string>>(deckString);
+            }
+            BasePropStrategyMetaData basePropStrategyMetaData;
+            for (int i = 0; i < 7; i++){
+                if (!basePropStrategyMetaDatas.TryGetValue(deckCache[i],out basePropStrategyMetaData)){
+                    SettingsManager.Instance.ResetSetting("pvpDeck");
+                    deckString = SettingsManager.Instance.GetSetting<string>("pvpDeck");
+                    deckCache = JsonConvert.DeserializeObject<List<string>>(deckString);
+                    break;
+                }
+            }
+
+            for (int i = 0; i < 7; i++)
+            {
+                GameObject s = Instantiate(deckSlot,deckContent,false);
+                deckSlots.Add(s.GetComponent<DeckSlot>());
+                deckSlots[i].Bind(i);
+                deckSlots[i].SetSelected(false);
+                if (basePropStrategyMetaDatas.TryGetValue(deckCache[i],out basePropStrategyMetaData))
+                {                    
+                    deckSlots[i].SetProp(basePropStrategyMetaData);
+                }
+            }
+            deckSlots[chosenDeckSlot].SetSelected(true);
+        }
+        public void DeckSlotClickedHandler(DeckSlotClickedEvent deckSlotClickedEvent)
+        {
+            deckSlots[chosenDeckSlot].SetSelected(false);
+            chosenDeckSlot = deckSlotClickedEvent.index;
+            deckSlots[chosenDeckSlot].SetSelected(true);
         }
     }
 }

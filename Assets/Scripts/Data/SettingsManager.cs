@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Flicker.Core;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace Flicker.Data
@@ -10,6 +11,12 @@ namespace Flicker.Data
         public void init()
         {
             RegistrySetting("playerName", ()=>{return GetRandomName();});
+            /** 默认卡组：固定的 7 个道具 id，序列化为 json 字符串存储。
+             *  默认值函数每次 GetSetting 都会被调用一次（结果被已存值覆盖丢弃），
+             *  因此这里必须是纯函数，不能随机、不能写盘 */
+            RegistrySetting("pvpDeck", ()=>JsonConvert.SerializeObject(new string[]{
+                "00001","00002","00003","00004","00005","00006","00007"
+            }));
         }
         private Dictionary<string, Func<object>> defaultPairs=new();
         public void RegistrySetting<T>(string key, Func<T> defaultValue){
@@ -56,6 +63,29 @@ namespace Flicker.Data
             if (typeof(T) == typeof(string))
             {
                 PlayerPrefs.SetString(key,(string)(object)value);
+            }
+            PlayerPrefs.Save();
+        }
+        /// <summary>
+        /// 将已注册的字段恢复为默认值（默认值由注册时的委托重新生成）
+        /// </summary>
+        /// <param name="key">已注册的字段名</param>
+        public void ResetSetting(string key)
+        {
+            if (!defaultPairs.ContainsKey(key)) return; //注册过才可以重置
+
+            object defaultValue = defaultPairs.GetValueOrDefault(key).Invoke();
+            if (defaultValue.GetType() == typeof(int))
+            {
+                PlayerPrefs.SetInt(key,(int)defaultValue);
+            }
+            if (defaultValue.GetType() == typeof(float))
+            {
+                PlayerPrefs.SetFloat(key,(float)defaultValue);
+            }
+            if (defaultValue.GetType() == typeof(string))
+            {
+                PlayerPrefs.SetString(key,(string)defaultValue);
             }
             PlayerPrefs.Save();
         }
