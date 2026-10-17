@@ -85,7 +85,9 @@ namespace Flicker.Module.UIEvent
     /// </summary>
     public struct LobbyPanelStartEvent{}
     public struct LobbyPanelQuitEvent{}
-    public struct LobbyPanelReadyEvent{}
+    public struct LobbyPanelReadyEvent{
+        public List<string> deck;
+    }
     /// <summary>
     /// 多人游戏房间，准备状态快照
     /// </summary>

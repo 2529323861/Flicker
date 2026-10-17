@@ -8,8 +8,6 @@ using Flicker.Module;
 using Flicker.Module.UIEvent;
 using Flicker.UI;
 using Mirror;
-using Mirror.BouncyCastle.Bcpg;
-using Mirror.Examples.RigidbodyBenchmark;
 using Newtonsoft.Json;
 using TMPro;
 using Unity.Collections;
@@ -71,7 +69,7 @@ namespace Flicker.UI
         }
         public void ReadyButtonCallback()
         {
-            EventBus.Publish<LobbyPanelReadyEvent>(new());
+            EventBus.Publish<LobbyPanelReadyEvent>(new(){deck=deckCache});
         }
         public void LobbyPanelReadySnapshotHandler(LobbyPanelReadySnapshotEvent lobbyPanelReadySnapshotEvent)
         {

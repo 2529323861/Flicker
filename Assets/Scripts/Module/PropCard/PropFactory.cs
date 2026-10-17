@@ -13,6 +13,10 @@ namespace Flicker.Module
         /// </summary>
         List<BasePropStrategyMetaData> metaDataCache;
         private Dictionary<string, Func<BasePropStrategy>> props = new();
+        /// <summary>
+        /// 黑名单：不参与大厅卡组构筑的道具。暂时魔法数字写在这里，后续改为数据层配置
+        /// </summary>
+        private static readonly HashSet<string> pvpBlacklist = new(){"00000"};
         protected override void OnSingletonInit()
         {
             RegisterAllProps();
@@ -62,19 +66,52 @@ namespace Flicker.Module
         {
             if (metaDataCache == null)
             {
-                /** 黑名单：不参与大厅卡组构筑的道具。暂时魔法数字写在这里 */
-                List<string> blacklist = new(){"00000"};
-
                 metaDataCache = new();
                 foreach (var pair in props)
                 {
-                    if (blacklist.Contains(pair.Key)) continue;
+                    if (pvpBlacklist.Contains(pair.Key)) continue;
                     metaDataCache.Add(pair.Value.Invoke().GetMetaData());
                 }
                 /** 字典遍历顺序无契约，按 id 升序固定下来 */
                 metaDataCache.Sort((a,b)=>string.CompareOrdinal(a.factoryId,b.factoryId));
             }
             EventBus.Publish<PropPoolEvent>(new(){metaDatas=metaDataCache});
+        }
+        /// <summary>
+        /// 校验一份 PvP 卡组是否合法：长度、不重复、工厂中存在、不在黑名单
+        /// </summary>
+        /// <param name="deck">待校验的卡组</param>
+        /// <param name="reason">不合法时的原因，合法时为 null</param>
+        /// <returns>是否合法</returns>
+        public bool IsLegalDeck(List<string> deck, out string reason)
+        {
+            reason = null;
+            if (deck == null || deck.Count != 7)
+            {
+                reason = $"卡组长度必须为7，实际为{deck?.Count}";
+                return false;
+            }
+
+            HashSet<string> seen = new();
+            foreach (var id in deck)
+            {
+                if (id == null || !props.ContainsKey(id))
+                {
+                    reason = $"道具不存在：{id}";
+                    return false;
+                }
+                if (pvpBlacklist.Contains(id))
+                {
+                    reason = $"道具不可用：{id}";
+                    return false;
+                }
+                if (!seen.Add(id))
+                {
+                    reason = $"道具重复：{id}";
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

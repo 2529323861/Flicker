@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Flicker.Core;
 using Flicker.Data;
 using Flicker.Module.UIEvent;
@@ -117,6 +118,14 @@ namespace Flicker.Module.Network
         {
             UIManager.Instance.Open<CountDown>();
         }
+        /// <summary>
+        /// 服务端驳回卡组，仅通知提交者本人
+        /// </summary>
+        [TargetRpc]
+        public void RpcDeckRejected()
+        {
+            UIManager.Instance.Open<TipPanel>(new TipMessage(){title="卡组非法",content="服务端校验未通过，请重新配置卡组后再试"});
+        }
         //———————————————————————————————————服务端控制命令————————————————————————————————————————————
         [Command]
         public void CmdUpdatePlayerName(string name, NetworkConnectionToClient sender = null)
@@ -130,11 +139,18 @@ namespace Flicker.Module.Network
             ((CustomNetworkManager)CustomNetworkManager.singleton).PublishLobbyPanelReadySnapshot();
         }
         [Command]
-        public void CmdClientReady(NetworkConnectionToClient sender = null)
+        public void CmdClientReady(List<string> deck, NetworkConnectionToClient sender = null)
         {
             if (sender==null) return;
+            /** 卡组合法性由服务端权威校验，不通过则不进入准备状态 */
+            if (!PropFactory.Instance.IsLegalDeck(deck, out string reason))
+            {
+                print($"[!] 卡组非法：{reason}");
+                RpcDeckRejected();
+                return;
+            }
             print("服务端收到准备指令");
-            ((CustomNetworkManager)CustomNetworkManager.singleton).SwitchReady(sender);
+            ((CustomNetworkManager)CustomNetworkManager.singleton).SwitchReady(deck,sender);
         }
         [Command]
         public void CmdHostStartGame()
@@ -197,7 +213,7 @@ namespace Flicker.Module.Network
         }
         public void LobbyPanelReadyHandler(LobbyPanelReadyEvent lobbyPanelReadyEvent)
         {
-            CmdClientReady();
+            CmdClientReady(lobbyPanelReadyEvent.deck);
         }
         public void LobbyPanelReadySnapshotRequestHandler(LobbyPanelReadySnapshotRequest lobbyPanelReadySnapshotRequest)
         {

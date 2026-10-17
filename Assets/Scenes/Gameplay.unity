@@ -854,10 +854,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: LobbyPanel
       objectReference: {fileID: 0}
-    - target: {fileID: 1994242381112907604, guid: ccc33483146f29249818c06ea8871dd5, type: 3}
-      propertyPath: m_Size
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 3509374525072918737, guid: ccc33483146f29249818c06ea8871dd5, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -881,14 +877,6 @@ PrefabInstance:
     - target: {fileID: 4365043130629750286, guid: ccc33483146f29249818c06ea8871dd5, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780508151982284449, guid: ccc33483146f29249818c06ea8871dd5, type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.85
-      objectReference: {fileID: 0}
-    - target: {fileID: 4780508151982284449, guid: ccc33483146f29249818c06ea8871dd5, type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.85
       objectReference: {fileID: 0}
     - target: {fileID: 5166875467845211114, guid: ccc33483146f29249818c06ea8871dd5, type: 3}
       propertyPath: m_AnchorMax.x
@@ -904,7 +892,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7504141242404346404, guid: ccc33483146f29249818c06ea8871dd5, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.00005135319
+      value: 0.000047660178
       objectReference: {fileID: 0}
     - target: {fileID: 8555668474557090729, guid: ccc33483146f29249818c06ea8871dd5, type: 3}
       propertyPath: m_AnchorMax.x

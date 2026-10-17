@@ -26,6 +26,7 @@ namespace Flicker.Module.Network
         public ConnectionProxy connectionProxy;
         public bool isReady;
         public string playerName;
+        public List<string> deck;
     }
     public class CustomNetworkManager: NetworkManager
     {
@@ -89,6 +90,7 @@ namespace Flicker.Module.Network
             connectionProxyWrapper.connectionProxy = conn.identity.GetComponent<ConnectionProxy>();
             connectionProxyWrapper.isReady = false;
             connectionProxyWrapper.playerName = "暂无玩家";
+            connectionProxyWrapper.deck = new();
             connectionProxyWrappers.Add(connectionProxyWrapper);
 
             //UI切换
@@ -258,13 +260,14 @@ namespace Flicker.Module.Network
             }
             
         }
-        public void SwitchReady(NetworkConnectionToClient sender)
+        public void SwitchReady(List<string> deck, NetworkConnectionToClient sender)
         {
             foreach (var i in connectionProxyWrappers)
             {
                 if (i.conn == sender)
                 {
                     i.isReady = !i.isReady;
+                    i.deck = deck;
                 }
             }
             PublishLobbyPanelReadySnapshot();
