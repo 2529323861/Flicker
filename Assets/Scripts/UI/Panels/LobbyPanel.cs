@@ -44,6 +44,7 @@ namespace Flicker.UI
         {
             base.OnOpen(args);
             startButton.interactable = NetworkServer.active;
+            readyMask.SetActive(false);
             EventBus.Publish<LobbyPanelReadySnapshotRequest>(new());
 
             if (!opened)
@@ -77,11 +78,13 @@ namespace Flicker.UI
             {
                 self.sprite = lobbyPanelReadySnapshotEvent.host ? prepared : unprepared;
                 other.sprite = lobbyPanelReadySnapshotEvent.client ? prepared : unprepared;
+                readyMask.SetActive(lobbyPanelReadySnapshotEvent.host);
             }
             else
             {
                 self.sprite = lobbyPanelReadySnapshotEvent.client ? prepared : unprepared;
                 other.sprite = lobbyPanelReadySnapshotEvent.host ? prepared : unprepared;
+                readyMask.SetActive(lobbyPanelReadySnapshotEvent.client);
             }
         }
         public void LobbyPanelPlayerNameUpdateHandler(LobbyPanelPlayerNameUpdateEvent lobbyPanelPlayerNameUpdateEvent)
@@ -208,5 +211,7 @@ namespace Flicker.UI
             chosenDeckSlot = deckSlotClickedEvent.index;
             deckSlots[chosenDeckSlot].SetSelected(true);
         }
+        //————————————————————————————————————准备遮罩——————————————————————————————————————————
+        public GameObject readyMask;
     }
 }
