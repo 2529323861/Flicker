@@ -19,6 +19,7 @@ namespace Flicker.UI
     public class LobbyPanel : UIPanel
     {
         public Button readyButton;
+        public TMP_Text readyText;
         public Button startButton;
         public Button quitButton;
         public Image self;
@@ -79,13 +80,23 @@ namespace Flicker.UI
                 self.sprite = lobbyPanelReadySnapshotEvent.host ? prepared : unprepared;
                 other.sprite = lobbyPanelReadySnapshotEvent.client ? prepared : unprepared;
                 readyMask.SetActive(lobbyPanelReadySnapshotEvent.host);
+                SetReadyText(lobbyPanelReadySnapshotEvent.host);
             }
             else
             {
                 self.sprite = lobbyPanelReadySnapshotEvent.client ? prepared : unprepared;
                 other.sprite = lobbyPanelReadySnapshotEvent.host ? prepared : unprepared;
                 readyMask.SetActive(lobbyPanelReadySnapshotEvent.client);
+                SetReadyText(lobbyPanelReadySnapshotEvent.client);
             }
+        }
+        /// <summary>
+        /// 准备按钮的文字随自身准备状态切换
+        /// </summary>
+        /// <param name="isReady">自己是否已准备</param>
+        private void SetReadyText(bool isReady)
+        {
+            readyText.text = isReady ? "取消准备" : "准备";
         }
         public void LobbyPanelPlayerNameUpdateHandler(LobbyPanelPlayerNameUpdateEvent lobbyPanelPlayerNameUpdateEvent)
         {
