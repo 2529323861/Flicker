@@ -322,6 +322,7 @@ MonoBehaviour:
   rightWallPos: 4.1
   teamTag: Player
   towardUp: 0
+  jumpCDRatio: 0
   isRightWall: 0
   playerName: {fileID: 4397360555249551361}
 --- !u!58 &4602146967020674669
@@ -460,8 +461,9 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   propSlot: 3
-  getPropCD: 10
+  getPropCD: 5
   getPropCDRate: 1
+  propCDRatio: 0
 --- !u!114 &3328804453363109166
 MonoBehaviour:
   m_ObjectHideFlags: 0
