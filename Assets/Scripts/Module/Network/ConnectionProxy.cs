@@ -103,10 +103,14 @@ namespace Flicker.Module.Network
             UIManager.Instance.CloseAll(UILayer.HUD);
             UIManager.Instance.Open<LobbyPanel>();
         }
+        /// <summary>
+        /// 打开结算面板
+        /// </summary>
+        /// <param name="win">本局是否获胜</param>
         [TargetRpc]
-        public void OpenSettlementUI()
+        public void OpenSettlementUI(bool win)
         {
-            UIManager.Instance.Open<MultiPlaySettlementPanel>();
+            UIManager.Instance.Open<MultiPlaySettlementPanel>(win);
         }
         [TargetRpc]
         public void ChangeNetworkConnectionState(NetworkConnectionState networkConnectionState)

@@ -16,5 +16,15 @@ namespace Flicker.UI
                 UIManager.Instance.Open<LobbyPanel>();
             });
         }
+        /// <summary>
+        /// 打开时接收本局胜负
+        /// </summary>
+        /// <param name="args">本局是否获胜</param>
+        public override void OnOpen(object args = null)
+        {
+            base.OnOpen(args);
+            bool win = (bool)args;
+            text.text = win ? "游戏胜利！" : "游戏失败！";
+        }
     }
 }

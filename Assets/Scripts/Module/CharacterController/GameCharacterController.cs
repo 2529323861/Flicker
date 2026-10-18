@@ -60,7 +60,10 @@ namespace Flicker.Module
         /// 跳跃CD变更的委托，供玩家控制器注入
         /// </summary>
         public Action<UpdateJumpCDProgressEvent> onUpdateJumpCDProgress;
-        public Action onDestroy;
+        /// <summary>
+        /// 死亡回调，参数为死亡的角色自身，供上层结算判定
+        /// </summary>
+        public Action<GameCharacterController> onDestroy;
         /// <summary>
         /// 移动速度
         /// </summary>
@@ -622,7 +625,7 @@ namespace Flicker.Module
             SetState(GameCharacterState.Dead);
 
             miniEventBus.Publish<AfterDie>(new AfterDie{context=context});
-            onDestroy?.Invoke();
+            onDestroy?.Invoke(this);
         }
 
         private void SetState(GameCharacterState newState)

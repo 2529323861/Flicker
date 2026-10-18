@@ -27,6 +27,10 @@ namespace Flicker.Module.Network
         public bool isReady;
         public string playerName;
         public List<string> deck;
+        /// <summary>
+        /// 本局创建的角色，结算时用于判定死亡者，对局结束后置空
+        /// </summary>
+        public GameCharacterController character;
     }
     public class CustomNetworkManager: NetworkManager
     {
@@ -174,10 +178,11 @@ namespace Flicker.Module.Network
                 GameObject gameChar = CharacterControllerManager.Instance.Create(gameCharacterPrefab);
                 var gcc = gameChar.GetComponent<PlayerController>();
                 gcc.teamTag = i == 0 ? "TeamA" : "TeamB";
-                gcc.onDestroy = ()=>{
-                    GameManager.Instance.MultiPlayEnd();
+                gcc.onDestroy = (dead)=>{
+                    GameManager.Instance.MultiPlayEnd(dead);
                 };
                 wrapper.connectionProxy.BindGameObject(gameChar);
+                wrapper.character = gcc;
 
                 gameChar.GetComponent<PlayerController>().SetPlayerName(wrapper.playerName);
 
@@ -213,7 +218,7 @@ namespace Flicker.Module.Network
             yield return new WaitForSeconds(3f);
             IsLimited = false;
         }
-        public void MultiPlayEnd()
+        public void MultiPlayEnd(GameCharacterController dead)
         {
             if (endLock) return;
             endLock = true;
@@ -224,19 +229,32 @@ namespace Flicker.Module.Network
                 StopCoroutine(countDownCoroutine);
             }
 
+            /** 死亡者对应哪个容器序位，另一个即胜者 */
+            int deadIndex = connectionProxyWrappers.FindIndex(w => w.character == dead);
+            if (deadIndex < 0)
+            {
+                Debug.LogError("[!] 结算失败：死亡角色不属于任何已注册的玩家");
+                return;
+            }
+
+            /** 对局结束，回到大厅需要重新准备，卡组保留 */
             foreach(var wrapper in connectionProxyWrappers){
+                wrapper.isReady = false;
                 wrapper.connectionProxy.ChangeNetworkConnectionState(NetworkConnectionState.Ready);
             }
-            StartCoroutine(MultiPlayEnd_());
+            PublishLobbyPanelReadySnapshot();
+            StartCoroutine(MultiPlayEnd_(deadIndex));
         }
-        IEnumerator MultiPlayEnd_(){
+        IEnumerator MultiPlayEnd_(int deadIndex){
             //这里主要是做1秒提供给场景完成剩余表演，也好让玩家看清是怎么结束的
             yield return new WaitForSeconds(1f);
             CharacterControllerManager.Instance.RemoveAll();
             //弹出结算UI
-            foreach (var i in connectionProxyWrappers)
+            for (int i = 0; i < connectionProxyWrappers.Count; i++)
             {
-                i.connectionProxy.OpenSettlementUI();
+                var wrapper = connectionProxyWrappers[i];
+                wrapper.character = null;
+                wrapper.connectionProxy.OpenSettlementUI(i != deadIndex);
             }
         }
         public void HostStartGame()

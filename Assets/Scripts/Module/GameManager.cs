@@ -18,9 +18,9 @@ namespace Flicker.Module
             gameMode = GameMode.MultiPlay;
             ((CustomNetworkManager)CustomNetworkManager.singleton).PrepareMultiPlay();
         }
-        public void MultiPlayEnd()
+        public void MultiPlayEnd(GameCharacterController dead)
         {
-            ((CustomNetworkManager)CustomNetworkManager.singleton).MultiPlayEnd();
+            ((CustomNetworkManager)CustomNetworkManager.singleton).MultiPlayEnd(dead);
         }
     }
 }
