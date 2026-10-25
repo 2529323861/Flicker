@@ -41,6 +41,8 @@ namespace Flicker.UI
 
         /** 缓存每个槽位是否有道具 */
         private bool[] propCache=new bool[5]{false,false,false,false,false};
+        /** 缓存每个槽位的悬停描述组件，复用 BuffDescription */
+        private BuffDescription[] propDescriptions = new BuffDescription[5];
         /** 缓存每个槽位CD */
         private float[] propCDCache = new float[5]{0f,0f,0f,0f,0f};
         private float jumpCDProgressCache=0;
@@ -63,6 +65,8 @@ namespace Flicker.UI
                 props[i].SetActive(false);
                 propBars[i] = gameObject.transform.Find("SlotCD").gameObject.GetComponent<Image>();
                 gameObject.transform.Find("Key").gameObject.GetComponent<Image>().sprite = slotsKey[i];
+                /** 道具图标复用 BuffDescription 的悬停能力 */
+                propDescriptions[i] = props[i].AddComponent<BuffDescription>();
             }
             EventBus.Subscribe<GetPropEvent>(GetPropHandler);
             EventBus.Subscribe<GetPropNumberEvent>(SetPropSlotNumberHandler);
@@ -145,6 +149,10 @@ namespace Flicker.UI
             Image image = props[getPropEvent.slotIndex].GetComponent<Image>();
             image.sprite = Resources.Load<Sprite>("Images/UI/PropIcon/"+getPropEvent.basePropStrategyMetaData.path);
 
+            /** 同步悬停描述内容 */
+            propDescriptions[getPropEvent.slotIndex].buffName = getPropEvent.basePropStrategyMetaData.name;
+            propDescriptions[getPropEvent.slotIndex].description = getPropEvent.basePropStrategyMetaData.description;
+
             props[getPropEvent.slotIndex].GetComponent<Animator>().Play("PropPop");
 
         }
@@ -207,6 +215,11 @@ namespace Flicker.UI
         public void UsePropHandler(UsePropEvent usePropEvent)
         {
             propCache[usePropEvent.propSlotIndex] = false;
+            /** 图标隐藏不会触发 PointerExit，避免描述框残留 */
+            if (propDescriptions[usePropEvent.propSlotIndex].isHovering)
+            {
+                EventBus.Publish<HideBuffDescriptionEvent>(new());
+            }
             props[usePropEvent.propSlotIndex].SetActive(false);
         }
         //—————————————————————————————————buff图标部分———————————————————————————————————————————
