@@ -38,12 +38,27 @@ namespace Flicker.UI
         private GameObject[] slots=new GameObject[PropContainer.EquippedPropCount];
         private GameObject[] props=new GameObject[PropContainer.EquippedPropCount];
         private Image[] propBars = new Image[PropContainer.EquippedPropCount];
+        private Animator[] propAnimators = new Animator[PropContainer.EquippedPropCount];
+
+        [Header("道具栏动画")]
+        [Tooltip("道具不可用时播放的动画状态名，动画写在 Prop 图标的 Animator 上")]
+        public string propUnavailableAnimState = "PropDisable";
+        [Tooltip("道具冷却结束时就绪时播放的动画状态名")]
+        public string propReadyAnimState = "PropPop";
 
         /** 缓存每个道具的悬停描述组件，复用 BuffDescription */
         private BuffDescription[] propDescriptions = new BuffDescription[PropContainer.EquippedPropCount];
         /** 每个道具的就绪度目标值，1 = 就绪，0 = 刚使用。只作阻尼目标，不是逻辑状态 */
         private float[] propCDTarget = new float[PropContainer.EquippedPropCount];
         private float jumpCDProgressCache=0;
+
+        //—————————————————————————————————道具栏反馈状态————————————————————————————————————
+        /** 图标原始颜色，用于灰化后还原 */
+        private Color[] propOrigColor = new Color[PropContainer.EquippedPropCount];
+        /// <summary>
+        /// 冷却中图标的颜色系数
+        /// </summary>
+        private static readonly Color DimColor = new(0.35f,0.35f,0.35f,1f);
 
         /// <summary>
         /// UI层BUff缓存
@@ -65,11 +80,15 @@ namespace Flicker.UI
                 gameObject.transform.Find("Key").gameObject.GetComponent<Image>().sprite = slotsKey[i];
                 /** 道具图标复用 BuffDescription 的悬停能力 */
                 propDescriptions[i] = props[i].AddComponent<BuffDescription>();
+                /** 图标动画器，用于获取道具 Pop 与不可用抖动 */
+                propAnimators[i] = props[i].GetComponent<Animator>();
+                /** 记录原始颜色，灰化后还原 */
+                propOrigColor[i] = props[i].GetComponent<Image>().color;
             }
             EventBus.Subscribe<GetPropEvent>(GetPropHandler);
             EventBus.Subscribe<UpdateJumpCDProgressEvent>(SetJumpCDHandler);
             EventBus.Subscribe<PropStateEvent>(PropStateHandler);
-            EventBus.Subscribe<UsePropEvent>(UsePropHandler);
+            EventBus.Subscribe<PropUnavailableEvent>(PropUnavailableHandler);
             EventBus.Subscribe<AddNewBuffEvent>(AddNewBuffHandler);
             EventBus.Subscribe<RemoveBuffEvent>(RemoveBuffHandler);
             EventBus.Subscribe<BuffStackChangeEvent>(BuffStackChangeHandler);
@@ -84,6 +103,7 @@ namespace Flicker.UI
         {
             UpdateJumpCDBar(1-jumpCDProgressCache);
             UpdatePropCDBar();
+            UpdatePropFeedback();
             ResetBuffPos();
         }
         public override void OnOpen(object args = null)
@@ -148,19 +168,43 @@ namespace Flicker.UI
             /** 同步悬停描述内容 */
             propDescriptions[getPropEvent.slotIndex].buffName = getPropEvent.basePropStrategyMetaData.name;
             propDescriptions[getPropEvent.slotIndex].description = getPropEvent.basePropStrategyMetaData.description;
-
-            props[getPropEvent.slotIndex].GetComponent<Animator>().Play("PropPop");
-
         }
         /// <summary>
         /// 渲染道具栏。快照是全量状态，同一份调用多次结果一致
         /// </summary>
         public void PropStateHandler(PropStateEvent propStateEvent)
         {
+            ApplyPropSnapshot(0, propStateEvent.propCD0);
+            ApplyPropSnapshot(1, propStateEvent.propCD1);
+            ApplyPropSnapshot(2, propStateEvent.propCD2);
+        }
+        /// <summary>
+        /// 应用单个道具的快照，并检出「刚变就绪」的跳变
+        /// </summary>
+        private void ApplyPropSnapshot(int index, float cdRatio)
+        {
+            /** 上一帧是否已就绪。初值为0（未就绪），因此开局首个快照也会触发一次 pop，
+             *  正好担当「道具出现」的表现 */
+            bool wasReady = propCDTarget[index] >= 1f;
+
             /** 条显示就绪度：1 = 可用，0 = 刚使用 */
-            propCDTarget[0] = 1f - propStateEvent.propCD0;
-            propCDTarget[1] = 1f - propStateEvent.propCD1;
-            propCDTarget[2] = 1f - propStateEvent.propCD2;
+            propCDTarget[index] = 1f - cdRatio;
+
+            /** 就绪跳变：冷却结束，播一次 pop 提示可用，玩家无需盯条 */
+            if (!wasReady && cdRatio <= 0f)
+            {
+                PlayPropReadyAnimation(index);
+            }
+        }
+        /// <summary>
+        /// 播放道具就绪动画。留作表现层接口，动画由美术/动画师在 Prop 图标的 Animator 上实现
+        /// </summary>
+        /// <param name="index">道具所在位置</param>
+        public void PlayPropReadyAnimation(int index)
+        {
+            if (index < 0 || index >= PropContainer.EquippedPropCount) return;
+            /** 显式从 0 开始，连续就绪可以重播 */
+            propAnimators[index].Play(propReadyAnimState, 0, 0f);
         }
         /// <summary>
         /// 更新道具CD条。只做显示阻尼，目标值由快照给定
@@ -172,12 +216,33 @@ namespace Flicker.UI
                 propBars[i].fillAmount = NonlinearDamper.FloatDamp(propBars[i].fillAmount,propCDTarget[i]);
             }
         }
-        public void UsePropHandler(UsePropEvent usePropEvent)
+        /// <summary>
+        /// 道具不可用。冷却中或道具自身条件不满足时由逻辑层回执
+        /// </summary>
+        public void PropUnavailableHandler(PropUnavailableEvent propUnavailableEvent)
         {
-            /** 道具不消耗，图标不隐藏，只清理可能残留的描述框 */
-            if (propDescriptions[usePropEvent.propSlotIndex].isHovering)
+            PlayPropUnavailableAnimation(propUnavailableEvent.propSlotIndex);
+        }
+        /// <summary>
+        /// 播放道具不可用动画。留作表现层接口，动画由美术/动画师在 Prop 图标的 Animator 上实现
+        /// </summary>
+        /// <param name="index">道具所在位置</param>
+        public void PlayPropUnavailableAnimation(int index)
+        {
+            if (index < 0 || index >= PropContainer.EquippedPropCount) return;
+            /** 显式从 0 开始，连按可以重播 */
+            propAnimators[index].Play(propUnavailableAnimState, 0, 0f);
+        }
+        /// <summary>
+        /// 道具栏反馈：灰化。缩放、位置、旋转一律交由 Animator
+        /// </summary>
+        private void UpdatePropFeedback()
+        {
+            for (int i = 0; i < PropContainer.EquippedPropCount; i++)
             {
-                EventBus.Publish<HideBuffDescriptionEvent>(new());
+                /** 灰化：用已经阻尼过的条值做插值，颜色与冷却条同步 */
+                Image icon = props[i].GetComponent<Image>();
+                icon.color = Color.Lerp(DimColor, propOrigColor[i], propBars[i].fillAmount);
             }
         }
         //—————————————————————————————————buff图标部分———————————————————————————————————————————

@@ -33,6 +33,13 @@ namespace Flicker.Module.UIEvent
         public int propSlotIndex;
     }
     /// <summary>
+    /// 道具不可用回执。冷却中或道具自身条件不满足时发布，供 UI 播放拒绝表现
+    /// </summary>
+    public struct PropUnavailableEvent
+    {
+        public int propSlotIndex;
+    }
+    /// <summary>
     /// 添加新buff
     /// </summary>
     public struct AddNewBuffEvent

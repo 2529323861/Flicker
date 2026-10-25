@@ -54,6 +54,12 @@ namespace Flicker.Module
         /// </summary>
         public Action<PropStateEvent> onPropState;
 
+        /// <summary>
+        /// 道具不可用时的UI发布委托，供玩家控制器注入。
+        /// 仅用于表现，不参与逻辑判定
+        /// </summary>
+        public Action<PropUnavailableEvent> onPropUnavailable;
+
         private BuffContainer buffContainer;
         private EffectContainer effectContainer;
         private ModifyPipeline modifyPipeline;
@@ -175,11 +181,19 @@ namespace Flicker.Module
 
             EquippedProp equippedProp = equippedProps[propSlotIndex];
 
-            /** 冷却中就不可用。与 CanUse 同为前置条件，不消耗也不发布任何事件 */
-            if (equippedProp.cdRatio > Ratio.Empty) return;
+            /** 冷却中就不可用。回执不可用，供 UI 播拒绝表现 */
+            if (equippedProp.cdRatio > Ratio.Empty)
+            {
+                onPropUnavailable?.Invoke(new(){propSlotIndex = propSlotIndex});
+                return;
+            }
 
             /** 道具自身的先决条件，不满足则不进入冷却也不触发任何钩子 */
-            if (!equippedProp.prop.CanUse()) return;
+            if (!equippedProp.prop.CanUse())
+            {
+                onPropUnavailable?.Invoke(new(){propSlotIndex = propSlotIndex});
+                return;
+            }
 
             ModifierSet values = modifyPipeline.GetModifierSet();
             UsePropContext context = new()
@@ -190,7 +204,11 @@ namespace Flicker.Module
 
             /** 相位一：决定本次使用道具是否发生 */
             miniEventBus.Publish<BeforeUsePropEvent>(new(){context=context});
-            if (context.cancelled) return;
+            if (context.cancelled)
+            {
+                onPropUnavailable?.Invoke(new(){propSlotIndex = propSlotIndex});
+                return;
+            }
 
             /** 相位二：确定本次使用道具的临时变量 */
             miniEventBus.Publish<UsePropResultEvent>(new(){context=context});

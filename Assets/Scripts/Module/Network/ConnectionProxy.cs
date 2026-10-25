@@ -39,7 +39,7 @@ namespace Flicker.Module.Network
                 if (input.ExitDown)
                     CmdExitMove(false);
                 if (input.Jump) CmdJump();
-                for (int i = 1; i <= 5; i++)
+                for (int i = 1; i <= PropContainer.EquippedPropCount; i++)
                 {
                     if (input.Number(i))
                     {
@@ -174,6 +174,7 @@ namespace Flicker.Module.Network
             /** 注入道具UI发布委托 */
             propContainer.onPropAdded = (evt) => EventTransmit<GetPropEvent>(evt);
             propContainer.onPropUse = (evt) => EventTransmit<UsePropEvent>(evt);
+            propContainer.onPropUnavailable = (evt) => EventTransmit<PropUnavailableEvent>(evt);
             propContainer.onPropState = (evt)=>EventTransmit<PropStateEvent>(evt);
             /** 注入跳跃CD发布委托 */
             playerController.onUpdateJumpCDProgress = (evt)=>EventTransmit<UpdateJumpCDProgressEvent>(evt);
