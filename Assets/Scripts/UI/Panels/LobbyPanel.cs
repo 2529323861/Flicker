@@ -188,13 +188,13 @@ namespace Flicker.UI
                 deckString = SettingsManager.Instance.GetSetting<string>("pvpDeck");
                 deckCache = JsonConvert.DeserializeObject<List<string>>(deckString);
             }
-            if (deckCache.Count!=7){
+            if (deckCache.Count!=PropContainer.EquippedPropCount){
                 SettingsManager.Instance.ResetSetting("pvpDeck");
                 deckString = SettingsManager.Instance.GetSetting<string>("pvpDeck");
                 deckCache = JsonConvert.DeserializeObject<List<string>>(deckString);
             }
             BasePropStrategyMetaData basePropStrategyMetaData;
-            for (int i = 0; i < 7; i++){
+            for (int i = 0; i < PropContainer.EquippedPropCount; i++){
                 if (!basePropStrategyMetaDatas.TryGetValue(deckCache[i],out basePropStrategyMetaData)){
                     SettingsManager.Instance.ResetSetting("pvpDeck");
                     deckString = SettingsManager.Instance.GetSetting<string>("pvpDeck");
@@ -203,7 +203,7 @@ namespace Flicker.UI
                 }
             }
 
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < PropContainer.EquippedPropCount; i++)
             {
                 GameObject s = Instantiate(deckSlot,deckContent,false);
                 deckSlots.Add(s.GetComponent<DeckSlot>());

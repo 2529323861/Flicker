@@ -10,12 +10,12 @@ namespace Flicker.Module.Prop
             name = "空转轴";
             factoryId = "00011";
             path = "IdleShaft";
-            description = "立刻清空道具获取冷却，但道具获取冷却上升20%，下次抽到道具后解除。";
+            description = "立刻清空全部道具冷却，但道具冷却速率降低20%，下次使用道具后解除。";
         }
         public override void OnUse()
         {
-            /** 立即清空道具获取冷却，下一次 Update 发放道具 */
-            propContainer.propCDRatio = Ratio.Empty;
+            /** 立即清空全部道具冷却，随后挂上冷却速率惩罚 */
+            propContainer.ClearAllCD();
             buffContainer.AddBuff(new IdleShaftBuff(), -1f);
         }
     }

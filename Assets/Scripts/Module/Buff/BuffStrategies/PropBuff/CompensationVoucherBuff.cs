@@ -5,7 +5,7 @@ namespace Flicker.Module.Buff.PropBuff
 {
     /// <summary>
     /// 补偿券：下一次跳跃的落地补偿。
-    /// 未命中返还70%跳跃冷却；命中（含被弹反）则道具获取冷却提升50%，持续7秒
+    /// 未命中返还70%跳跃冷却；命中（含被弹反）则道具冷却速率降低，持续7秒
     /// </summary>
     public class CompensationVoucherBuff : BaseBuffStrategy
     {
@@ -14,9 +14,9 @@ namespace Flicker.Module.Buff.PropBuff
         /// </summary>
         public const float JumpCDRemainRatio = 0.3f;
         /// <summary>
-        /// 后段道具获取冷却倍率
+        /// 后段道具冷却速率倍率。原获取CD ×1.5 等价于速率 ÷1.5
         /// </summary>
-        public const float GetPropCDMultiplier = 1.5f;
+        public const float PropCDRateMultiplier = 2f / 3f;
         /// <summary>
         /// 后段持续时间
         /// </summary>
@@ -41,7 +41,7 @@ namespace Flicker.Module.Buff.PropBuff
             name = "补偿券";
             /** 暂无美术资源，补齐 BuffIcon/CompensationVoucher.png 后改为 "CompensationVoucher" */
             path = "CompensationVoucher";
-            description = "未命中返还70%跳跃冷却；命中则道具获取冷却提升50%，持续7秒";
+            description = "未命中返还70%跳跃冷却；命中则道具冷却速率降低33%，持续7秒";
             isStackable = true;
         }
         public override void OnAdd()
@@ -85,9 +85,9 @@ namespace Flicker.Module.Buff.PropBuff
                 return;
             }
 
-            /** 命中：切换为后段，附加道具获取冷却惩罚并开始计时 */
+            /** 命中：切换为后段，附加道具冷却速率惩罚并开始计时 */
             this.backEffect = new BaseEffectStrategy();
-            backEffect.apply = (b, m) => m.Get(ModifierSet.Key.GetPropCD).AddMultiplier(GetPropCDMultiplier);
+            backEffect.apply = (b, m) => m.Get(ModifierSet.Key.PropCDRate).AddMultiplier(PropCDRateMultiplier);
             effectContainer.AddEffect(backEffect);
 
             backTimer = BackDuration;

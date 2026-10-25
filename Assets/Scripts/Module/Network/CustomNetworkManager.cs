@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using Flicker.Core;
+using Flicker.Data;
 using Flicker.Module.UIEvent;
 using Flicker.UI;
 using Mirror;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace Flicker.Module.Network
@@ -194,10 +196,9 @@ namespace Flicker.Module.Network
                 {
                     gcc.SetPosition(-4.0f,true);
                 }
-                /** 注入大厅提交的卡组，必须在开局抽卡之前 */
-                gameChar.GetComponent<PropCardDeck>().SetDeck(wrapper.deck);
+                /** 注入大厅提交的携带道具 */
+                gameChar.GetComponent<PropContainer>().Init(ResolveLoadout(wrapper.deck));
                 i++;
-                gameChar.GetComponent<PropContainer>().AddProp(); //开局获得一个随机道具
             }
 
             if (i == 1 && Debugger.isDebug)
@@ -212,6 +213,15 @@ namespace Flicker.Module.Network
                 StopCoroutine(countDownCoroutine);
             }
             countDownCoroutine = StartCoroutine(StartCountDown());
+        }
+        /// <summary>
+        /// 结算携带道具。大厅已提交合法携带时直接使用，
+        /// 否则（调试直开等未提交场景）回退到本地默认携带
+        /// </summary>
+        List<string> ResolveLoadout(List<string> loadout)
+        {
+            if (loadout != null && loadout.Count == PropContainer.EquippedPropCount) return loadout;
+            return JsonConvert.DeserializeObject<List<string>>(SettingsManager.Instance.GetSetting<string>("pvpDeck"));
         }
         IEnumerator StartCountDown()
         {

@@ -35,16 +35,14 @@ namespace Flicker.UI
         public GameObject buffParent;
         public GameObject buffDescription;
 
-        private GameObject[] slots=new GameObject[5];
-        private GameObject[] props=new GameObject[5];
-        private Image[] propBars = new Image[5];
+        private GameObject[] slots=new GameObject[PropContainer.EquippedPropCount];
+        private GameObject[] props=new GameObject[PropContainer.EquippedPropCount];
+        private Image[] propBars = new Image[PropContainer.EquippedPropCount];
 
-        /** 缓存每个槽位是否有道具 */
-        private bool[] propCache=new bool[5]{false,false,false,false,false};
-        /** 缓存每个槽位的悬停描述组件，复用 BuffDescription */
-        private BuffDescription[] propDescriptions = new BuffDescription[5];
-        /** 缓存每个槽位CD */
-        private float[] propCDCache = new float[5]{0f,0f,0f,0f,0f};
+        /** 缓存每个道具的悬停描述组件，复用 BuffDescription */
+        private BuffDescription[] propDescriptions = new BuffDescription[PropContainer.EquippedPropCount];
+        /** 缓存每个道具的就绪度，1 = 就绪，0 = 刚使用 */
+        private float[] propCDCache = new float[PropContainer.EquippedPropCount];
         private float jumpCDProgressCache=0;
 
         /// <summary>
@@ -54,7 +52,7 @@ namespace Flicker.UI
         void Awake()
         {
             jumpCDImage =  jumpCDProgress.GetComponent<Image>();
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < PropContainer.EquippedPropCount; i++)
             {
                 GameObject gameObject =  Instantiate(slotPrefab);
                 gameObject.transform.SetParent(slotParent.transform);
@@ -69,7 +67,6 @@ namespace Flicker.UI
                 propDescriptions[i] = props[i].AddComponent<BuffDescription>();
             }
             EventBus.Subscribe<GetPropEvent>(GetPropHandler);
-            EventBus.Subscribe<GetPropNumberEvent>(SetPropSlotNumberHandler);
             EventBus.Subscribe<UpdateJumpCDProgressEvent>(SetJumpCDHandler);
             EventBus.Subscribe<UpdatePropCDProgressEvent>(SetPropCDBarHandler);
             EventBus.Subscribe<UsePropEvent>(UsePropHandler);
@@ -104,7 +101,7 @@ namespace Flicker.UI
         /// </summary>
         public void ClearCache()
         {
-            propCache=new bool[5]{false,false,false,false,false};
+            propCDCache=new float[PropContainer.EquippedPropCount];
             jumpCDProgressCache=0;
         }
         /// <summary>
@@ -143,7 +140,6 @@ namespace Flicker.UI
         /// <param name="getPropEvent"></param>
         public void GetPropHandler(GetPropEvent getPropEvent)
         {
-            propCache[getPropEvent.slotIndex] = true;
             /** 设置可见并切换材质 */
             props[getPropEvent.slotIndex].SetActive(true);
             Image image = props[getPropEvent.slotIndex].GetComponent<Image>();
@@ -157,70 +153,31 @@ namespace Flicker.UI
 
         }
         /// <summary>
-        /// 设置道具槽位数
-        /// </summary>
-        /// <param name="propSlot"></param>
-        public void SetPropSlotNumberHandler(GetPropNumberEvent getPropNumberEvent)
-        {
-            int propSlot = getPropNumberEvent.propSlot;
-            for (int i = 0; i < 5; i++)
-            {
-                if (i >= propSlot)
-                {
-                    slots[i].SetActive(false);
-                }
-                else
-                {
-                    slots[i].SetActive(true);
-                }
-            }
-        }
-        /// <summary>
         /// 设置道具槽位CD条
         /// </summary>
         /// <param name="updatePropCDProgressEvent"></param>
         public void SetPropCDBarHandler(UpdatePropCDProgressEvent updatePropCDProgressEvent)
         {
-            for (int i = 0; i < 5; i++)
-            {
-                if (propCache[i])
-                {
-                    propCDCache[i] = 1f;
-                }
-                else
-                {
-                    propCDCache[i] = 0f;
-                }
-            }
-            int j=0;
-            while (propCache[j] == true && j < 5)
-            {
-                j++;
-            }
-            if (j < 5)
-            {
-                propCDCache[j] = 1-updatePropCDProgressEvent.propCDProgress;
-            }
+            /** 条显示就绪度：1 = 可用，0 = 刚使用 */
+            propCDCache[updatePropCDProgressEvent.slotIndex] = 1f - updatePropCDProgressEvent.propCDProgress;
         }
         /// <summary>
-        /// 更新道具槽进度条Bar
+        /// 更新道具CD条
         /// </summary>
         public void UpdatePropCDBar()
         {
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < PropContainer.EquippedPropCount; i++)
             {
                 propBars[i].fillAmount = NonlinearDamper.FloatDamp(propBars[i].fillAmount,propCDCache[i]);
             }
         }
         public void UsePropHandler(UsePropEvent usePropEvent)
         {
-            propCache[usePropEvent.propSlotIndex] = false;
-            /** 图标隐藏不会触发 PointerExit，避免描述框残留 */
+            /** 道具不消耗，图标不隐藏，只清理可能残留的描述框 */
             if (propDescriptions[usePropEvent.propSlotIndex].isHovering)
             {
                 EventBus.Publish<HideBuffDescriptionEvent>(new());
             }
-            props[usePropEvent.propSlotIndex].SetActive(false);
         }
         //—————————————————————————————————buff图标部分———————————————————————————————————————————
         /// <summary>

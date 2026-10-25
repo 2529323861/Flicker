@@ -9,29 +9,23 @@ namespace Flicker.Module.UIEvent
         public float jumpCDProgress;
     }
     /// <summary>
-    /// 获取当前槽位数
-    /// </summary>
-    public struct GetPropNumberEvent
-    {
-        /** 当前道具槽位 */
-        public int propSlot;
-    }
-    /// <summary>
-    /// 获取新道具事件
+    /// 装备道具事件。开局携带时逐格发布，局中不再发布
     /// </summary>
     public struct GetPropEvent
     {
-        /** 新道具 */
+        /** 道具元信息 */
         public BasePropStrategyMetaData basePropStrategyMetaData;
-        /** 新道具的位置 */
+        /** 所在位置 */
         public int slotIndex;
     }
     /// <summary>
-    /// 获取当前道具CD比
+    /// 道具冷却进度
     /// </summary>
     public struct UpdatePropCDProgressEvent
     {
-        /** CD比，0到1 */
+        /** 所在位置 */
+        public int slotIndex;
+        /** CD比，0 = 就绪，1 = 刚使用 */
         public float propCDProgress;
     }
     public struct UsePropEvent

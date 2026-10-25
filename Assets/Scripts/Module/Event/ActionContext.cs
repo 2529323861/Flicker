@@ -138,17 +138,6 @@ namespace Flicker.Module.Context
     }
 
     /// <summary>
-    /// 添加道具上下文
-    /// </summary>
-    public class AddPropContext: ActionContext
-    {
-        /// <summary>
-        /// 本次操作的道具
-        /// </summary>
-        public BasePropStrategy prop;
-    }
-
-    /// <summary>
     /// 使用道具上下文
     /// </summary>
     public class UsePropContext: ActionContext

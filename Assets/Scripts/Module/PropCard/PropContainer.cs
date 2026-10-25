@@ -10,14 +10,38 @@ using UnityEngine;
 
 namespace Flicker.Module
 {
-    [RequireComponent(typeof(PropCardDeck))]
     /// <summary>
-    /// 道具卡容器，用于管理道具卡的生成，使用
+    /// 一个已携带的道具。
+    /// 状态归容器，配置归策略体：冷却不写进 BasePropStrategy，避免多实例时状态分散
+    /// </summary>
+    public class EquippedProp
+    {
+        /// <summary>
+        /// 道具策略体
+        /// </summary>
+        public BasePropStrategy prop;
+        /// <summary>
+        /// 冷却时长，来自 prop.cooldown，Init 时读一次，不参与修饰
+        /// </summary>
+        public float cdMax;
+        /// <summary>
+        /// 剩余冷却比例，0 = 就绪，1 = 刚使用
+        /// </summary>
+        public float cdRatio;
+    }
+
+    /// <summary>
+    /// 道具容器。道具固定携带、不消耗，使用后进入各自的冷却
     /// </summary>
     public class PropContainer : NetworkBehaviour
     {
         /// <summary>
-        /// 道具添加时的UI发布委托，供玩家控制器注入
+        /// 固定携带数
+        /// </summary>
+        public const int EquippedPropCount = 3;
+
+        /// <summary>
+        /// 道具装配时的UI发布委托，供玩家控制器注入
         /// </summary>
         public Action<GetPropEvent> onPropAdded;
         /// <summary>
@@ -25,172 +49,126 @@ namespace Flicker.Module
         /// </summary>
         public Action<UsePropEvent> onPropUse;
         /// <summary>
-        /// 获取当前道具槽数的UI发布委托，供玩家控制器注入
-        /// </summary>
-        public Action<GetPropNumberEvent> onGetPropNumber;
-        /// <summary>
-        /// 获取当前UICD进度比的UI发布委托，供玩家控制器注入
+        /// 道具冷却进度的UI发布委托，供玩家控制器注入
         /// </summary>
         public Action<UpdatePropCDProgressEvent> onUpdatePropCDProgress;
 
         private BuffContainer buffContainer;
         private EffectContainer effectContainer;
         private ModifyPipeline modifyPipeline;
-        private PropCardDeck propCardDeck;
         private MiniEventBus miniEventBus;
         private GameCharacterController gameCharacterController;
-        /// <summary>
-        /// 道具卡槽位数
-        /// </summary>
-        public float propSlot;
-        public ModifiableValue propSlotMV;
-        /// <summary>
-        /// 获取道具卡时间
-        /// </summary>
-        public float getPropCD;
-        public ModifiableValue getPropCDMV;
 
         /// <summary>
-        /// 获取道具卡冷却速率
+        /// 道具冷却速率基准值
         /// </summary>
-        public float getPropCDRate;
-        public ModifiableValue getPropCDRateMV;
+        public float propCDRate = 1f;
+        public ModifiableValue propCDRateMV;
 
         /// <summary>
-        /// 当前获取道具卡冷却比例，0 = 就绪，1 = 刚触发过
+        /// 已携带的道具，长度恒为 EquippedPropCount，元素不为 null
         /// </summary>
-        public float propCDRatio;
+        private List<EquippedProp> equippedProps = new();
 
-        public List<BasePropStrategy> props;
-
-        public void GenerateDataPool()
-        {
-            propSlotMV = new(propSlot);
-            getPropCDMV = new(getPropCD);
-            getPropCDRateMV = new(getPropCDRate);
-        }
         void Awake()
         {
-            props= new();
-            for (int i = 0; i < 5; i++)
-            {
-                props.Add(null);
-            }
-            GenerateDataPool();
-
-            /** 冷却比例以"上限"为不变量，上限变化时比例不变，无需观察者做等比缩放。
-             *  初始为满冷却；上限为 0 时视为无冷却，与旧逻辑一致 */
-            propCDRatio = Ratio.ToRatio(getPropCD, getPropCD);
-
             modifyPipeline = GetComponent<ModifyPipeline>();
-            propCardDeck = GetComponent<PropCardDeck>();
             miniEventBus = GetComponent<MiniEventBus>();
             buffContainer = GetComponent<BuffContainer>();
             effectContainer = GetComponent<EffectContainer>();
             gameCharacterController = GetComponent<GameCharacterController>();
 
-            modifyPipeline.modifierSet.Register(ModifierSet.Key.GetPropCD, getPropCDMV);
-            modifyPipeline.modifierSet.Register(ModifierSet.Key.GetPropCDRate, getPropCDRateMV);
-            modifyPipeline.modifierSet.Register(ModifierSet.Key.PropSlot, propSlotMV);
+            /** 必须显式注册：惰性补值会得到基值0，冷却将永不恢复 */
+            propCDRateMV = new(propCDRate);
+            modifyPipeline.modifierSet.Register(ModifierSet.Key.PropCDRate, propCDRateMV);
         }
+
+        /// <summary>
+        /// 注入携带道具，开局由服务端调用一次
+        /// </summary>
+        /// <param name="propIds">道具工厂 id，数量必须等于 EquippedPropCount</param>
+        public void Init(List<string> propIds)
+        {
+            if (propIds == null || propIds.Count != EquippedPropCount)
+                throw new ArgumentException($"携带道具数必须为 {EquippedPropCount}，实际为 {propIds?.Count}");
+
+            equippedProps.Clear();
+            for (int i = 0; i < EquippedPropCount; i++)
+            {
+                BasePropStrategy prop = PropFactory.Instance.GetProp(propIds[i]);
+                prop.BindGameCharacterController(gameCharacterController);
+                prop.BindBuffContainer(buffContainer);
+                prop.BindEffectContainer(effectContainer);
+                prop.BindPropContainer(this);
+
+                equippedProps.Add(new EquippedProp
+                {
+                    prop = prop,
+                    cdMax = prop.cooldown,
+                    cdRatio = Ratio.Empty
+                });
+
+                onPropAdded?.Invoke(new(){basePropStrategyMetaData = prop.GetMetaData(), slotIndex = i});
+            }
+        }
+
         void Update()
         {
             if (!isServer) return;  // 客户端空壳：逻辑空转
             if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
-            ModifierSet values = modifyPipeline.GetModifierSet();
-            float getPropCD = values.Final(ModifierSet.Key.GetPropCD);
-            bool hasSlot = GetNowPropCount() < values.Final(ModifierSet.Key.PropSlot);
 
-            /** CD 流动：有空槽位时才推进，防止同时持有超过上限的道具 */
-            if (hasSlot && propCDRatio > 0)
-            {
-                float getPropCDRate = values.Final(ModifierSet.Key.GetPropCDRate);
-                propCDRatio = Ratio.Advance(propCDRatio, getPropCD, -Time.deltaTime*getPropCDRate);
-            }
+            /** 冷却速率每帧只取一次。GetModifierSet 每次调用都会清空并重算全部 Effect */
+            float propCDRate = modifyPipeline.GetModifierSet().Final(ModifierSet.Key.PropCDRate);
 
-            /** 比例归零即发放。外部清空 CD（如空转轴）也走这条路径 */
-            if (hasSlot && propCDRatio <= 0 && getPropCD > 0)
+            for (int i = 0; i < equippedProps.Count; i++)
             {
-                propCDRatio = Ratio.ToRatio(getPropCD, getPropCD);
-                AddProp(propCardDeck.GetProp());
-            }
-            
-            onGetPropNumber?.Invoke(new(){propSlot=(int)values.Final(ModifierSet.Key.PropSlot)});
-            onUpdatePropCDProgress?.Invoke(new(){propCDProgress=propCDRatio});
-        }
-        /// <summary>
-        /// 获取当前道具容器中的道具数，超出槽位的不计
-        /// </summary>
-        /// <returns></returns>
-        public int GetNowPropCount()
-        {   
-            float propSlot = modifyPipeline.GetModifierSet().Final(ModifierSet.Key.PropSlot);
-            int result = 0;
-            for (int i = 0; i < propSlot; i++)
-            {
-                if (props[i] != null)
+                EquippedProp equippedProp = equippedProps[i];
+                if (equippedProp.cdRatio > Ratio.Empty)
                 {
-                    result ++;
+                    equippedProp.cdRatio = Ratio.Advance(equippedProp.cdRatio, equippedProp.cdMax, -Time.deltaTime * propCDRate);
                 }
+                onUpdatePropCDProgress?.Invoke(new(){slotIndex = i, propCDProgress = equippedProp.cdRatio});
             }
-            return result;
         }
-        public void AddProp()
-        {
-            AddProp(propCardDeck.GetProp());
-        }
+
         /// <summary>
-        /// 添加道具卡到当前槽位，若超出当前槽位值则不赋值
+        /// 清空全部道具冷却，供道具效果调用
         /// </summary>
-        /// <param name="basePropStrategy"></param>
-        public void AddProp(BasePropStrategy basePropStrategy)
+        public void ClearAllCD()
         {
-            ModifierSet values = modifyPipeline.GetModifierSet();
-            if (GetNowPropCount()>=values.Final(ModifierSet.Key.PropSlot)) return;
-
-            AddPropContext context = new()
+            foreach (var i in equippedProps)
             {
-                attributes = values,
-                prop = basePropStrategy
-            };
-
-            /** 相位一：决定本次获得道具是否发生 */
-            miniEventBus.Publish<BeforeAddPropEvent>(new(){context=context});
-            if (context.cancelled) return;
-
-            /** 相位二：确定本次获得道具的临时变量 */
-            miniEventBus.Publish<AddPropResultEvent>(new(){context=context});
-
-            /** 相位三：按结果执行 */
-            int i=0;
-            while (props[i] != null)
-            {
-                i++;
+                i.cdRatio = Ratio.Empty;
             }
-            context.prop.BindGameCharacterController(gameCharacterController);
-            context.prop.BindBuffContainer(buffContainer);
-            context.prop.BindEffectContainer(effectContainer);
-            context.prop.BindPropContainer(this);
-            props[i]=context.prop;
-            miniEventBus.Publish<AfterAddPropEvent>(new(){context=context});
-
-            onPropAdded?.Invoke(new(){basePropStrategyMetaData=context.prop.GetMetaData(),slotIndex=i});
         }
+
+        /// <summary>
+        /// 读取指定位置的道具，供只读查询
+        /// </summary>
+        public BasePropStrategy GetProp(int index)
+        {
+            if (index < 0 || index >= equippedProps.Count) return null;
+            return equippedProps[index].prop;
+        }
+
         public void UseProp(int propSlotIndex)
         {
+            if (propSlotIndex < 0 || propSlotIndex >= equippedProps.Count) return;
             if (((CustomNetworkManager)CustomNetworkManager.singleton).IsLogicDisabled) return;  //暂停/剧情/倒数
 
+            EquippedProp equippedProp = equippedProps[propSlotIndex];
+
+            /** 冷却中就不可用。与 CanUse 同为前置条件，不消耗也不发布任何事件 */
+            if (equippedProp.cdRatio > Ratio.Empty) return;
+
+            /** 道具自身的先决条件，不满足则不进入冷却也不触发任何钩子 */
+            if (!equippedProp.prop.CanUse()) return;
+
             ModifierSet values = modifyPipeline.GetModifierSet();
-            if (propSlotIndex >= values.Final(ModifierSet.Key.PropSlot)) return;
-            if (props[propSlotIndex]==null) return;
-
-            /** 道具自身的先决条件，不满足则不消耗也不触发任何钩子 */
-            if (!props[propSlotIndex].CanUse()) return;
-
             UsePropContext context = new()
             {
                 attributes = values,
-                prop = props[propSlotIndex]
+                prop = equippedProp.prop
             };
 
             /** 相位一：决定本次使用道具是否发生 */
@@ -200,9 +178,9 @@ namespace Flicker.Module
             /** 相位二：确定本次使用道具的临时变量 */
             miniEventBus.Publish<UsePropResultEvent>(new(){context=context});
 
-            /** 相位三：按结果执行 */
-            props[propSlotIndex] = null;
+            /** 相位三：按结果执行。道具不消耗，只进入冷却 */
             context.prop.OnUse();
+            equippedProp.cdRatio = Ratio.Full;
 
             miniEventBus.Publish<AfterUsePropEvent>(new(){context=context});
 

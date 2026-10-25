@@ -72,6 +72,10 @@ namespace Flicker.Module
         /// </summary>
         public string description = "默认描述";
         /// <summary>
+        /// 道具冷却时长（秒）。冷却比例 = 剩余 / 该值，该值不参与修饰
+        /// </summary>
+        public float cooldown = 4f;
+        /// <summary>
         /// 使用者的游戏角色控制器绑定
         /// </summary>
         protected GameCharacterController gameCharacterController;
@@ -92,7 +96,7 @@ namespace Flicker.Module
         /// </summary>
         public virtual void OnUse(){}
         /// <summary>
-        /// 道具自身的使用条件。不满足则本次使用不发生，也不消耗道具
+        /// 道具自身的使用条件。不满足则本次使用不发生，也不进入冷却
         /// </summary>
         public virtual bool CanUse(){ return true; }
         /// <summary>

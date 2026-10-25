@@ -11,11 +11,11 @@ namespace Flicker.Data
         public void init()
         {
             RegistrySetting("playerName", ()=>{return GetRandomName();});
-            /** 默认卡组：固定的 7 个道具 id，序列化为 json 字符串存储。
+            /** 默认携带：固定的 3 个道具 id，序列化为 json 字符串存储。
              *  默认值函数每次 GetSetting 都会被调用一次（结果被已存值覆盖丢弃），
              *  因此这里必须是纯函数，不能随机、不能写盘 */
             RegistrySetting("pvpDeck", ()=>JsonConvert.SerializeObject(new string[]{
-                "00001","00002","00003","00004","00005","00006","00007"
+                "00001","00006","00007"
             }));
         }
         private Dictionary<string, Func<object>> defaultPairs=new();
