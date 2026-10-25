@@ -33,7 +33,7 @@ namespace Flicker.Module
             PropContainer propContainer = GetComponent<PropContainer>();
             propContainer.onPropAdded = (evt) => EventBus.Publish<GetPropEvent>(evt);
             propContainer.onPropUse = (evt) => EventBus.Publish<UsePropEvent>(evt);
-            propContainer.onUpdatePropCDProgress = (evt)=>EventBus.Publish<UpdatePropCDProgressEvent>(evt);
+            propContainer.onPropState = (evt)=>EventBus.Publish<PropStateEvent>(evt);
             /** 注入跳跃CD发布委托 */
             onUpdateJumpCDProgress = (evt)=>EventBus.Publish<UpdateJumpCDProgressEvent>(evt);
         }

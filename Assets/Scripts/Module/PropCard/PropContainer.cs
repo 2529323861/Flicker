@@ -49,9 +49,10 @@ namespace Flicker.Module
         /// </summary>
         public Action<UsePropEvent> onPropUse;
         /// <summary>
-        /// 道具冷却进度的UI发布委托，供玩家控制器注入
+        /// 道具冷却进度的UI发布委托，供玩家控制器注入。
+        /// 每帧发布一次完整状态，UI 只做渲染
         /// </summary>
-        public Action<UpdatePropCDProgressEvent> onUpdatePropCDProgress;
+        public Action<PropStateEvent> onPropState;
 
         private BuffContainer buffContainer;
         private EffectContainer effectContainer;
@@ -127,8 +128,15 @@ namespace Flicker.Module
                 {
                     equippedProp.cdRatio = Ratio.Advance(equippedProp.cdRatio, equippedProp.cdMax, -Time.deltaTime * propCDRate);
                 }
-                onUpdatePropCDProgress?.Invoke(new(){slotIndex = i, propCDProgress = equippedProp.cdRatio});
             }
+
+            /** 每帧发布完整状态，UI 不需要自己拼凑增量 */
+            onPropState?.Invoke(new()
+            {
+                propCD0 = GetCDRatio(0),
+                propCD1 = GetCDRatio(1),
+                propCD2 = GetCDRatio(2)
+            });
         }
 
         /// <summary>
@@ -149,6 +157,15 @@ namespace Flicker.Module
         {
             if (index < 0 || index >= equippedProps.Count) return null;
             return equippedProps[index].prop;
+        }
+
+        /// <summary>
+        /// 读取指定位置的冷却比例，供HUD快照使用
+        /// </summary>
+        public float GetCDRatio(int index)
+        {
+            if (index < 0 || index >= equippedProps.Count) return Ratio.Empty;
+            return equippedProps[index].cdRatio;
         }
 
         public void UseProp(int propSlotIndex)

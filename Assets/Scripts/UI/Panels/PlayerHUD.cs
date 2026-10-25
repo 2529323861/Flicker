@@ -41,8 +41,8 @@ namespace Flicker.UI
 
         /** 缓存每个道具的悬停描述组件，复用 BuffDescription */
         private BuffDescription[] propDescriptions = new BuffDescription[PropContainer.EquippedPropCount];
-        /** 缓存每个道具的就绪度，1 = 就绪，0 = 刚使用 */
-        private float[] propCDCache = new float[PropContainer.EquippedPropCount];
+        /** 每个道具的就绪度目标值，1 = 就绪，0 = 刚使用。只作阻尼目标，不是逻辑状态 */
+        private float[] propCDTarget = new float[PropContainer.EquippedPropCount];
         private float jumpCDProgressCache=0;
 
         /// <summary>
@@ -68,7 +68,7 @@ namespace Flicker.UI
             }
             EventBus.Subscribe<GetPropEvent>(GetPropHandler);
             EventBus.Subscribe<UpdateJumpCDProgressEvent>(SetJumpCDHandler);
-            EventBus.Subscribe<UpdatePropCDProgressEvent>(SetPropCDBarHandler);
+            EventBus.Subscribe<PropStateEvent>(PropStateHandler);
             EventBus.Subscribe<UsePropEvent>(UsePropHandler);
             EventBus.Subscribe<AddNewBuffEvent>(AddNewBuffHandler);
             EventBus.Subscribe<RemoveBuffEvent>(RemoveBuffHandler);
@@ -101,7 +101,7 @@ namespace Flicker.UI
         /// </summary>
         public void ClearCache()
         {
-            propCDCache=new float[PropContainer.EquippedPropCount];
+            propCDTarget=new float[PropContainer.EquippedPropCount];
             jumpCDProgressCache=0;
         }
         /// <summary>
@@ -153,22 +153,23 @@ namespace Flicker.UI
 
         }
         /// <summary>
-        /// 设置道具槽位CD条
+        /// 渲染道具栏。快照是全量状态，同一份调用多次结果一致
         /// </summary>
-        /// <param name="updatePropCDProgressEvent"></param>
-        public void SetPropCDBarHandler(UpdatePropCDProgressEvent updatePropCDProgressEvent)
+        public void PropStateHandler(PropStateEvent propStateEvent)
         {
             /** 条显示就绪度：1 = 可用，0 = 刚使用 */
-            propCDCache[updatePropCDProgressEvent.slotIndex] = 1f - updatePropCDProgressEvent.propCDProgress;
+            propCDTarget[0] = 1f - propStateEvent.propCD0;
+            propCDTarget[1] = 1f - propStateEvent.propCD1;
+            propCDTarget[2] = 1f - propStateEvent.propCD2;
         }
         /// <summary>
-        /// 更新道具CD条
+        /// 更新道具CD条。只做显示阻尼，目标值由快照给定
         /// </summary>
         public void UpdatePropCDBar()
         {
             for (int i = 0; i < PropContainer.EquippedPropCount; i++)
             {
-                propBars[i].fillAmount = NonlinearDamper.FloatDamp(propBars[i].fillAmount,propCDCache[i]);
+                propBars[i].fillAmount = NonlinearDamper.FloatDamp(propBars[i].fillAmount,propCDTarget[i]);
             }
         }
         public void UsePropHandler(UsePropEvent usePropEvent)

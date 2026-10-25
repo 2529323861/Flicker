@@ -174,7 +174,7 @@ namespace Flicker.Module.Network
             /** 注入道具UI发布委托 */
             propContainer.onPropAdded = (evt) => EventTransmit<GetPropEvent>(evt);
             propContainer.onPropUse = (evt) => EventTransmit<UsePropEvent>(evt);
-            propContainer.onUpdatePropCDProgress = (evt)=>EventTransmit<UpdatePropCDProgressEvent>(evt);
+            propContainer.onPropState = (evt)=>EventTransmit<PropStateEvent>(evt);
             /** 注入跳跃CD发布委托 */
             playerController.onUpdateJumpCDProgress = (evt)=>EventTransmit<UpdateJumpCDProgressEvent>(evt);
         }

@@ -19,14 +19,14 @@ namespace Flicker.Module.UIEvent
         public int slotIndex;
     }
     /// <summary>
-    /// 道具冷却进度
+    /// 道具栏完整状态。每帧推送一次，UI 只做渲染，不维护影子状态
     /// </summary>
-    public struct UpdatePropCDProgressEvent
+    public struct PropStateEvent
     {
-        /** 所在位置 */
-        public int slotIndex;
-        /** CD比，0 = 就绪，1 = 刚使用 */
-        public float propCDProgress;
+        /** 三个携带位的冷却比例，0 = 就绪，1 = 刚使用 */
+        public float propCD0;
+        public float propCD1;
+        public float propCD2;
     }
     public struct UsePropEvent
     {
