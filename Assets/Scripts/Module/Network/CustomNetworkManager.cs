@@ -229,8 +229,9 @@ namespace Flicker.Module.Network
                     GameManager.Instance.MultiPlayEnd(dead);
                 };
                 bot.SetPosition(-4.0f,true);
-                /** 不初始化携带，道具的 CanUse 与 UseProp 会空引用 */
-                botChar.GetComponent<PropContainer>().Init(ResolveLoadout(null));
+                /** 不初始化携带，道具的 CanUse 与 UseProp 会空引用。
+                 *  人机从预制卡组中随机挑一套 */
+                botChar.GetComponent<PropContainer>().Init(BotLoadouts.PickRandom());
             }
 
             if (countDownCoroutine != null)
