@@ -98,6 +98,15 @@ namespace Flicker.Module.UIEvent
         public bool client;
     }
     public struct LobbyPanelReadySnapshotRequest{}
+    /// <summary>添加机器人，仅主机可用</summary>
+    public struct LobbyPanelAddBotEvent{}
+    /// <summary>移除机器人，仅主机可用</summary>
+    public struct LobbyPanelRemoveBotEvent{}
+    /// <summary>机器人存在状态快照，供大厅按钮与提示刷新</summary>
+    public struct LobbyPanelBotStateEvent
+    {
+        public bool hasBot;
+    }
     public struct LobbyPanelPlayerNameUpdateEvent
     {
         public string host;

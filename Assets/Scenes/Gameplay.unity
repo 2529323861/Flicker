@@ -454,6 +454,7 @@ MonoBehaviour:
   gameCharacterPrefab: {fileID: 8513294268330583383, guid: fe3704e6495c30f4f8e062fd7c138df2, type: 3}
   mockCharacterPrefab: {fileID: 8513294268330583383, guid: 6203bc38a62195f43a4d73e9195da21b, type: 3}
   networkConnectionState: 0
+  hasBot: 0
 --- !u!1 &604883452
 GameObject:
   m_ObjectHideFlags: 0
