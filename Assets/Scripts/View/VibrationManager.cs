@@ -54,7 +54,7 @@ namespace Flicker.View
             }
             Camera.main.transform.localPosition = offset+cameraOffset;
         }
-        public void init()
+        public void Init()
         {
             EventBus.Subscribe<AddVibration>((evt)=>{
                 AddVibration(evt.maxTime, new Vector3(evt.amplitudeX,evt.amplitudeY,evt.amplitudeZ));

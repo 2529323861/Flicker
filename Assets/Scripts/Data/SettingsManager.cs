@@ -8,7 +8,7 @@ namespace Flicker.Data
 {
     public class SettingsManager: Singleton<SettingsManager>
     {
-        public void init()
+        public void Init()
         {
             RegistrySetting("playerName", ()=>{return GetRandomName();});
             /** 默认携带：固定的 3 个道具 id，序列化为 json 字符串存储。
