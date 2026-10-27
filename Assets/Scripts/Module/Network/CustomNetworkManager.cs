@@ -234,11 +234,26 @@ namespace Flicker.Module.Network
                 botChar.GetComponent<PropContainer>().Init(BotLoadouts.PickRandom());
             }
 
+            /** 角色全部生成完再统一上色，bot 与玩家走同一套规则 */
+            ApplyTeamColors();
+
             if (countDownCoroutine != null)
             {
                 StopCoroutine(countDownCoroutine);
             }
             countDownCoroutine = StartCoroutine(StartCountDown());
+        }
+        /// <summary>
+        /// 按队伍上色。TeamB（玩家二 / 机器人）为绿色，其余保持预制体原色。
+        /// 颜色属于表现，不走逻辑层的事件，而是由角色自己的 ClientRpc 下发
+        /// </summary>
+        static readonly Color TeamBColor = new(0.388f, 1f, 0f);
+        void ApplyTeamColors()
+        {
+            foreach (var gcc in CharacterControllerManager.Instance.GetAll())
+            {
+                gcc.SetTeamColor(gcc.teamTag == "TeamB" ? TeamBColor : Color.white);
+            }
         }
         /// <summary>
         /// 结算携带道具。大厅已提交合法携带时直接使用，
