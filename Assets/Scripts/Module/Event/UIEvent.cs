@@ -9,32 +9,33 @@ namespace Flicker.Module.UIEvent
         public float jumpCDProgress;
     }
     /// <summary>
-    /// 获取当前槽位数
-    /// </summary>
-    public struct GetPropNumberEvent
-    {
-        /** 当前道具槽位 */
-        public int propSlot;
-    }
-    /// <summary>
-    /// 获取新道具事件
+    /// 装备道具事件。开局携带时逐格发布，局中不再发布
     /// </summary>
     public struct GetPropEvent
     {
-        /** 新道具 */
+        /** 道具元信息 */
         public BasePropStrategyMetaData basePropStrategyMetaData;
-        /** 新道具的位置 */
+        /** 所在位置 */
         public int slotIndex;
     }
     /// <summary>
-    /// 获取当前道具CD比
+    /// 道具栏完整状态。每帧推送一次，UI 只做渲染，不维护影子状态
     /// </summary>
-    public struct UpdatePropCDProgressEvent
+    public struct PropStateEvent
     {
-        /** CD比，0到1 */
-        public float propCDProgress;
+        /** 三个携带位的冷却比例，0 = 就绪，1 = 刚使用 */
+        public float propCD0;
+        public float propCD1;
+        public float propCD2;
     }
     public struct UsePropEvent
+    {
+        public int propSlotIndex;
+    }
+    /// <summary>
+    /// 道具不可用回执。冷却中或道具自身条件不满足时发布，供 UI 播放拒绝表现
+    /// </summary>
+    public struct PropUnavailableEvent
     {
         public int propSlotIndex;
     }
@@ -97,6 +98,15 @@ namespace Flicker.Module.UIEvent
         public bool client;
     }
     public struct LobbyPanelReadySnapshotRequest{}
+    /// <summary>添加机器人，仅主机可用</summary>
+    public struct LobbyPanelAddBotEvent{}
+    /// <summary>移除机器人，仅主机可用</summary>
+    public struct LobbyPanelRemoveBotEvent{}
+    /// <summary>机器人存在状态快照，供大厅按钮与提示刷新</summary>
+    public struct LobbyPanelBotStateEvent
+    {
+        public bool hasBot;
+    }
     public struct LobbyPanelPlayerNameUpdateEvent
     {
         public string host;

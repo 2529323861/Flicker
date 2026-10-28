@@ -35,17 +35,9 @@ namespace Flicker.Module
             /// </summary>
             Damage,
             /// <summary>
-            /// 道具栏槽位
+            /// 道具冷却速率。只修饰速率，不修饰冷却上限，比例语义因此恒定
             /// </summary>
-            PropSlot,
-            /// <summary>
-            /// 获取道具卡时间
-            /// </summary>
-            GetPropCD,
-            /// <summary>
-            /// 获取道具卡冷却速率
-            /// </summary>
-            GetPropCDRate,
+            PropCDRate,
             /// <summary>
             /// 僵直时间
             /// </summary>

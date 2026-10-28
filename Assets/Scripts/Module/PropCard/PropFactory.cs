@@ -78,17 +78,17 @@ namespace Flicker.Module
             EventBus.Publish<PropPoolEvent>(new(){metaDatas=metaDataCache});
         }
         /// <summary>
-        /// 校验一份 PvP 卡组是否合法：长度、不重复、工厂中存在、不在黑名单
+        /// 校验一份 PvP 携带是否合法：长度、不重复、工厂中存在、不在黑名单
         /// </summary>
-        /// <param name="deck">待校验的卡组</param>
+        /// <param name="deck">待校验的携带道具 id 列表</param>
         /// <param name="reason">不合法时的原因，合法时为 null</param>
         /// <returns>是否合法</returns>
         public bool IsLegalDeck(List<string> deck, out string reason)
         {
             reason = null;
-            if (deck == null || deck.Count != 7)
+            if (deck == null || deck.Count != PropContainer.EquippedPropCount)
             {
-                reason = $"卡组长度必须为7，实际为{deck?.Count}";
+                reason = $"携带数必须为{PropContainer.EquippedPropCount}，实际为{deck?.Count}";
                 return false;
             }
 

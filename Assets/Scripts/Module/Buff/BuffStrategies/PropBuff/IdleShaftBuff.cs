@@ -3,46 +3,51 @@ using Flicker.Module.CharacterEvent;
 namespace Flicker.Module.Buff.PropBuff
 {
     /// <summary>
-    /// 空转轴：道具获取冷却上升20%，持续一个完整周期，
-    /// 到下一次抽到道具时自动移除（清空CD导致的那次即时抽卡不计）
+    /// 空转轴：立刻清空全部道具冷却，但之后道具冷却速率降低，
+    /// 到自身下一次使用道具后自动移除（清空冷却换来的那次使用不计）
     /// </summary>
     public class IdleShaftBuff : BaseBuffStrategy
     {
         /// <summary>
-        /// 道具获取冷却倍率
+        /// 道具冷却速率倍率
         /// </summary>
-        public const float GetPropCDMultiplier = 1.2f;
+        public const float PropCDRateMultiplier = 0.8f;
 
         BaseEffectStrategy baseEffectStrategy;
+        PropContainer propContainer;
         /// <summary>
-        /// 是否已抽到过因清空CD而即时发放的那一张
+        /// 是否已过清空冷却换来的那一次使用
         /// </summary>
-        bool drawnOnce = false;
+        bool usedOnce = false;
         public IdleShaftBuff()
         {
             name = "空转轴";
             /** 暂无美术资源，补齐 BuffIcon/IdleShaft.png 后改为 "IdleShaft" */
             path = "IdleShaft";
-            description = "道具获取冷却上升20%，下次抽到道具后解除";
+            description = "立刻清空全部道具冷却，但道具冷却速率降低20%，下次使用道具后解除";
             isStackable = true;
         }
         public override void OnAdd()
         {
+            this.propContainer = effectContainer.GetComponent<PropContainer>();
+            /** 先清空冷却，不然后挂的道具会立刻进入冷却 */
+            propContainer.ClearAllCD();
+
             this.baseEffectStrategy = new BaseEffectStrategy();
-            baseEffectStrategy.apply = (b, m) => m.Get(ModifierSet.Key.GetPropCD).AddMultiplier(GetPropCDMultiplier);
-            baseEffectStrategy.onAdd = (b) => b.Listen<AfterAddPropEvent>(OnGotProp);
+            baseEffectStrategy.apply = (b, m) => m.Get(ModifierSet.Key.PropCDRate).AddMultiplier(PropCDRateMultiplier);
+            baseEffectStrategy.onAdd = (b) => b.Listen<AfterUsePropEvent>(OnUsedProp);
             effectContainer.AddEffect(baseEffectStrategy, this);
         }
         public override void OnRemove()
         {
             effectContainer.RemoveEffect(baseEffectStrategy);
         }
-        private void OnGotProp(AfterAddPropEvent afterAddPropEvent)
+        private void OnUsedProp(AfterUsePropEvent afterUsePropEvent)
         {
-            /** 第一张是清空CD换来的，不计入惩罚周期 */
-            if (!drawnOnce)
+            /** 第一次是本次使用自身造成的，不计入惩罚周期 */
+            if (!usedOnce)
             {
-                drawnOnce = true;
+                usedOnce = true;
                 return;
             }
             buffContainer.RemoveBuff(this);

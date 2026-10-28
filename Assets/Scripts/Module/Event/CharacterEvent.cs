@@ -238,27 +238,6 @@ namespace Flicker.Module.CharacterEvent
         public RemoveBuffContext context;
     }
     /// <summary>
-    /// 获得道具前事件
-    /// </summary>
-    public struct BeforeAddPropEvent
-    {
-        public AddPropContext context;
-    }
-    /// <summary>
-    /// 获得道具结果事件
-    /// </summary>
-    public struct AddPropResultEvent
-    {
-        public AddPropContext context;
-    }
-    /// <summary>
-    /// 获得道具后事件
-    /// </summary>
-    public struct AfterAddPropEvent
-    {
-        public AddPropContext context;
-    }
-    /// <summary>
     /// 使用道具前事件
     /// </summary>
     public struct BeforeUsePropEvent

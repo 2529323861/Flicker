@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using Flicker.Core;
+using Flicker.Data;
 using Flicker.Module.UIEvent;
 using Flicker.UI;
 using Mirror;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace Flicker.Module.Network
@@ -59,6 +61,12 @@ namespace Flicker.Module.Network
         /// </summary>
         private bool endLock = false;
 
+        /// <summary>
+        /// 人机模式：单人房间，跳过准备检查并额外生成一个机器人。
+        /// 机器人不进 connectionProxyWrappers，因此所有 UI 转发对它天然无效
+        /// </summary>
+        public bool hasBot = false;
+
 
         //———————————————————————————————————钩子—————————————————————————————————————————————
         new void Awake()
@@ -67,6 +75,8 @@ namespace Flicker.Module.Network
             EventBus.Subscribe<HostPlayClickedEvent>(HostPlayClickedHandler);
             EventBus.Subscribe<JoinUrlEvent>(JoinUrlHandler);
             EventBus.Subscribe<LobbyPanelQuitEvent>(LobbyPanelQuitHandler);
+            EventBus.Subscribe<LobbyPanelAddBotEvent>(LobbyPanelAddBotHandler);
+            EventBus.Subscribe<LobbyPanelRemoveBotEvent>(LobbyPanelRemoveBotHandler);
             
         }
         new void OnDestroy() {
@@ -74,6 +84,8 @@ namespace Flicker.Module.Network
             EventBus.Unsubscribe<HostPlayClickedEvent>(HostPlayClickedHandler);
             EventBus.Unsubscribe<JoinUrlEvent>(JoinUrlHandler);
             EventBus.Unsubscribe<LobbyPanelQuitEvent>(LobbyPanelQuitHandler);
+            EventBus.Unsubscribe<LobbyPanelAddBotEvent>(LobbyPanelAddBotHandler);
+            EventBus.Unsubscribe<LobbyPanelRemoveBotEvent>(LobbyPanelRemoveBotHandler);
         }
         public override void OnServerConnect(NetworkConnectionToClient conn)
         {
@@ -82,8 +94,14 @@ namespace Flicker.Module.Network
             {
                 /** 留空做通知 */
                 conn.Disconnect();
+                return;
             }
-            
+            /** 人机房间只允许一台机器：机器人已占位时，真实玩家一律踢出。
+             *  机器人不占 NetworkServer.connections，因此上面的上限拦不住它 */
+            if (hasBot)
+            {
+                conn.Disconnect();
+            }
         }
         public override void OnServerAddPlayer(NetworkConnectionToClient conn)
         {
@@ -99,6 +117,7 @@ namespace Flicker.Module.Network
 
             //UI切换
             connectionProxyWrapper.connectionProxy.SwitchToLobbyUI();
+            PublishBotState();
 
         }
         public override void OnServerDisconnect(NetworkConnectionToClient conn)
@@ -194,24 +213,56 @@ namespace Flicker.Module.Network
                 {
                     gcc.SetPosition(-4.0f,true);
                 }
-                /** 注入大厅提交的卡组，必须在开局抽卡之前 */
-                gameChar.GetComponent<PropCardDeck>().SetDeck(wrapper.deck);
+                /** 注入大厅提交的携带道具 */
+                gameChar.GetComponent<PropContainer>().Init(ResolveLoadout(wrapper.deck));
                 i++;
-                gameChar.GetComponent<PropContainer>().AddProp(); //开局获得一个随机道具
             }
 
-            if (i == 1 && Debugger.isDebug)
+            if (hasBot)
             {
-                GameObject gameChar = CharacterControllerManager.Instance.Create(mockCharacterPrefab);
-                var gcc = gameChar.GetComponent<GameCharacterController>();
-                gcc.SetPosition(-4.0f,true);
+                GameObject botChar = CharacterControllerManager.Instance.Create(mockCharacterPrefab);
+                var bot = botChar.GetComponent<GameCharacterController>();
+                /** 机器人没有队伍标签则与玩家同阵营，攻击与弹反都会跳过对方 */
+                bot.teamTag = "TeamB";
+                /** 不绑死亡回调，机器人死亡不会触发结算，对局永不结束 */
+                bot.onDestroy = (dead)=>{
+                    GameManager.Instance.MultiPlayEnd(dead);
+                };
+                bot.SetPosition(-4.0f,true);
+                /** 不初始化携带，道具的 CanUse 与 UseProp 会空引用。
+                 *  人机从预制卡组中随机挑一套 */
+                botChar.GetComponent<PropContainer>().Init(BotLoadouts.PickRandom());
             }
+
+            /** 角色全部生成完再统一上色，bot 与玩家走同一套规则 */
+            ApplyTeamColors();
 
             if (countDownCoroutine != null)
             {
                 StopCoroutine(countDownCoroutine);
             }
             countDownCoroutine = StartCoroutine(StartCountDown());
+        }
+        /// <summary>
+        /// 按队伍上色。TeamB（玩家二 / 机器人）为绿色，其余保持预制体原色。
+        /// 颜色属于表现，不走逻辑层的事件，而是由角色自己的 ClientRpc 下发
+        /// </summary>
+        static readonly Color TeamBColor = new(0.388f, 1f, 0f);
+        void ApplyTeamColors()
+        {
+            foreach (var gcc in CharacterControllerManager.Instance.GetAll())
+            {
+                gcc.SetTeamColor(gcc.teamTag == "TeamB" ? TeamBColor : Color.white);
+            }
+        }
+        /// <summary>
+        /// 结算携带道具。大厅已提交合法携带时直接使用，
+        /// 否则（调试直开等未提交场景）回退到本地默认携带
+        /// </summary>
+        List<string> ResolveLoadout(List<string> loadout)
+        {
+            if (loadout != null && loadout.Count == PropContainer.EquippedPropCount) return loadout;
+            return JsonConvert.DeserializeObject<List<string>>(SettingsManager.Instance.GetSetting<string>("pvpDeck"));
         }
         IEnumerator StartCountDown()
         {
@@ -233,8 +284,16 @@ namespace Flicker.Module.Network
             int deadIndex = connectionProxyWrappers.FindIndex(w => w.character == dead);
             if (deadIndex < 0)
             {
-                Debug.LogError("[!] 结算失败：死亡角色不属于任何已注册的玩家");
-                return;
+                /** 死亡者是机器人，不在玩家列表里属正常情况。
+                 *  deadIndex 保持 -1 向下传，i != -1 恒成立，即全部玩家获胜 */
+                if (!hasBot)
+                {
+                    Debug.LogError("[!] 结算失败：死亡角色既不是玩家也不是机器人");
+                    /** 回滚锁，否则对局永久卡在受限状态 */
+                    endLock = false;
+                    IsLimited = false;
+                    return;
+                }
             }
 
             /** 对局结束，回到大厅需要重新准备，卡组保留 */
@@ -259,7 +318,8 @@ namespace Flicker.Module.Network
         }
         public void HostStartGame()
         {
-            if (Debugger.isDebug) {
+            if (hasBot) {
+                /** 人机模式：机器人恒准备，只需主机点开始 */
                 GameManager.Instance.PrepareMultiPlay();
                 return;
                 }
@@ -296,7 +356,12 @@ namespace Flicker.Module.Network
         {
             print("快照被调用");
             LobbyPanelReadySnapshotEvent lobbyPanelReadySnapshotEvent = new();
-            if (connectionProxyWrappers.Count == 1)
+            /** hasBot 必须排在人数判断之前：机器人占着客户端位但不进玩家列表 */
+            if (hasBot)
+            {
+                lobbyPanelReadySnapshotEvent.client = true;
+            }
+            else if (connectionProxyWrappers.Count == 1)
             {    
                 lobbyPanelReadySnapshotEvent.client = false;
             }
@@ -322,7 +387,12 @@ namespace Flicker.Module.Network
         public void PublishLobbyPanelPlayerNameUpdate()
         {
             LobbyPanelPlayerNameUpdateEvent lobbyPanelPlayerNameUpdateEvent = new();
-            if (connectionProxyWrappers.Count == 1)
+            /** hasBot 必须排在人数判断之前：机器人占着客户端位但不进玩家列表 */
+            if (hasBot)
+            {    
+                lobbyPanelPlayerNameUpdateEvent.client = "机器人";
+            }
+            else if (connectionProxyWrappers.Count == 1)
             {    
                 lobbyPanelPlayerNameUpdateEvent.client = "暂无玩家";
             }
@@ -365,6 +435,58 @@ namespace Flicker.Module.Network
             }else{
                 StopClient();
             }
+        }
+        //—————————————————————————————————机器人—————————————————————————————————————————————
+        /// <summary>
+        /// 添加机器人。仅大厅内、且没有第二位真实玩家时可用
+        /// </summary>
+        public void AddBot()
+        {
+            if (!NetworkServer.active) return;
+            if (hasBot) return;
+            /** 已有第二位真实玩家，不再插入机器人 */
+            if (connectionProxyWrappers.Count != 1)
+            {
+                UIManager.Instance.Open<TipPanel>(new TipMessage(){title="无法添加",content="房间内已有其他玩家"});
+                return;
+            }
+            /** 对局进行中不允许增删机器人 */
+            if (connectionProxyWrappers.Exists(w => w.character != null)) return;
+
+            hasBot = true;
+            PublishBotState();
+            PublishLobbyPanelReadySnapshot();
+            PublishLobbyPanelPlayerNameUpdate();
+        }
+        /// <summary>
+        /// 移除机器人。仅大厅内可用
+        /// </summary>
+        public void RemoveBot()
+        {
+            if (!NetworkServer.active) return;
+            if (!hasBot) return;
+            /** 对局进行中不允许增删机器人 */
+            if (connectionProxyWrappers.Exists(w => w.character != null)) return;
+
+            hasBot = false;
+            PublishBotState();
+            PublishLobbyPanelReadySnapshot();
+            PublishLobbyPanelPlayerNameUpdate();
+        }
+        /// <summary>
+        /// 广播机器人存在状态，供大厅按钮刷新文字
+        /// </summary>
+        public void PublishBotState()
+        {
+            EventBroadcast(new LobbyPanelBotStateEvent{hasBot = hasBot});
+        }
+        public void LobbyPanelAddBotHandler(LobbyPanelAddBotEvent lobbyPanelAddBotEvent)
+        {
+            AddBot();
+        }
+        public void LobbyPanelRemoveBotHandler(LobbyPanelRemoveBotEvent lobbyPanelRemoveBotEvent)
+        {
+            RemoveBot();
         }
     }
 }

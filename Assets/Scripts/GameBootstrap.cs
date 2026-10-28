@@ -10,8 +10,8 @@ public class GameBootstrap : MonoBehaviour
     void Awake()
     {   
         //注册屏幕振动服务
-        VibrationManager.Instance.init();
-        SettingsManager.Instance.init();
+        VibrationManager.Instance.Init();
+        SettingsManager.Instance.Init();
         PropFactory.Instance.Init();
     }
     // Start is called before the first frame update

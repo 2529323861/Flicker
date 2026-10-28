@@ -22,6 +22,8 @@ namespace Flicker.UI
         public TMP_Text readyText;
         public Button startButton;
         public Button quitButton;
+        public Button botButton;
+        public TMP_Text botButtonText;
         public Image self;
         public Image other;
         public Sprite prepared;
@@ -30,14 +32,20 @@ namespace Flicker.UI
         public TMP_Text otherName;
 
         private bool opened = false;
+        /// <summary>
+        /// 机器人存在状态，仅用于决定本次点击发出添加还是移除
+        /// </summary>
+        private bool hasBot = false;
         void Awake()
         {
             quitButton.onClick.AddListener(QuitButtonCallback);
             readyButton.onClick.AddListener(ReadyButtonCallback);
             startButton.onClick.AddListener(StartButtonCallback);
+            botButton.onClick.AddListener(BotButtonCallback);
 
             EventBus.Subscribe<LobbyPanelReadySnapshotEvent>(LobbyPanelReadySnapshotHandler);
             EventBus.Subscribe<LobbyPanelPlayerNameUpdateEvent>(LobbyPanelPlayerNameUpdateHandler);
+            EventBus.Subscribe<LobbyPanelBotStateEvent>(LobbyPanelBotStateHandler);
             EventBus.Subscribe<UpdatePropDescriptionEvent>(UpdatePropDescriptionHandler);
             EventBus.Subscribe<DeckSlotClickedEvent>(DeckSlotClickedHandler);
         }
@@ -72,6 +80,24 @@ namespace Flicker.UI
         public void ReadyButtonCallback()
         {
             EventBus.Publish<LobbyPanelReadyEvent>(new(){deck=deckCache});
+        }
+        public void LobbyPanelBotStateHandler(LobbyPanelBotStateEvent lobbyPanelBotStateEvent)
+        {
+            /** 机器人开关只能由主机操作 */
+            botButton.interactable = NetworkServer.active;
+            botButtonText.text = lobbyPanelBotStateEvent.hasBot ? "移除机器人" : "添加机器人";
+            hasBot = lobbyPanelBotStateEvent.hasBot;
+        }
+        public void BotButtonCallback()
+        {
+            if (hasBot)
+            {
+                EventBus.Publish<LobbyPanelRemoveBotEvent>(new());
+            }
+            else
+            {
+                EventBus.Publish<LobbyPanelAddBotEvent>(new());
+            }
         }
         public void LobbyPanelReadySnapshotHandler(LobbyPanelReadySnapshotEvent lobbyPanelReadySnapshotEvent)
         {
@@ -188,13 +214,13 @@ namespace Flicker.UI
                 deckString = SettingsManager.Instance.GetSetting<string>("pvpDeck");
                 deckCache = JsonConvert.DeserializeObject<List<string>>(deckString);
             }
-            if (deckCache.Count!=7){
+            if (deckCache.Count!=PropContainer.EquippedPropCount){
                 SettingsManager.Instance.ResetSetting("pvpDeck");
                 deckString = SettingsManager.Instance.GetSetting<string>("pvpDeck");
                 deckCache = JsonConvert.DeserializeObject<List<string>>(deckString);
             }
             BasePropStrategyMetaData basePropStrategyMetaData;
-            for (int i = 0; i < 7; i++){
+            for (int i = 0; i < PropContainer.EquippedPropCount; i++){
                 if (!basePropStrategyMetaDatas.TryGetValue(deckCache[i],out basePropStrategyMetaData)){
                     SettingsManager.Instance.ResetSetting("pvpDeck");
                     deckString = SettingsManager.Instance.GetSetting<string>("pvpDeck");
@@ -203,7 +229,7 @@ namespace Flicker.UI
                 }
             }
 
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < PropContainer.EquippedPropCount; i++)
             {
                 GameObject s = Instantiate(deckSlot,deckContent,false);
                 deckSlots.Add(s.GetComponent<DeckSlot>());

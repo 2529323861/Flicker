@@ -11,10 +11,6 @@ using Flicker.Module.UIEvent;
 using Flicker.Module.ViewEvent;
 using Flicker.View;
 using Mirror;
-using Mirror.BouncyCastle.Asn1.Crmf;
-using Mirror.Transports.Encryption;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
 
 namespace Flicker.Module
@@ -644,6 +640,15 @@ namespace Flicker.Module
             gameCharacterActor.ChangeAnimationStateTo(state);
             gameCharacterActor.ChangeTowardTo(towardUp);
             gameCharacterActor.ChangeWallTo(isRightWall);
+        }
+        /// <summary>
+        /// 设置阵营颜色。与 SetPlayerName 同一模式：ClientRpc 会回灌到 Host 本地，
+        /// 因此服务端不需要额外应用一次
+        /// </summary>
+        [ClientRpc]
+        public void SetTeamColor(Color color)
+        {
+            gameCharacterActor.SetColor(color);
         }
     }
 }

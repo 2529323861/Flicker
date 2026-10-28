@@ -213,6 +213,24 @@ namespace Flicker.Module
             }
         }
         /// <summary>
+        /// 是否持有该类型的 buff。供条件判断使用，不存在则返回 false
+        /// </summary>
+        public bool HasBuff(System.Type type)
+        {
+            for (int i = 0; i < buffs.Count; i++)
+            {
+                if (buffs[i].baseBuffStrategy.GetType() == type) return true;
+            }
+            return false;
+        }
+        /// <summary>
+        /// 是否持有该类型的 buff
+        /// </summary>
+        public bool HasBuff<T>() where T : BaseBuffStrategy
+        {
+            return HasBuff(typeof(T));
+        }
+        /// <summary>
         /// 清除所有buff
         /// </summary>
         public void ClearBuff()

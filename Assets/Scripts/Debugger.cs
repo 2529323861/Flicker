@@ -1,4 +1,4 @@
 public static class Debugger
 {
-    public static bool isDebug = false;
+    public static bool isDebug = true;
 }

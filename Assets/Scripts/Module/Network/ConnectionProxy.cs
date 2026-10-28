@@ -20,7 +20,6 @@ namespace Flicker.Module.Network
         public IInput input=new KeyInput();
         private PlayerController playerController;
         private PropContainer propContainer;
-        private PropCardDeck propCardDeck;
         private BuffContainer buffContainer;
 
         void Awake()
@@ -40,7 +39,7 @@ namespace Flicker.Module.Network
                 if (input.ExitDown)
                     CmdExitMove(false);
                 if (input.Jump) CmdJump();
-                for (int i = 1; i <= 5; i++)
+                for (int i = 1; i <= PropContainer.EquippedPropCount; i++)
                 {
                     if (input.Number(i))
                     {
@@ -167,7 +166,6 @@ namespace Flicker.Module.Network
             if (isClientOnly) return;
             playerController = gameObject.GetComponent<PlayerController>();
             propContainer = gameObject.GetComponent<PropContainer>();
-            propCardDeck = gameObject.GetComponent<PropCardDeck>();
             buffContainer = gameObject.GetComponent<BuffContainer>();
             
             buffContainer.onBuffAdd = (evt)=> EventTransmit<AddNewBuffEvent>(evt);
@@ -176,8 +174,8 @@ namespace Flicker.Module.Network
             /** 注入道具UI发布委托 */
             propContainer.onPropAdded = (evt) => EventTransmit<GetPropEvent>(evt);
             propContainer.onPropUse = (evt) => EventTransmit<UsePropEvent>(evt);
-            propContainer.onGetPropNumber = (evt)=>EventTransmit<GetPropNumberEvent>(evt);
-            propContainer.onUpdatePropCDProgress = (evt)=>EventTransmit<UpdatePropCDProgressEvent>(evt);
+            propContainer.onPropUnavailable = (evt) => EventTransmit<PropUnavailableEvent>(evt);
+            propContainer.onPropState = (evt)=>EventTransmit<PropStateEvent>(evt);
             /** 注入跳跃CD发布委托 */
             playerController.onUpdateJumpCDProgress = (evt)=>EventTransmit<UpdateJumpCDProgressEvent>(evt);
         }
@@ -185,7 +183,6 @@ namespace Flicker.Module.Network
         {
             playerController = null;
             propContainer = null;
-            propCardDeck = null;
             buffContainer = null;
         }
         //—————————————————————————————————游戏对象cmd方法———————————————————————————————————————————————
