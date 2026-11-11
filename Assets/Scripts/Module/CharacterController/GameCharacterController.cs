@@ -249,6 +249,10 @@ namespace Flicker.Module
             miniEventBus.Publish<BeforeJumpEvent>(new BeforeJumpEvent{context=context});
             if (context.cancelled) return;  //事件被取消
 
+            /** 起跳已确定发生，此处广播音效。必须放在取消判定之后，
+             *  否则被拦下的跳跃也会响 */
+            ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new PlaySfxEvent(){key="PlayerJump",volumeScale=1f});
+
             /** 相位二：修饰本次跳跃的行为参数 */
             miniEventBus.Publish<JumpResultEvent>(new JumpResultEvent{context=context});
 
@@ -295,6 +299,7 @@ namespace Flicker.Module
                     context.FoldBack();
 
                     ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new AddVibration(){maxTime=0.4f,amplitudeX=0.8f,amplitudeY=0f,amplitudeZ=0f});
+                    ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new PlaySfxEvent(){key="PlayerParry",volumeScale=1f});
 
                     miniEventBus.Publish<AfterParryEvent>(new AfterParryEvent{context=_parryContext});
                     _parryContext = null;
@@ -334,6 +339,7 @@ namespace Flicker.Module
             SetState(GameCharacterState.Idle);
             MoveRecovery();
             ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new AddVibration(){maxTime=0.2f,amplitudeX=0.2f,amplitudeY=0f,amplitudeZ=0f});
+            ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new PlaySfxEvent(){key="PlayerLand",volumeScale=1f});
 
             /** 落地：本次跳跃全部结算已完毕，仅作必然发生的通知 */
             miniEventBus.Publish<LandEvent>(new LandEvent());
@@ -619,6 +625,8 @@ namespace Flicker.Module
 
             /** 相位三：按结果执行 */
             SetState(GameCharacterState.Dead);
+
+            ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new PlaySfxEvent(){key="PlayerDead",volumeScale=1f});
 
             miniEventBus.Publish<AfterDie>(new AfterDie{context=context});
             onDestroy?.Invoke(this);
