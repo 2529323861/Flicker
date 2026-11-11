@@ -11,6 +11,8 @@ public class GameBootstrap : MonoBehaviour
     {   
         //注册屏幕振动服务
         VibrationManager.Instance.Init();
+        //注册音频服务
+        AudioManager.Instance.Init();
         SettingsManager.Instance.Init();
         PropFactory.Instance.Init();
     }
