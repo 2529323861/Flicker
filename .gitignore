@@ -25,3 +25,5 @@ bin/
 obj/
 .codegraph
 .continue
+# 临时工作目录，不纳入版本控制
+worktemp/

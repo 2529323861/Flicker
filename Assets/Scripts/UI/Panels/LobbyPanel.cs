@@ -52,6 +52,8 @@ namespace Flicker.UI
         public override void OnOpen(object args = null)
         {
             base.OnOpen(args);
+            /** 与主菜单共用同一首，重复请求会被忽略 */
+            Flicker.View.AudioManager.Instance.PlayMusic("BG");
             startButton.interactable = NetworkServer.active;
             readyMask.SetActive(false);
             EventBus.Publish<LobbyPanelReadySnapshotRequest>(new());

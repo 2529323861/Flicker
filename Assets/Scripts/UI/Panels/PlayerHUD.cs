@@ -109,6 +109,9 @@ namespace Flicker.UI
         public override void OnOpen(object args = null)
         {
             base.OnOpen(args);
+            /** HUD 只在对局中出现，因此这里等价于「进入战斗」这一时刻。
+             *  PlayMusic 会忽略同一首的重复请求，重复开 HUD 不会重播 */
+            Flicker.View.AudioManager.Instance.PlayMusic("Battle");
             ClearCache();
             InitBuffIcon();
             foreach (var i in props)

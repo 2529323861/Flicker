@@ -1,3 +1,4 @@
+using Flicker.View;
 using TMPro;
 using UnityEngine.UI;
 
@@ -23,6 +24,7 @@ namespace Flicker.UI
         public override void OnOpen(object args = null)
         {
             base.OnOpen(args);
+            AudioManager.Instance.PlayMusic("Settlement", 0.4f);
             bool win = (bool)args;
             text.text = win ? "游戏胜利！" : "游戏失败！";
         }
