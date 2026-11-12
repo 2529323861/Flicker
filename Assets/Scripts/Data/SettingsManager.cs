@@ -17,6 +17,8 @@ namespace Flicker.Data
             RegistrySetting("pvpDeck", ()=>JsonConvert.SerializeObject(new string[]{
                 "00001","00006","00007"
             }));
+            RegistrySetting("musicVolume",()=>1f);
+            RegistrySetting("sfxVolume",()=>1f);
         }
         private Dictionary<string, Func<object>> defaultPairs=new();
         public void RegistrySetting<T>(string key, Func<T> defaultValue){

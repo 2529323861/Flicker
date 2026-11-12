@@ -45,7 +45,7 @@ namespace Flicker.UI
         }
         public void SettingsButtonCallback()
         {
-            
+            UIManager.Instance.Open<SettingsPanel>();
         }
     }
 }
