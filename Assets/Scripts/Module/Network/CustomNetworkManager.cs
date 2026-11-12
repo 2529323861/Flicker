@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using Flicker.Core;
 using Flicker.Data;
 using Flicker.Module.UIEvent;
+using Flicker.Module.ViewEvent;
 using Flicker.UI;
 using Mirror;
 using Newtonsoft.Json;
@@ -52,6 +53,11 @@ namespace Flicker.Module.Network
         /// </summary>
         public bool IsLimited {get;private set;} = false;
         /// <summary>
+        /// 顿帧剩余时间。用非缩放时间计时：timeScale 归零后 deltaTime 也为零，
+        /// 用普通 deltaTime 将永远走不完
+        /// </summary>
+        private float hitStopRemaining = 0f;
+        /// <summary>
         /// 是否禁用逻辑
         /// </summary>
         public bool IsLogicDisabled {get{return IsPaused||IsLimited;}}
@@ -77,6 +83,7 @@ namespace Flicker.Module.Network
             EventBus.Subscribe<LobbyPanelQuitEvent>(LobbyPanelQuitHandler);
             EventBus.Subscribe<LobbyPanelAddBotEvent>(LobbyPanelAddBotHandler);
             EventBus.Subscribe<LobbyPanelRemoveBotEvent>(LobbyPanelRemoveBotHandler);
+            EventBus.Subscribe<HitStopEvent>(HitStopHandler);
             
         }
         new void OnDestroy() {
@@ -86,6 +93,29 @@ namespace Flicker.Module.Network
             EventBus.Unsubscribe<LobbyPanelQuitEvent>(LobbyPanelQuitHandler);
             EventBus.Unsubscribe<LobbyPanelAddBotEvent>(LobbyPanelAddBotHandler);
             EventBus.Unsubscribe<LobbyPanelRemoveBotEvent>(LobbyPanelRemoveBotHandler);
+            EventBus.Unsubscribe<HitStopEvent>(HitStopHandler);
+            /** 销毁时务必恢复，否则编辑器里会停在暂停状态 */
+            Time.timeScale = 1f;
+        }
+        public override void Update()
+        {
+            base.Update();
+            if (hitStopRemaining <= 0f) return;
+
+            /** 非缩放计时而 deltaTime 已被自己冻成 0 */
+            hitStopRemaining -= Time.unscaledDeltaTime;
+            Time.timeScale = hitStopRemaining > 0f ? 0f : 1f;
+        }
+        /// <summary>
+        /// 触发顿帧。取较大值，同时命中不会叠加成明显更长的冻结
+        /// </summary>
+        public void HitStop(float duration)
+        {
+            if (duration > hitStopRemaining) hitStopRemaining = duration;
+        }
+        public void HitStopHandler(HitStopEvent evt)
+        {
+            HitStop(evt.duration);
         }
         public override void OnServerConnect(NetworkConnectionToClient conn)
         {

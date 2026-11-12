@@ -300,7 +300,8 @@ namespace Flicker.Module
 
                     ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new AddVibration(){maxTime=0.4f,amplitudeX=0.8f,amplitudeY=0f,amplitudeZ=0f});
                     ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new PlaySfxEvent(){key="PlayerParry",volumeScale=1f});
-                    /** 弹反比受击更重：更亮、更慢 */
+                    /** 弹反比受击更重：更亮、更慢，顿帧也更长 */
+                    ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new HitStopEvent(){duration=0.1f});
                     ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new PlayScreenFlashEvent(){alphaScale=1f,speed=0.85f});
 
                     miniEventBus.Publish<AfterParryEvent>(new AfterParryEvent{context=_parryContext});
@@ -606,6 +607,7 @@ namespace Flicker.Module
             int finalDamage = (int)context.damage.FinalValue;
             if (finalDamage > 0)
             {
+                ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new HitStopEvent(){duration=0.2f});
                 ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new PlayScreenFlashEvent(){alphaScale=0.7f,speed=1.1f});
             }
 

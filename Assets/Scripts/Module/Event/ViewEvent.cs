@@ -11,6 +11,18 @@ namespace Flicker.Module.ViewEvent
     }
 
     /// <summary>
+    /// 顿帧。命中或弹反瞬间冻结游戏时间若干毫秒，制造重击感。
+    /// 项目内所有逻辑与表现都已避开 timeScale（NetworkTime 用非缩放时间、
+    /// 音频淡化也用非缩放时间），因此 timeScale 可以专门留给顿帧。
+    /// 属于表现，走 EventBroadcast，两端同时冻结
+    /// </summary>
+    public struct HitStopEvent
+    {
+        /// <summary>冻结时长（秒），通常 0.04 ~ 0.08</summary>
+        public float duration;
+    }
+
+    /// <summary>
     /// 全屏闪白。屏幕空间的表现，所有客户端都要看到，
     /// 因此与震动同走 EventBroadcast，不挂在任何角色上。
     /// 曲线形状由动画决定，这里只控制强度与速度
