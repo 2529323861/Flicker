@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Flicker.Core;
 using Flicker.Data;
+using Flicker.Module.UIEvent;
 using Flicker.Module.ViewEvent;
 using UnityEngine;
 
@@ -56,6 +57,12 @@ namespace Flicker.View
         [Tooltip("交叉淡化的默认时长（秒）")]
         public float defaultFadeTime = 0.8f;
 
+        [Header("道具反馈")]
+        [Tooltip("道具按下去不可用的音效，留空则不播。只有使用者本人能听到，对手听不到")]
+        public string propUnavailableSfx = "PropUnavailable";
+        [Tooltip("不可用音的音量系数。素材本身偏响（mean -9dB），降到 0.3 以免反复按键时刺耳")]
+        [Range(0f, 1f)] public float propUnavailableVolumeScale = 0.3f;
+
         private const string MusicRoot = "Sounds/Music/";
         private const string SfxRoot = "Sounds/Sfx/";
 
@@ -109,6 +116,22 @@ namespace Flicker.View
         {
             EventBus.Subscribe<PlaySfxEvent>(OnPlaySfx);
             EventBus.Subscribe<PlayMusicEvent>(OnPlayMusic);
+            /** 不可用回执是 TargetRpc，只发给使用者本人，因此天然不泄露给对手。
+             *  使用成功的声音走广播，不在这里订阅 */
+            EventBus.Subscribe<PropUnavailableEvent>(OnPropUnavailable);
+        }
+
+        void OnDestroy()
+        {
+            EventBus.Unsubscribe<PlaySfxEvent>(OnPlaySfx);
+            EventBus.Unsubscribe<PlayMusicEvent>(OnPlayMusic);
+            EventBus.Unsubscribe<PropUnavailableEvent>(OnPropUnavailable);
+        }
+
+        private void OnPropUnavailable(PropUnavailableEvent evt)
+        {
+            if (string.IsNullOrEmpty(propUnavailableSfx)) return;
+            PlaySfx(propUnavailableSfx, propUnavailableVolumeScale);
         }
 
         private AudioSource CreateSource(string sourceName, bool loop)

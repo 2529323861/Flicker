@@ -5,6 +5,7 @@ using Flicker.Module.CharacterEvent;
 using Flicker.Module.Context;
 using Flicker.Module.Network;
 using Flicker.Module.UIEvent;
+using Flicker.Module.ViewEvent;
 using Mirror;
 using UnityEngine;
 
@@ -218,6 +219,12 @@ namespace Flicker.Module
             equippedProp.cdRatio = Ratio.Full;
 
             miniEventBus.Publish<AfterUsePropEvent>(new(){context=context});
+
+            /** 道具使用走广播而非 TargetRpc：使用效果（换位、冲刺、加速）本来就双方可见，
+             *  声音作为公开信息一并让对手听到，与“不可用”的私人反馈区分开。
+             *  素材本身偏响（mean -8dB），系数降到 0.5 与角色音效对齐 */
+            ((CustomNetworkManager)CustomNetworkManager.singleton)
+                .EventBroadcast(new PlaySfxEvent(){key="PropUse",volumeScale=0.5f});
 
             onPropUse?.Invoke(new(){propSlotIndex=propSlotIndex});
         }
