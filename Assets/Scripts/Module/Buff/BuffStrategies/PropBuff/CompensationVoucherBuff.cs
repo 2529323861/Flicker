@@ -42,7 +42,10 @@ namespace Flicker.Module.Buff.PropBuff
             /** 暂无美术资源，补齐 BuffIcon/CompensationVoucher.png 后改为 "CompensationVoucher" */
             path = "CompensationVoucher";
             description = "未命中返还70%跳跃冷却；命中则道具冷却速率降低33%，持续7秒";
-            isStackable = true;
+            /** 两段式动作型：后段 7 秒比道具冷却还长，
+             *  若叠层则再次使用只刷新时长，OnAdd 不执行，命中记录不会重置。
+             *  改用不可叠层，新旧实例并存 */
+            isStackable = false;
         }
         public override void OnAdd()
         {

@@ -51,7 +51,10 @@ namespace Flicker.Module.Buff.PropBuff
             /** 暂无美术资源，补齐 BuffIcon/AnchorClaw.png 后改为 "AnchorClaw" */
             path = "AnchorClaw";
             description = "下次跳跃在30%处未被弹反则立刻折返，落地后移速下降20%持续4秒";
-            isStackable = true;
+            /** 两段式动作型：后段 debuff 可能比冷却还长，
+             *  若叠层则再次使用只刷新时长，OnAdd 不执行，折返状态不会重置。
+             *  改用不可叠层，新旧实例并存：旧的跑完 debuff 自搞，新的负责折返 */
+            isStackable = false;
         }
         public override void OnAdd()
         {
