@@ -300,6 +300,8 @@ namespace Flicker.Module
 
                     ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new AddVibration(){maxTime=0.4f,amplitudeX=0.8f,amplitudeY=0f,amplitudeZ=0f});
                     ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new PlaySfxEvent(){key="PlayerParry",volumeScale=1f});
+                    /** 弹反比受击更重：更亮、更慢 */
+                    ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new PlayScreenFlashEvent(){alphaScale=1f,speed=0.85f});
 
                     miniEventBus.Publish<AfterParryEvent>(new AfterParryEvent{context=_parryContext});
                     _parryContext = null;
@@ -600,8 +602,14 @@ namespace Flicker.Module
             /** 相位二：确定本次承受的伤害 */
             miniEventBus.Publish<BeAttackedResultEvent>(new BeAttackedResultEvent{context=context});
 
-            /** 相位三：按结果执行 */
-            healthController.ReduceHealth((int)context.damage.FinalValue);
+            /** 相位三：按结果执行。伤害归零（被盾抵消等）不闪，避免没有伤害却有反馈 */
+            int finalDamage = (int)context.damage.FinalValue;
+            if (finalDamage > 0)
+            {
+                ((CustomNetworkManager)CustomNetworkManager.singleton).EventBroadcast(new PlayScreenFlashEvent(){alphaScale=0.7f,speed=1.1f});
+            }
+
+            healthController.ReduceHealth(finalDamage);
             miniEventBus.Publish<AfterBeAttackedEvent>(new AfterBeAttackedEvent{context=context});
 
             if (healthController.health <= 0) Die();

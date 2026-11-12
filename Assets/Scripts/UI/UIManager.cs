@@ -63,6 +63,9 @@ namespace Flicker.UI
                 _layerRoots[layer] = layerTransform;
                 _panelStacks[layer] = new List<UIPanel>();
             }
+
+            /** 闪白层：开机即建好并常驻，之后每次命中只是重播动画 */
+            Open<ScreenFlash>();
         }
 
         /// <summary>

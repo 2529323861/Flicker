@@ -11,6 +11,19 @@ namespace Flicker.Module.ViewEvent
     }
 
     /// <summary>
+    /// 全屏闪白。屏幕空间的表现，所有客户端都要看到，
+    /// 因此与震动同走 EventBroadcast，不挂在任何角色上。
+    /// 曲线形状由动画决定，这里只控制强度与速度
+    /// </summary>
+    public struct PlayScreenFlashEvent
+    {
+        /// <summary>峰值亮度系数，0~1</summary>
+        public float alphaScale;
+        /// <summary>播放倍速，小于 1 变慢、看起来更重</summary>
+        public float speed;
+    }
+
+    /// <summary>
     /// 播放一次音效。由逻辑层广播，负责表现的一端订阅后播放。
     /// PlayOneShot 可叠加，同一帧连续触发不会互相打断
     /// </summary>
