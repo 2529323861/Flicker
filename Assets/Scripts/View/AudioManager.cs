@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Flicker.Core;
+using Flicker.Data;
 using Flicker.Module.ViewEvent;
 using UnityEngine;
 
@@ -20,8 +21,36 @@ namespace Flicker.View
     public class AudioManager : Singleton<AudioManager>
     {
         [Header("音量")]
-        [Range(0f, 1f)] public float musicVolume = 0.6f;
-        [Range(0f, 1f)] public float sfxVolume = 0.8f;
+        [SerializeField, Range(0f, 1f)] private float musicVolumeValue = 0.6f;
+        [SerializeField, Range(0f, 1f)] private float sfxVolumeValue = 0.8f;
+
+        /// <summary>
+        /// 音乐音量。赋值立即生效：淡化结束后音源的 volume 不再被任何代码写入，
+        /// 所以必须在这里主动同步，否则拖滑条时听不到变化
+        /// </summary>
+        public float musicVolume
+        {
+            get => musicVolumeValue;
+            set
+            {
+                musicVolumeValue = Mathf.Clamp01(value);
+                ApplyMusicVolume();
+            }
+        }
+
+        /// <summary>
+        /// 音效音量。写在音源自身而不是每次 PlayOneShot 的系数上，
+        /// 这样已经在播的音也会跟着变
+        /// </summary>
+        public float sfxVolume
+        {
+            get => sfxVolumeValue;
+            set
+            {
+                sfxVolumeValue = Mathf.Clamp01(value);
+                if (sfxSource != null) sfxSource.volume = sfxVolumeValue;
+            }
+        }
 
         [Header("淡化")]
         [Tooltip("交叉淡化的默认时长（秒）")]
@@ -54,6 +83,22 @@ namespace Flicker.View
             musicA = CreateSource("MusicA", loop: true);
             musicB = CreateSource("MusicB", loop: true);
             sfxSource = CreateSource("Sfx", loop: false);
+
+            /** 走属性赋值，让音源与设置值从上电就一致 */
+            musicVolume = SettingsManager.Instance.GetSetting<float>("musicVolume");
+            sfxVolume = SettingsManager.Instance.GetSetting<float>("sfxVolume");
+        }
+
+        /// <summary>
+        /// 把当前音量写到正在播放的音源上。
+        /// 淡化期间不写：渐变协程每帧都在覆写 volume，此时插手会与它冲突。
+        /// 而淡化期间协程每帧读的就是 musicVolume，本来就能取到新值
+        /// </summary>
+        private void ApplyMusicVolume()
+        {
+            if (fadeRoutine != null) return;
+            if (currentMusic == null) return;
+            currentMusic.volume = musicVolumeValue;
         }
 
         /// <summary>
@@ -191,7 +236,8 @@ namespace Flicker.View
             AudioClip clip = LoadClip(SfxRoot + key);
             if (clip == null) return;
 
-            sfxSource.PlayOneShot(clip, Mathf.Clamp01(volumeScale) * sfxVolume);
+            /** 这里的系数只表达单次差异，总音量由音源自身承担 */
+            sfxSource.PlayOneShot(clip, Mathf.Clamp01(volumeScale));
         }
         //—————————————————————————————————资源———————————————————————————————————————————
         /// <summary>
