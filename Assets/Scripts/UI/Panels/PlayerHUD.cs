@@ -48,17 +48,10 @@ namespace Flicker.UI
 
         /** 缓存每个道具的悬停描述组件，复用 BuffDescription */
         private BuffDescription[] propDescriptions = new BuffDescription[PropContainer.EquippedPropCount];
-        /** 每个道具的就绪度目标值，1 = 就绪，0 = 刚使用。只作阻尼目标，不是逻辑状态 */
+        /** 每个道具的冷却遮罩目标值，1 = 完全遮住（刚使用），0 = 无遮罩（就绪）。
+         *  只作阻尼目标，不是逻辑状态 */
         private float[] propCDTarget = new float[PropContainer.EquippedPropCount];
         private float jumpCDProgressCache=0;
-
-        //—————————————————————————————————道具栏反馈状态————————————————————————————————————
-        /** 图标原始颜色，用于灰化后还原 */
-        private Color[] propOrigColor = new Color[PropContainer.EquippedPropCount];
-        /// <summary>
-        /// 冷却中图标的颜色系数
-        /// </summary>
-        private static readonly Color DimColor = new(0.35f,0.35f,0.35f,1f);
 
         /// <summary>
         /// UI层BUff缓存
@@ -82,8 +75,6 @@ namespace Flicker.UI
                 propDescriptions[i] = props[i].AddComponent<BuffDescription>();
                 /** 图标动画器，用于获取道具 Pop 与不可用抖动 */
                 propAnimators[i] = props[i].GetComponent<Animator>();
-                /** 记录原始颜色，灰化后还原 */
-                propOrigColor[i] = props[i].GetComponent<Image>().color;
             }
             EventBus.Subscribe<GetPropEvent>(GetPropHandler);
             EventBus.Subscribe<UpdateJumpCDProgressEvent>(SetJumpCDHandler);
@@ -101,9 +92,9 @@ namespace Flicker.UI
         }
         void Update()
         {
-            UpdateJumpCDBar(1-jumpCDProgressCache);
+            /** 跳跃与道具的条都是「冷却遮罩」：1 = 完全遮住，0 = 无遮�� */
+            UpdateJumpCDBar(jumpCDProgressCache);
             UpdatePropCDBar();
-            UpdatePropFeedback();
             ResetBuffPos();
         }
         public override void OnOpen(object args = null)
@@ -150,7 +141,7 @@ namespace Flicker.UI
         /// <summary>
         /// 设置跳跃CD条Image
         /// </summary>
-        /// <param name="per"></param>
+        /// <param name="per">冷却遮罩比例：1 = 完全遮住，0 = 就绪</param>
         public void UpdateJumpCDBar(float per)
         {
             var nowAmount = NonlinearDamper.Vector3Damp(new(jumpCDImage.fillAmount,0,0),new(per,0,0)).x;
@@ -188,10 +179,10 @@ namespace Flicker.UI
         {
             /** 上一帧是否已就绪。初值为0（未就绪），因此开局首个快照也会触发一次 pop，
              *  正好担当「道具出现」的表现 */
-            bool wasReady = propCDTarget[index] >= 1f;
+            bool wasReady = propCDTarget[index] <= 0f;
 
-            /** 条显示就绪度：1 = 可用，0 = 刚使用 */
-            propCDTarget[index] = 1f - cdRatio;
+            /** 遮罩比例与冷却比例同向：1 = 完全遮住，0 = 无遮罩 */
+            propCDTarget[index] = cdRatio;
 
             /** 就绪跳变：冷却结束，播一次 pop 提示可用，玩家无需盯条 */
             if (!wasReady && cdRatio <= 0f)
@@ -210,7 +201,7 @@ namespace Flicker.UI
             propAnimators[index].Play(propReadyAnimState, 0, 0f);
         }
         /// <summary>
-        /// 更新道具CD条。只做显示阻尼，目标值由快照给定
+        /// 更新道具冷却遮罩。只做显示阻尼，目标值由快照给定
         /// </summary>
         public void UpdatePropCDBar()
         {
@@ -235,18 +226,6 @@ namespace Flicker.UI
             if (index < 0 || index >= PropContainer.EquippedPropCount) return;
             /** 显式从 0 开始，连按可以重播 */
             propAnimators[index].Play(propUnavailableAnimState, 0, 0f);
-        }
-        /// <summary>
-        /// 道具栏反馈：灰化。缩放、位置、旋转一律交由 Animator
-        /// </summary>
-        private void UpdatePropFeedback()
-        {
-            for (int i = 0; i < PropContainer.EquippedPropCount; i++)
-            {
-                /** 灰化：用已经阻尼过的条值做插值，颜色与冷却条同步 */
-                Image icon = props[i].GetComponent<Image>();
-                icon.color = Color.Lerp(DimColor, propOrigColor[i], propBars[i].fillAmount);
-            }
         }
         //—————————————————————————————————buff图标部分———————————————————————————————————————————
         /// <summary>
