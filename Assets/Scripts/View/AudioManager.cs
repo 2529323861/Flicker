@@ -121,7 +121,7 @@ namespace Flicker.View
             EventBus.Subscribe<PropUnavailableEvent>(OnPropUnavailable);
         }
 
-        void OnDestroy()
+        new void OnDestroy()
         {
             EventBus.Unsubscribe<PlaySfxEvent>(OnPlaySfx);
             EventBus.Unsubscribe<PlayMusicEvent>(OnPlayMusic);

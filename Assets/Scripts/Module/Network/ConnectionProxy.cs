@@ -105,11 +105,11 @@ namespace Flicker.Module.Network
         /// <summary>
         /// 打开结算面板
         /// </summary>
-        /// <param name="win">本局是否获胜</param>
+        /// <param name="args">本局胜负与统计数据</param>
         [TargetRpc]
-        public void OpenSettlementUI(bool win)
+        public void OpenSettlementUI(SettlementArgs args)
         {
-            UIManager.Instance.Open<MultiPlaySettlementPanel>(win);
+            UIManager.Instance.Open<MultiPlaySettlementPanel>(args);
         }
         [TargetRpc]
         public void ChangeNetworkConnectionState(NetworkConnectionState networkConnectionState)

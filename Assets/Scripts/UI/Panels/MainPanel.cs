@@ -11,20 +11,14 @@ namespace Flicker.UI
 {    
     public class MainPanel : UIPanel
     {
-        public GameObject singlePlayButton;
         public GameObject hostPlayButton;
         public GameObject joinPlayButton;
         public GameObject settingsButton;
         void Awake()
         {
-            singlePlayButton.GetComponent<Button>().onClick.AddListener(SinglePlayButtonCallback);
             hostPlayButton.GetComponent<Button>().onClick.AddListener(HostPlayButtonCallback);
             joinPlayButton.GetComponent<Button>().onClick.AddListener(JoinPlayButtonCallback);
             settingsButton.GetComponent<Button>().onClick.AddListener(SettingsButtonCallback);
-        }
-        public void SinglePlayButtonCallback()
-        {
-            
         }
         /// <summary>
         /// 主菜单与大厅共用一首曲子。PlayMusic 会忽略同一首的重复请求，

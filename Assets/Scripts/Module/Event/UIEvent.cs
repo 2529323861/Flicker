@@ -39,6 +39,24 @@ namespace Flicker.Module.UIEvent
     {
         public int propSlotIndex;
     }
+    //———————————————————————————————MultiPlaySettlementPanel————————————————————————————————
+    /// <summary>
+    /// 结算面板的入参。由服务端在移除角色之前采集，
+    /// 通过 OpenSettlementUI 逐个发给对应玩家
+    /// </summary>
+    public struct SettlementArgs
+    {
+        /** 本局是否获胜 */
+        public bool win;
+        /** 对局时长（秒） */
+        public float duration;
+        /** 跳跃次数 */
+        public int jumpCount;
+        /** 弹反次数 */
+        public int parryCount;
+        /** 道具使用成功次数 */
+        public int propUseCount;
+    }
     /// <summary>
     /// 添加新buff
     /// </summary>

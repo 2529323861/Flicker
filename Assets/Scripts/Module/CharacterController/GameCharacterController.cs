@@ -47,6 +47,7 @@ namespace Flicker.Module
     [RequireComponent(typeof(MiniEventBus))]
     [RequireComponent(typeof(EffectContainer))]
     [RequireComponent(typeof(BuffContainer))]
+    [RequireComponent(typeof(CharacterStats))]
     /// <summary>
     /// 游戏角色行为基类，定义跳跃，跳跃冷却等所有游戏角色都有的基本行为
     /// </summary>

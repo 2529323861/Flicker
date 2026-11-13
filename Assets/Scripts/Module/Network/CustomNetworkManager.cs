@@ -212,11 +212,20 @@ namespace Flicker.Module.Network
                 wrapper.connectionProxy.EventTransmit(evt);
             }
         }
+        /// <summary>
+        /// 对局开始时刻，用于结算时计算时长。
+        /// 用缩放时间而非非缩放时间：顿帧期间 timeScale 为 0，
+        /// 冻结的时间不会计入，得到的时长与实际可操作的帧数一致
+        /// </summary>
+        private float matchStartTime;
+
         Coroutine countDownCoroutine;
         public void PrepareMultiPlay()
         {
             endLock = false;
             IsLimited = true;
+            /** 倒计时结束后再开算，这样时长只包含真正能操作的时间 */
+            matchStartTime = 0f;
             int i = 0;
             foreach(var wrapper in connectionProxyWrappers)
             {
@@ -298,6 +307,9 @@ namespace Flicker.Module.Network
         {
             yield return new WaitForSeconds(3f);
             IsLimited = false;
+            /** 此处才开始计时：倒计时属于准备阶段，不计入对局时长。
+             *  用缩放时间，顿帧期间 timeScale 为 0，冻结的时间自然不计入 */
+            matchStartTime = Time.time;
         }
         public void MultiPlayEnd(GameCharacterController dead)
         {
@@ -335,6 +347,25 @@ namespace Flicker.Module.Network
             StartCoroutine(MultiPlayEnd_(deadIndex));
         }
         IEnumerator MultiPlayEnd_(int deadIndex){
+            /** 统计数据必须在移除角色之前采集，否则组件已经没了 */
+            SettlementArgs[] settlementArgs = new SettlementArgs[connectionProxyWrappers.Count];
+            float duration = matchStartTime > 0f ? Time.time - matchStartTime : 0f;
+            for (int i = 0; i < connectionProxyWrappers.Count; i++)
+            {
+                CharacterStats stats = connectionProxyWrappers[i].character != null
+                    ? connectionProxyWrappers[i].character.GetComponent<CharacterStats>()
+                    : null;
+
+                settlementArgs[i] = new SettlementArgs
+                {
+                    win = i != deadIndex,
+                    duration = duration,
+                    jumpCount = stats != null ? stats.jumpCount : 0,
+                    parryCount = stats != null ? stats.parryCount : 0,
+                    propUseCount = stats != null ? stats.propUseCount : 0
+                };
+            }
+
             //这里主要是做1秒提供给场景完成剩余表演，也好让玩家看清是怎么结束的
             yield return new WaitForSeconds(1f);
             CharacterControllerManager.Instance.RemoveAll();
@@ -343,7 +374,7 @@ namespace Flicker.Module.Network
             {
                 var wrapper = connectionProxyWrappers[i];
                 wrapper.character = null;
-                wrapper.connectionProxy.OpenSettlementUI(i != deadIndex);
+                wrapper.connectionProxy.OpenSettlementUI(settlementArgs[i]);
             }
         }
         public void HostStartGame()
