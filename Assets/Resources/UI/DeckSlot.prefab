@@ -98,8 +98,8 @@ MonoBehaviour:
   icon: {fileID: 3220859965984888827}
   button: {fileID: 7381233925707362698}
   traySprites:
-  - {fileID: 21300000, guid: ce723395697129445977a1d2736fd74a, type: 3}
-  - {fileID: 21300000, guid: eae38b9cd79a22049837e1197f09328d, type: 3}
+  - {fileID: 21300000, guid: 2847abf0972a10b4a8046f2e5e31e2fc, type: 3}
+  - {fileID: 21300000, guid: b7ecdf49d92c9f44eaef16cefa420bb5, type: 3}
 --- !u!1 &8237132523570754273
 GameObject:
   m_ObjectHideFlags: 0
@@ -241,8 +241,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: ce723395697129445977a1d2736fd74a, type: 3}
-  m_Type: 0
+  m_Sprite: {fileID: 21300000, guid: 2847abf0972a10b4a8046f2e5e31e2fc, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
