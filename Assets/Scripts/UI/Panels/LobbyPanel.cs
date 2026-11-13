@@ -69,6 +69,10 @@ namespace Flicker.UI
 
                 opened = true;
             }
+
+            /** 补扫一次：卡组槽位与道具一览都是上面才生成的，
+             *  基类在 OnOpen 开头扫时它们还不存在 */
+            AttachButtonSfx();
         }
         //————————————————————————————————Handler——————————————————————————————————————————
         public void StartButtonCallback()

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Flicker.UI
 {
@@ -30,6 +31,26 @@ namespace Flicker.UI
         {
             _openArgs = args;
             gameObject.SetActive(true);
+            /** 在激活之后扫描：未激活的子物体默认查不到 */
+            AttachButtonSfx();
+        }
+
+        /// <summary>
+        /// 给面板内所有按钮挂上点击音。
+        /// 放在基类而不是逐个按钮手工拖拽，是因为按钮会随面板增删，
+        /// 手工挂载必然漏。每次打开都扫一遍，已挂的跳过，代价是十几次 GetComponent。
+        ///
+        /// 子类若在 OnOpen 里动态生成按钮（如大厅的卡组槽位），
+        /// 需在生成完后再调一次——基类的扫描发生在动态生成之前。
+        /// </summary>
+        protected void AttachButtonSfx()
+        {
+            Button[] buttons = GetComponentsInChildren<Button>(true);
+            foreach (Button button in buttons)
+            {
+                if (button.GetComponent<UIButtonSfx>() != null) continue;
+                button.gameObject.AddComponent<UIButtonSfx>();
+            }
         }
 
         /// <summary>

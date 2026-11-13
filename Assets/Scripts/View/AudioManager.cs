@@ -63,8 +63,27 @@ namespace Flicker.View
         [Tooltip("不可用音的音量系数。素材本身偏响（mean -9dB），降到 0.3 以免反复按键时刺耳")]
         [Range(0f, 1f)] public float propUnavailableVolumeScale = 0.3f;
 
+        [Header("UI 反馈")]
+        [Tooltip("任意按钮点击的音效，留空则不播。短促（0.2s），不打断音乐")]
+        public string buttonClickSfx = "ButtonClick";
+        [Tooltip("点击音的音量系数。点击是全界面高频操作，叫得比道具音更轻")]
+        [Range(0f, 1f)] public float buttonClickVolumeScale = 0.45f;
+
         private const string MusicRoot = "Sounds/Music/";
         private const string SfxRoot = "Sounds/Sfx/";
+
+        /// <summary>
+        /// 背景音乐的固定混音系数。玩家设置值是 0~1 的直觉区间，直接映射到音源会让
+        /// 满音量偏响——音乐对体验的敏感度低于音效，因此在这里插一层固定衰减。
+        /// 写死而不暴露：这是调音结论，不是玩家可选项。
+        /// </summary>
+        private const float MusicMixScale = 0.5f;
+
+        /// <summary>
+        /// 真正写入音源的音乐音量 = 玩家设置值 × 固定系数。
+        /// 设置界面里的滑条仍然只看到 0~1，不受这里影响
+        /// </summary>
+        private float MusicOutput => musicVolumeValue * MusicMixScale;
 
         /// <summary>
         /// 音乐双音源。交叉淡化要求两首曲子同时存在一段时间，
@@ -105,7 +124,7 @@ namespace Flicker.View
         {
             if (fadeRoutine != null) return;
             if (currentMusic == null) return;
-            currentMusic.volume = musicVolumeValue;
+            currentMusic.volume = MusicOutput;
         }
 
         /// <summary>
@@ -132,6 +151,16 @@ namespace Flicker.View
         {
             if (string.IsNullOrEmpty(propUnavailableSfx)) return;
             PlaySfx(propUnavailableSfx, propUnavailableVolumeScale);
+        }
+
+        /// <summary>
+        /// 播放按钮点击音。供 UI 层直接调用——声音不改变任何游戏状态，
+        /// 不属于「UI 驱动逻辑」，因此不需要绕事件总线
+        /// </summary>
+        public void PlayButtonClick()
+        {
+            if (string.IsNullOrEmpty(buttonClickSfx)) return;
+            PlaySfx(buttonClickSfx, buttonClickVolumeScale);
         }
 
         private AudioSource CreateSource(string sourceName, bool loop)
@@ -224,7 +253,7 @@ namespace Flicker.View
                 elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.Clamp01(elapsed / duration);
 
-                if (to != null) to.volume = musicVolume * t;
+                if (to != null) to.volume = MusicOutput * t;
                 if (from != null) from.volume = fromStart * (1f - t);
 
                 yield return null;
@@ -239,7 +268,7 @@ namespace Flicker.View
         /// </summary>
         private void ApplyFadeEnd(AudioSource from, AudioSource to)
         {
-            if (to != null) to.volume = musicVolume;
+            if (to != null) to.volume = MusicOutput;
 
             if (from == null) return;
             from.volume = 0f;
