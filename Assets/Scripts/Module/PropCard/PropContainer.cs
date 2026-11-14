@@ -220,6 +220,10 @@ namespace Flicker.Module
 
             miniEventBus.Publish<AfterUsePropEvent>(new(){context=context});
 
+            /** 道具特效：在角色身上播一次图标放大淡出。
+             *  效果本身双方可见，故走 ClientRpc 让所有人都看到 */
+            GetComponent<GameCharacterController>().PlayPropVfx(context.prop.path);
+
             /** 道具使用走广播而非 TargetRpc：使用效果（换位、冲刺、加速）本来就双方可见，
              *  声音作为公开信息一并让对手听到，与“不可用”的私人反馈区分开。
              *  素材本身偏响（mean -8dB），系数降到 0.5 与角色音效对齐 */

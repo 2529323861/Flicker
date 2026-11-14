@@ -113,6 +113,11 @@ namespace Flicker.Module
         public float rightWallPos;
 
         /// <summary>
+        /// 道具使用特效。跟随角色的子对象，未拖拽时由 Awake 自动查找
+        /// </summary>
+        public PropVfxPlayer propVfxPlayer;
+
+        /// <summary>
         /// 阵营tag
         /// </summary>
         public string teamTag;
@@ -180,6 +185,9 @@ namespace Flicker.Module
             modifyPipeline = GetComponent<ModifyPipeline>();
             miniEventBus = GetComponent<MiniEventBus>();
             healthController = GetComponent<HealthController>();
+
+            /** 特效挂在子物体上，允许在预制体里不显式拖拽 */
+            if (propVfxPlayer == null) propVfxPlayer = GetComponentInChildren<PropVfxPlayer>(true);
 
             GenerateDataPool();
 
@@ -669,6 +677,18 @@ namespace Flicker.Module
         public void SetTeamColor(Color color)
         {
             gameCharacterActor.SetColor(color);
+        }
+
+        /// <summary>
+        /// 播放道具使用特效。道具效果本来就双方可见，
+        /// 因此走 ClientRpc 让所有客户端都看到同一个人的特效。
+        /// 与 SetTeamColor 同一模式，Host 本地会被回灌，无需额外调用
+        /// </summary>
+        /// <param name="propPath">道具图标文件名，对应 PropIcon 目录</param>
+        [ClientRpc]
+        public void PlayPropVfx(string propPath)
+        {
+            if (propVfxPlayer != null) propVfxPlayer.Play(propPath);
         }
     }
 }
