@@ -317,13 +317,12 @@ namespace Flicker.UI
         /// <param name="showBuffDescriptionEvent"></param>
         public void ShowBuffDescriptionHandler(ShowBuffDescriptionEvent showBuffDescriptionEvent)
         {
+            var hudRect = GetComponent<RectTransform>();
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                GetComponent<RectTransform>(),
+                hudRect,
                 Input.mousePosition,
                 null,
                 out var localPoint);
-            buffDescription.GetComponent<RectTransform>().anchoredPosition = localPoint;
-
 
             var descriptionTray = buffDescription.transform.Find("Root/BuffDescriptionTray");
             descriptionTray.Find("name").GetComponent<TextMeshProUGUI>().text = showBuffDescriptionEvent.name;
@@ -333,6 +332,17 @@ namespace Flicker.UI
             var lineHeight = i.GetPreferredValues(i.text,i.GetComponent<RectTransform>().sizeDelta.x,0).y;
             var rt = descriptionTray.GetComponent<RectTransform>();
             rt.sizeDelta = new(rt.sizeDelta.x,lineHeight+50f);
+
+            /** 框高每次随文本重算，因此定位必须放在尺寸确定之后 */
+            float trayHeight = rt.sizeDelta.y;
+            /** 鼠标离 HUD 下边缘的距离。localPoint 与 hudRect.rect 同处 HUD 局部空间，可直接相减 */
+            float distFromBottom = localPoint.y - hudRect.rect.yMin;
+            /** 下方装不下时抬起「框高 - 离底距离」，框底边恰好落在屏幕下沿。
+             *  装得下时抬升量为 0，与原行为完全一致，两种情形在临界点处连续 */
+            float lift = Mathf.Max(0f, trayHeight - distFromBottom);
+
+            buffDescription.GetComponent<RectTransform>().anchoredPosition =
+                new(localPoint.x, localPoint.y + lift);
 
             buffDescription.SetActive(true);
             buffDescription.GetComponent<Animator>().Play("UIShow");
