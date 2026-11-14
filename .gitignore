@@ -27,3 +27,7 @@ obj/
 .continue
 # 临时工作目录，不纳入版本控制
 worktemp/
+
+# 构建分发包
+*.zip
+
