@@ -150,6 +150,23 @@ namespace Flicker.Module.UIEvent
     {
         public int index;
     }
+    //—————————————————————————————————————聊天———————————————————————————————————
+    /// <summary>
+    /// 玩家发送聊天。客户端只发正文，发送者名由服务端从连接信息填入，
+    /// 避免客户端伪造他人身份
+    /// </summary>
+    public struct SendChatEvent
+    {
+        public string content;
+    }
+    /// <summary>
+    /// 服务端广播到各端的聊天消息。sender 由服务端填写
+    /// </summary>
+    public struct ChatMessageEvent
+    {
+        public string sender;
+        public string content;
+    }
         //—————————————————————————————————————JoinInputPanel———————————————————————————————————
     public struct JoinUrlEvent
     {

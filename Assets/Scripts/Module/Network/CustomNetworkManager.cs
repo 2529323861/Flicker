@@ -213,6 +213,23 @@ namespace Flicker.Module.Network
             }
         }
         /// <summary>
+        /// 服务端转发一条聊天。发送者名从连接记录中取，客户端无法指定。
+        /// 走 EventBroadcast 广播给所有已连接玩家（含发送者本人），
+        /// 因此本地不需要额外的回显逻辑
+        /// </summary>
+        public void SendChat(NetworkConnectionToClient sender, string content)
+        {
+            var wrapper = connectionProxyWrappers.Find(w => w.conn == sender);
+            /** 连接已断开或不在玩家列表里，直接丢弃 */
+            if (wrapper == null) return;
+
+            EventBroadcast(new ChatMessageEvent
+            {
+                sender = wrapper.playerName,
+                content = content
+            });
+        }
+        /// <summary>
         /// 对局开始时刻，用于结算时计算时长。
         /// 用缩放时间而非非缩放时间：顿帧期间 timeScale 为 0，
         /// 冻结的时间不会计入，得到的时长与实际可操作的帧数一致

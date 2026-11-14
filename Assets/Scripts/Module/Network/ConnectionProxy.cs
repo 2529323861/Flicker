@@ -55,6 +55,7 @@ namespace Flicker.Module.Network
                 EventBus.Unsubscribe<LobbyPanelStartEvent>(LobbyPanelStartHandler);
                 EventBus.Unsubscribe<LobbyPanelReadyEvent>(LobbyPanelReadyHandler);
                 EventBus.Unsubscribe<LobbyPanelReadySnapshotRequest>(LobbyPanelReadySnapshotRequestHandler);
+                EventBus.Unsubscribe<SendChatEvent>(SendChatHandler);
             }
         }
         //—————————————————————————————————————客户端方法—————————————————————————————————————————————
@@ -65,6 +66,7 @@ namespace Flicker.Module.Network
                 EventBus.Subscribe<LobbyPanelStartEvent>(LobbyPanelStartHandler);
                 EventBus.Subscribe<LobbyPanelReadyEvent>(LobbyPanelReadyHandler);
                 EventBus.Subscribe<LobbyPanelReadySnapshotRequest>(LobbyPanelReadySnapshotRequestHandler);
+                EventBus.Subscribe<SendChatEvent>(SendChatHandler);
 
                 CmdUpdatePlayerName(SettingsManager.Instance.GetSetting<string>("playerName"));
 
@@ -206,6 +208,18 @@ namespace Flicker.Module.Network
         {
             propContainer?.UseProp(i);
         }
+        /// <summary>
+        /// 发送聊天。只有正文由客户端提供，发送者名取服务端记录的 playerName，
+        /// 因此客户端无法冒充他人。空消息直接丢弃，避免产生空行
+        /// </summary>
+        [Command]
+        public void CmdSendChat(string content, NetworkConnectionToClient sender = null)
+        {
+            if (sender == null) return;
+            if (string.IsNullOrWhiteSpace(content)) return;
+
+            ((CustomNetworkManager)CustomNetworkManager.singleton).SendChat(sender, content);
+        }
         //————————————————————————————————————Handler—————————————————————————————————————————————————
         public void LobbyPanelStartHandler(LobbyPanelStartEvent lobbyPanelStartEvent)
         {
@@ -218,6 +232,10 @@ namespace Flicker.Module.Network
         public void LobbyPanelReadySnapshotRequestHandler(LobbyPanelReadySnapshotRequest lobbyPanelReadySnapshotRequest)
         {
             CmdReadySnapshotRequest();
+        }
+        public void SendChatHandler(SendChatEvent sendChatEvent)
+        {
+            CmdSendChat(sendChatEvent.content);
         }
     }
 }

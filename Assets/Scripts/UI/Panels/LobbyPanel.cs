@@ -31,6 +31,18 @@ namespace Flicker.UI
         public TMP_Text selfName;
         public TMP_Text otherName;
 
+        [Header("聊天")]
+        [Tooltip("发送按钮，对应 Chat/MessageInput/InputField (TMP)/Submit")]
+        public Button chatSubmitButton;
+        [Tooltip("消息输入框，对应 Chat/MessageInput/InputField (TMP)")]
+        public TMP_InputField chatInputField;
+        [Tooltip("消息容器，对应 Chat/Scroll View/Viewport/Content。挂 VerticalLayoutGroup + ContentSizeFitter")]
+        public RectTransform chatContent;
+        [Tooltip("聊天滚动视图，对应 Chat/Scroll View。新增消息后需要把它拉到底")]
+        public ScrollRect chatScroll;
+        [Tooltip("消息预制体，对应 Resources/UI/Message.prefab")]
+        public GameObject messagePrefab;
+
         private bool opened = false;
         /// <summary>
         /// 机器人存在状态，仅用于决定本次点击发出添加还是移除
@@ -48,6 +60,11 @@ namespace Flicker.UI
             EventBus.Subscribe<LobbyPanelBotStateEvent>(LobbyPanelBotStateHandler);
             EventBus.Subscribe<UpdatePropDescriptionEvent>(UpdatePropDescriptionHandler);
             EventBus.Subscribe<DeckSlotClickedEvent>(DeckSlotClickedHandler);
+            EventBus.Subscribe<ChatMessageEvent>(ChatMessageHandler);
+
+            chatSubmitButton.onClick.AddListener(ChatSubmitCallback);
+            /** 回车也能发送，聊天框的常规习惯 */
+            chatInputField.onSubmit.AddListener(_ => ChatSubmitCallback());
         }
         public override void OnOpen(object args = null)
         {
@@ -57,6 +74,10 @@ namespace Flicker.UI
             startButton.interactable = NetworkServer.active;
             readyMask.SetActive(false);
             EventBus.Publish<LobbyPanelReadySnapshotRequest>(new());
+
+            /** 聊天不缓存，每次回到大厅都从空开始。
+             *  必须放在 opened 判断之外，否则只有第一次进大厅会清 */
+            ClearChat();
 
             if (!opened)
             {
@@ -253,6 +274,56 @@ namespace Flicker.UI
             deckSlots[chosenDeckSlot].SetSelected(false);
             chosenDeckSlot = deckSlotClickedEvent.index;
             deckSlots[chosenDeckSlot].SetSelected(true);
+        }
+        //————————————————————————————————————聊天——————————————————————————————————————————
+        /// <summary>
+        /// 点击发送。只发正文，发送者名由服务端填。
+        /// 空消息与纯空白在此拦掉，避免产生空白气泡
+        /// </summary>
+        public void ChatSubmitCallback()
+        {
+            string text = chatInputField.text;
+            if (string.IsNullOrWhiteSpace(text)) return;
+
+            EventBus.Publish<SendChatEvent>(new() { content = text });
+            chatInputField.text = string.Empty;
+        }
+        /// <summary>
+        /// 收到服务端广播的聊天，落到界面上。
+        /// 所有端（含发送者本人）走同一条路径，不做本地回显
+        /// </summary>
+        public void ChatMessageHandler(ChatMessageEvent chatMessageEvent)
+        {
+            GameObject go = Instantiate(messagePrefab, chatContent, false);
+            var message = go.GetComponent<Message>();
+            message.SetSender(chatMessageEvent.sender);
+            message.SetContent(chatMessageEvent.content);
+
+            ScrollChatToBottom();
+        }
+        /// <summary>
+        /// 滚到最新一条。
+        /// 刚创建的节点在本帧尚未参与布局，content 高度还是旧值，
+        /// 此刻直接设 normalizedPosition 会按旧高度算而滚不到底。
+        /// 因此先强制重建一次，再设位置
+        /// </summary>
+        private void ScrollChatToBottom()
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(chatContent);
+            chatScroll.verticalNormalizedPosition = 0f;
+        }
+        /// <summary>
+        /// 清空聊天区。回到大厅时调用，符合"不缓存历史消息"的设计
+        /// </summary>
+        private void ClearChat()
+        {
+            if (chatContent == null) return;
+
+            for (int i = chatContent.childCount - 1; i >= 0; i--)
+            {
+                Destroy(chatContent.GetChild(i).gameObject);
+            }
+            if (chatInputField != null) chatInputField.text = string.Empty;
         }
         //————————————————————————————————————准备遮罩——————————————————————————————————————————
         public GameObject readyMask;
