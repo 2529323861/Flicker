@@ -479,33 +479,38 @@ namespace Flicker.Module
         /// </summary>
         protected virtual void OnIntoEdge(LevelEdge levelEdge){}
         /// <summary>
-        /// 弹反侦测
+        /// 侦测缓冲。OverlapCircleNonAlloc 复用同一块内存，避免每帧产生垃圾。
+        /// 容量 8 足够：同屏最多两名对手，其余是墙体等非角色碰撞体
+        /// </summary>
+        private readonly Collider2D[] detectBuffer = new Collider2D[8];
+        /// <summary>
+        /// 弹反侦测：飞行途中与迎面跳跃的敌人相撞。
+        ///
+        /// 用重叠查询而非射线：角色是圆形碰撞体，判定本质就是"两个圆是否相交"，
+        /// 射线只能沿单一方向扫，对纵向偏移和相切情形都会漏判。
         /// </summary>
         private void ParryDetect()
         {
-            Vector2 centerStart = new Vector2(transform.position.x,transform.position.y);
-            Vector2 topStart = new Vector2(transform.position.x,transform.position.y+collisionRadius);
-            Vector2 bottomStart = new Vector2(transform.position.x,transform.position.y-collisionRadius);
+            /** 查询半径取 2 倍自身半径，覆盖"刚接触"的相切情形；
+             *  精确接触判定仍由下面的圆心距比较负责，此处只是放宽搜索范围 */
+            int count = Physics2D.OverlapCircleNonAlloc(
+                transform.position, collisionRadius * 2f, detectBuffer);
 
-            RaycastHit2D[] centerHit =  Physics2D.RaycastAll(centerStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
-            RaycastHit2D[] topHit =  Physics2D.RaycastAll(topStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
-            RaycastHit2D[] bottomHit =  Physics2D.RaycastAll(bottomStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
-
-            RaycastHit2D[] raycastHit2Ds = topHit.Concat(bottomHit).Concat(centerHit).ToArray();
-            foreach (var i in raycastHit2Ds)
+            for (int i = 0; i < count; i++)
             {
-                if (i.collider.gameObject.TryGetComponent<GameCharacterController>(out var gameCharacterController) && //是游戏角色
-                    gameCharacterController.teamTag != teamTag && //与自己不是一个阵营的
-                    gameCharacterController.state == GameCharacterState.JumpHanging && //处于跳跃状态
-                    (i.collider.gameObject.transform.localPosition - transform.localPosition).magnitude <= collisionRadius + gameCharacterController.collisionRadius && //碰撞
-                    gameCharacterController.isRightWall != isRightWall //相向移动
-                    )
-                {
-                    gameCharacterController.Parry(gameObject);
-                    Parry(i.collider.gameObject);
-                }
+                Collider2D hit = detectBuffer[i];
+                /** 自身碰撞体也在查询结果里 */
+                if (hit.gameObject == gameObject) continue;
+                if (!hit.TryGetComponent<GameCharacterController>(out var opponent)) continue;  //是游戏角色
+                if (opponent.teamTag == teamTag) continue;                                      //与自己不是一个阵营的
+                if (opponent.state != GameCharacterState.JumpHanging) continue;                 //处于跳跃状态
+                if (opponent.isRightWall == isRightWall) continue;                              //相向移动
+                if ((opponent.transform.localPosition - transform.localPosition).magnitude
+                    > collisionRadius + opponent.collisionRadius) continue;                     //碰撞
+
+                opponent.Parry(gameObject);
+                Parry(opponent.gameObject);
             }
-            
         }
         /// <summary>
         /// 弹反
@@ -534,52 +539,48 @@ namespace Flicker.Module
         }
 
         /// <summary>
-        /// 攻击侦测
+        /// 攻击侦测：跳跃落地瞬间，与站在同一面墙上的对手碰撞。
+        ///
+        /// 与弹反侦测同样改用重叠查询。原先的水平射线在此处必然落空：
+        /// 落地后双方都在同一面墙、x 相同，只有 y 有差，水平方向扫不到任何东西。
         /// </summary>
         private void AttackDetect()
         {
-            Vector2 centerStart = new Vector2(transform.position.x,transform.position.y);
-            Vector2 topStart = new Vector2(transform.position.x,transform.position.y+collisionRadius);
-            Vector2 bottomStart = new Vector2(transform.position.x,transform.position.y-collisionRadius);
+            int count = Physics2D.OverlapCircleNonAlloc(
+                transform.position, collisionRadius * 2f, detectBuffer);
 
-            RaycastHit2D[] centerHit =  Physics2D.RaycastAll(centerStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
-            RaycastHit2D[] topHit =  Physics2D.RaycastAll(topStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
-            RaycastHit2D[] bottomHit =  Physics2D.RaycastAll(bottomStart,new Vector2(isRightWall ? -1 : 1,0),collisionRadius);
-
-            RaycastHit2D[] raycastHit2Ds = topHit.Concat(bottomHit).Concat(centerHit).ToArray();
-            List<GameObject> attacked = new();
             /** 属性整个侦测只取一次，循环内不重复结算修饰 */
             ModifierSet attributes = modifyPipeline.GetModifierSet();
-            foreach (var i in raycastHit2Ds)
+            for (int i = 0; i < count; i++)
             {
-                if (i.collider.gameObject.TryGetComponent<GameCharacterController>(out var gameCharacterController) && //是游戏角色
-                    gameCharacterController.teamTag != teamTag && //与自己不是一个阵营的
-                    gameCharacterController.state != GameCharacterState.JumpHanging && //不处于跳跃滞空
-                    gameCharacterController.state != GameCharacterState.ParryHanging && //不处于弹反滞空
-                    !attacked.Contains(i.collider.gameObject) && //没有计算过伤害
-                    (i.collider.gameObject.transform.localPosition - transform.localPosition).magnitude <= collisionRadius + gameCharacterController.collisionRadius //碰撞
-                    )
+                Collider2D hit = detectBuffer[i];
+                /** 自身碰撞体也在查询结果里 */
+                if (hit.gameObject == gameObject) continue;
+                if (!hit.TryGetComponent<GameCharacterController>(out var victim)) continue;   //是游戏角色
+                if (victim.teamTag == teamTag) continue;                                       //与自己不是一个阵营的
+                if (victim.state == GameCharacterState.JumpHanging) continue;                  //对方跳走了
+                if (victim.state == GameCharacterState.ParryHanging) continue;                 //对方正在弹反滞空
+                if ((victim.transform.localPosition - transform.localPosition).magnitude
+                    > collisionRadius + victim.collisionRadius) continue;                       //碰撞
+
+                AttackContext context = new()
                 {
-                    AttackContext context = new()
-                    {
-                        attributes = attributes,
-                        victim = i.collider.gameObject,
-                        damage = new ModifiableValue(attributes.Final(ModifierSet.Key.Damage))
-                    };
+                    attributes = attributes,
+                    victim = victim.gameObject,
+                    damage = new ModifiableValue(attributes.Final(ModifierSet.Key.Damage))
+                };
 
-                    /** 相位一：决定本次攻击是否发生 */
-                    miniEventBus.Publish<BeforeAttackEvent>(new BeforeAttackEvent{context=context});
-                    if (context.cancelled) continue;  //事件是否被取消
+                /** 相位一：决定本次攻击是否发生 */
+                miniEventBus.Publish<BeforeAttackEvent>(new BeforeAttackEvent{context=context});
+                if (context.cancelled) continue;  //事件是否被取消
 
-                    /** 相位二：确定本次攻击的伤害 */
-                    miniEventBus.Publish<AttackResultEvent>(new AttackResultEvent{context=context});
+                /** 相位二：确定本次攻击的伤害 */
+                miniEventBus.Publish<AttackResultEvent>(new AttackResultEvent{context=context});
 
-                    /** 相位三：按结果执行 */
-                    gameCharacterController.BeAttacked(gameObject,context.damage.FinalValue);
-                    attacked.Add(i.collider.gameObject);
+                /** 相位三：按结果执行 */
+                victim.BeAttacked(gameObject,context.damage.FinalValue);
 
-                    miniEventBus.Publish<AfterAttackEvent>(new AfterAttackEvent{context=context});
-                }
+                miniEventBus.Publish<AfterAttackEvent>(new AfterAttackEvent{context=context});
             }
             
         }
