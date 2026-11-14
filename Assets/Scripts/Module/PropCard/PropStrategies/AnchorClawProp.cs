@@ -9,7 +9,7 @@ namespace Flicker.Module.Prop
             name = "锚爪";
             factoryId = "00013";
             path = "AnchorClaw";
-            description = "下次跳跃若在30%处没有被弹反，则立刻折返，落地后移速降低20%，持续4秒。";
+            description = "下次跳跃若在70%处没有被弹反，则立刻折返，落地后移速降低50%，持续4秒。";
         }
         public override void OnUse()
         {

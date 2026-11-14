@@ -12,7 +12,7 @@ namespace Flicker.Module.Buff.PropBuff
         /// <summary>
         /// 冲刺总距离
         /// </summary>
-        public const float Distance = 3f;
+        public const float Distance = 5f;
         /// <summary>
         /// 冲刺速度，单位/秒
         /// </summary>
@@ -51,7 +51,7 @@ namespace Flicker.Module.Buff.PropBuff
         {
             name = "脉冲发条";
             path = "PulseClock";
-            description = "沿当前方向冲刺3单位距离，期间不可被攻击，随后移速下降30%持续4秒";
+            description = "沿当前方向冲刺5单位距离，期间不可被攻击，随后移速下降30%持续4秒";
             /** 逐帧动作需允许多个实例并存，否则连续使用会被吞掉 */
             isStackable = false;
             this.direction = isUp ? 1f : -1f;
